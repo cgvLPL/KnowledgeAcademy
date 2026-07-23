@@ -425,21 +425,16 @@ function Login({
   onLogin: (role: Role, email: string, password: string) => Promise<string | null>;
 }) {
   const [role, setRole] = useState<Role>("participant");
-  const [email, setEmail] = useState("rayhan.ardhana@cgv.co.id");
-  const [password, setPassword] = useState("participant123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   function switchRole(nextRole: Role) {
     setRole(nextRole);
-    if (nextRole === "admin") {
-      setEmail("admin@cgv.co.id");
-      setPassword("ChangeMe123!");
-    } else {
-      setEmail("rayhan.ardhana@cgv.co.id");
-      setPassword("participant123");
-    }
+    setEmail("");
+    setPassword("");
   }
 
   async function submit(event: FormEvent) {
@@ -576,10 +571,6 @@ function Login({
               {submitting ? "Signing in…" : "Enter workspace"} {!submitting && <ArrowRight size={19} />}
             </button>
 
-            <p className="demo-note">
-              Demo credentials are prefilled. Production accounts are managed
-              from the admin workspace and Google Sheets.
-            </p>
           </form>
         </div>
       </section>
