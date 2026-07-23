@@ -193,17 +193,6 @@ button:disabled {
   width: 500px;
 }
 
-.login-header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin: 0 auto;
-  max-width: 1480px;
-  padding: 34px 52px;
-  position: relative;
-  z-index: 2;
-}
-
 .brand-lockup {
   align-items: center;
   display: inline-flex;
@@ -256,7 +245,6 @@ button:disabled {
   width: 32px;
 }
 
-.secure-pill,
 .eyebrow,
 .live-pill {
   align-items: center;
@@ -270,80 +258,21 @@ button:disabled {
   padding: 9px 13px;
 }
 
-.secure-pill {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(14px);
-  color: #505650;
-}
-
 .login-layout {
   align-items: center;
-  display: grid;
-  gap: clamp(60px, 9vw, 150px);
-  grid-template-columns: minmax(0, 1fr) minmax(430px, 0.78fr);
+  display: flex;
+  justify-content: center;
   margin: 0 auto;
-  max-width: 1310px;
-  min-height: calc(100vh - 110px);
-  padding: 40px 56px 100px;
+  min-height: 100vh;
+  padding: 64px 24px;
   position: relative;
   z-index: 1;
 }
 
-.login-story {
-  max-width: 640px;
-}
-
-.login-story .eyebrow {
-  background: rgba(255, 255, 255, 0.74);
-}
-
-.login-story h1 {
-  font-size: clamp(58px, 6.4vw, 98px);
-  font-weight: 500;
-  letter-spacing: -0.072em;
-  line-height: 0.91;
-  margin: 28px 0 30px;
-}
-
-.login-story h1 em {
-  color: #367f3d;
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 400;
-}
-
-.login-story > p {
-  color: #666c66;
-  font-size: 18px;
-  line-height: 1.75;
-  max-width: 570px;
-}
-
-.story-stats {
-  border-top: 1px solid rgba(16, 17, 16, 0.13);
-  display: flex;
-  gap: clamp(28px, 5vw, 70px);
-  margin-top: 58px;
-  padding-top: 28px;
-}
-
-.story-stats div {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.story-stats strong {
-  font-size: 25px;
-  letter-spacing: -0.04em;
-}
-
-.story-stats span {
-  color: #777c77;
-  font-size: 12px;
-}
-
 .login-card-wrap {
+  max-width: 470px;
   position: relative;
+  width: 100%;
 }
 
 .stack-card {
@@ -2845,11 +2774,6 @@ td {
 }
 
 @media (max-width: 1180px) {
-  .login-layout {
-    gap: 50px;
-    grid-template-columns: 1fr 430px;
-  }
-  .login-story h1 { font-size: 66px; }
   .hero-evaluation { grid-template-columns: 1.2fr .8fr; }
   .evaluation-row { grid-template-columns: 45px minmax(220px, 1fr) 160px 90px; }
   .evaluation-details { display: none; }
@@ -2860,14 +2784,6 @@ td {
 }
 
 @media (max-width: 980px) {
-  .login-layout {
-    grid-template-columns: 1fr;
-    max-width: 640px;
-    padding-top: 15px;
-  }
-  .login-story { text-align: center; }
-  .login-story > p { margin-left: auto; margin-right: auto; }
-  .story-stats { justify-content: center; }
   .sidebar { flex-basis: 210px; }
   .top-search { display: none; }
   .content { padding: 26px; }
@@ -2888,14 +2804,7 @@ td {
 }
 
 @media (max-width: 760px) {
-  .login-header { padding: 24px; }
-  .secure-pill { display: none; }
-  .login-layout { padding: 30px 20px 70px; }
-  .login-story h1 { font-size: 50px; }
-  .login-story > p { font-size: 15px; }
-  .story-stats { gap: 25px; }
-  .story-stats strong { font-size: 20px; }
-  .story-stats span { font-size: 9px; }
+  .login-layout { padding: 40px 20px; }
   .login-card { border-radius: 25px; padding: 28px 22px; }
   .sidebar { display: none; }
   .main-shell { padding-bottom: 78px; }
@@ -3006,8 +2915,6 @@ td {
 }
 
 @media (max-width: 430px) {
-  .login-story h1 { font-size: 44px; }
-  .story-stats div:last-child { display: none; }
   .history-summary { grid-template-columns: 1fr; }
   .history-score-card { grid-column: auto; }
   .scoreboard-kpis { grid-template-columns: 1fr 1fr; }

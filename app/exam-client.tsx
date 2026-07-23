@@ -451,45 +451,8 @@ function Login({
     <main className="login-page">
       <div className="login-aurora aurora-one" />
       <div className="login-aurora aurora-two" />
-      <header className="login-header">
-        <Logo />
-        <span className="secure-pill">
-          <ShieldCheck size={15} /> Secure evaluation portal
-        </span>
-      </header>
 
       <section className="login-layout">
-        <div className="login-story">
-          <span className="eyebrow">
-            <Sparkles size={15} />
-            Learn. Evaluate. Grow.
-          </span>
-          <h1>
-            Every evaluation,
-            <br />
-            <em>one clear path.</em>
-          </h1>
-          <p>
-            A focused place for teams to complete evaluations, understand their
-            progress, and keep growing.
-          </p>
-
-          <div className="story-stats">
-            <div>
-              <strong>92%</strong>
-              <span>completion rate</span>
-            </div>
-            <div>
-              <strong>1,248</strong>
-              <span>evaluations logged</span>
-            </div>
-            <div>
-              <strong>4.9</strong>
-              <span>learner rating</span>
-            </div>
-          </div>
-        </div>
-
         <div className="login-card-wrap">
           <div className="stack-card stack-card-two" />
           <div className="stack-card stack-card-one" />
