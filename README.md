@@ -23,6 +23,17 @@ history, live rankings, and administrator-managed content.
 - `google-apps-script/` — Google Sheets database, authentication, scoring API,
   workbook setup, and dashboard generator
 - `.env.example` — hosted environment variable template
+- `.github/workflows/deploy-pages.yml` — automatic GitHub Pages deployment
+
+## Live site
+
+The GitHub Pages version is published at:
+
+<https://rayhanmawuntu-stack.github.io/CGV.Exams/>
+
+Every push to `main` rebuilds and redeploys the static frontend automatically.
+The Pages build connects directly to the configured Apps Script Web App, while
+the full-stack deployment uses the server-side Sheets proxy.
 
 ## Google Sheets connection
 
