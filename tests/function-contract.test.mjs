@@ -13,8 +13,10 @@ const adminTools = read("app/admin-functionality-enhancer.tsx");
 const builder = read("app/course-builder-enhancer.tsx");
 const safetyNet = read("app/button-safety-net.tsx");
 const settings = read("app/settings-enhancer.tsx");
+const performance = read("app/interaction-performance-enhancer.tsx");
 const settingsCss = read("app/settings-enhancer.css");
 const topbarCss = read("app/topbar-polish.css");
+const builderHeaderCss = read("app/builder-header-polish.css");
 const visibility = read("app/visibility-audit.css");
 
 const requiredActions = [
@@ -107,6 +109,22 @@ test("administrator, course, and account management controls are loaded", () => 
   assert.doesNotMatch(adminTools, /window\.location\.reload/);
 });
 
+test("sign-in and administrator actions use warm-up, caching, and request deduplication", () => {
+  assert.match(layout, /InteractionPerformanceEnhancer/);
+  assert.match(performance, /adminGetDashboard:\s*20_000/);
+  assert.match(performance, /adminGetCourse:\s*90_000/);
+  assert.match(performance, /getParticipantHome:\s*20_000/);
+  assert.match(performance, /const inFlight = new Map/);
+  assert.match(performance, /action === "login"/);
+  assert.match(performance, /prefetch\(endpoint/);
+  assert.match(performance, /method:\s*"GET"/);
+  assert.match(performance, /pointerover/);
+  assert.match(performance, /focusin/);
+  assert.match(performance, /INVALIDATING_ACTIONS/);
+  assert.match(performance, /adminDeleteCourse/);
+  assert.match(performance, /adminSaveCourse/);
+});
+
 test("remaining global controls have explicit behavior", () => {
   for (const label of [
     "notifications",
@@ -156,6 +174,22 @@ test("topbar controls retain stable desktop and mobile proportions", () => {
   }
   assert.match(topbarCss, /writing-mode:\s*horizontal-tb/);
   assert.match(topbarCss, /white-space:\s*nowrap/);
+});
+
+test("course builder action buttons retain consistent spacing at every breakpoint", () => {
+  assert.match(layout, /import "\.\/builder-header-polish\.css";/);
+  for (const selector of [
+    ".builder-page .builder-header",
+    ".builder-page .builder-actions",
+    ".builder-page .builder-actions button",
+    ".builder-page .builder-actions .primary-button",
+    "@media (max-width: 760px)",
+    "@media (max-width: 420px)",
+  ]) {
+    assert.ok(builderHeaderCss.includes(selector), `Missing builder header safeguard for ${selector}`);
+  }
+  assert.match(builderHeaderCss, /grid-auto-columns:\s*max-content/);
+  assert.match(builderHeaderCss, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
 });
 
 test("visibility safeguards cover every high-risk interface state", () => {
