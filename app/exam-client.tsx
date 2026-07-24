@@ -264,13 +264,6 @@ function Login({
             <Logo />
             <span>Secure portal</span>
           </div>
-          <div className="login-progress" aria-hidden="true">
-            <span />
-          </div>
-          <div className="login-coach">
-            <Logo compact />
-            <p>Hello! Sign in to manage courses or complete your assigned evaluations.</p>
-          </div>
           <div className="login-card-heading">
             <span className="card-kicker">WELCOME BACK</span>
             <h1>Ready to continue?</h1>
