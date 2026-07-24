@@ -198,18 +198,19 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
 
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`brand-lockup ${compact ? "brand-compact" : ""}`}>
-      <div className="brand-mark" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      {!compact && (
-        <div>
-          <strong>CGV</strong>
-          <small>Exams</small>
-        </div>
-      )}
+    <div
+      className={`brand-lockup ${compact ? "brand-compact" : ""}`}
+      aria-label={compact ? "CGV" : "CGV Exams"}
+    >
+      <Image
+        className="brand-logo"
+        src={`${publicBasePath}/cgv-logo.svg`}
+        alt="CGV"
+        width={compact ? 56 : 72}
+        height={compact ? 25 : 32}
+        unoptimized
+      />
+      {!compact && <span className="brand-product-name">Exams</span>}
     </div>
   );
 }
