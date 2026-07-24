@@ -14,6 +14,7 @@ import "./layout-guard.css";
 import "./course-builder-performance.css";
 import "./admin-functionality-enhancer.css";
 import "./runtime-functionality-enhancer.css";
+import "./visibility-audit.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
