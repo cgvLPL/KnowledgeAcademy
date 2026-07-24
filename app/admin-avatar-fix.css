@@ -1,0 +1,62 @@
+/* Stable administrator avatar presentation. */
+.avatar,
+.cgv-admin-account-avatar {
+  align-items: center !important;
+  aspect-ratio: 1 / 1;
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.user-chip .avatar-sm {
+  block-size: 40px !important;
+  inline-size: 40px !important;
+  max-block-size: 40px !important;
+  max-inline-size: 40px !important;
+  min-block-size: 40px !important;
+  min-inline-size: 40px !important;
+  font-size: 11px !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.cgv-admin-account-modal > .card-kicker,
+.cgv-admin-account-modal > h2,
+.cgv-admin-account-modal > p {
+  display: block;
+  text-align: center;
+}
+
+.cgv-admin-account-avatar {
+  background:
+    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.7), transparent 38%),
+    linear-gradient(145deg, #b8ff36, #79e987 60%, #d8ff72);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  box-shadow: 0 14px 34px rgba(108, 197, 55, 0.2);
+  color: #12200d;
+  font-size: 22px;
+  font-weight: 850;
+  height: 76px;
+  letter-spacing: -0.04em;
+  margin: 8px auto 18px;
+  width: 76px;
+}
+
+@media (max-width: 760px) {
+  .user-chip .avatar-sm {
+    block-size: 40px !important;
+    inline-size: 40px !important;
+  }
+
+  .cgv-admin-account-avatar {
+    font-size: 18px;
+    height: 64px;
+    margin-bottom: 15px;
+    width: 64px;
+  }
+}
