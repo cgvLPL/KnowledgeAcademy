@@ -1,0 +1,31 @@
+.cgv-backend-version-warning {
+  background: #3a160f;
+  border: 1px solid rgba(255, 142, 105, 0.55);
+  border-radius: 12px;
+  bottom: 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+  color: #ffe4d9;
+  font-size: 12px;
+  font-weight: 700;
+  left: 50%;
+  max-width: min(680px, calc(100vw - 28px));
+  padding: 13px 16px;
+  position: fixed;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 2700;
+}
+
+.timer.timer-warning {
+  border-color: rgba(255, 112, 112, 0.52) !important;
+  color: #ffaaaa !important;
+}
+
+.builder-page label[hidden] {
+  display: none !important;
+}
+
+.builder-page select:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
