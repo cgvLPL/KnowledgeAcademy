@@ -12,6 +12,9 @@ const runtime = read("app/runtime-functionality-enhancer.tsx");
 const adminTools = read("app/admin-functionality-enhancer.tsx");
 const builder = read("app/course-builder-enhancer.tsx");
 const safetyNet = read("app/button-safety-net.tsx");
+const settings = read("app/settings-enhancer.tsx");
+const settingsCss = read("app/settings-enhancer.css");
+const topbarCss = read("app/topbar-polish.css");
 const visibility = read("app/visibility-audit.css");
 
 const requiredActions = [
@@ -109,13 +112,50 @@ test("remaining global controls have explicit behavior", () => {
     "notifications",
     "forgot password?",
     "help centre",
-    "settings",
     "export scoreboard",
     "duplicate question",
   ]) {
     assert.match(safetyNet.toLowerCase(), new RegExp(label.replace(/[?]/g, "\\?")));
   }
   assert.match(adminTools, /\.user-chip/);
+});
+
+test("settings panel persists and applies real interface preferences", () => {
+  assert.match(layout, /SettingsEnhancer/);
+  assert.match(layout, /import "\.\/settings-enhancer\.css";/);
+  assert.match(settings, /cgv-exams-interface-settings-v1/);
+  assert.match(settings, /cgv-exams-auto-refresh/);
+  assert.match(settings, /cgv-density-compact/);
+  assert.match(settings, /cgv-reduced-motion/);
+  assert.match(settings, /cgv-enhanced-contrast/);
+  assert.match(settings, /Automatic live refresh/);
+  assert.match(settings, /cgv:settings-refresh-now/);
+  assert.match(resultSync, /autoRefreshEnabled/);
+  assert.match(resultSync, /cgv:settings-refresh-now/);
+  for (const selector of [
+    "body.cgv-density-compact",
+    "body.cgv-reduced-motion",
+    "body.cgv-enhanced-contrast",
+    ".cgv-settings-row input[type=\"checkbox\"]:checked",
+  ]) {
+    assert.ok(settingsCss.includes(selector), `Missing settings style ${selector}`);
+  }
+});
+
+test("topbar controls retain stable desktop and mobile proportions", () => {
+  assert.match(layout, /import "\.\/topbar-polish\.css";/);
+  for (const selector of [
+    ".topbar-actions",
+    ".top-search kbd",
+    ".topbar .notification",
+    ".user-chip .avatar-sm",
+    ".user-chip > svg",
+    "@media (max-width: 760px)",
+  ]) {
+    assert.ok(topbarCss.includes(selector), `Missing topbar safeguard for ${selector}`);
+  }
+  assert.match(topbarCss, /writing-mode:\s*horizontal-tb/);
+  assert.match(topbarCss, /white-space:\s*nowrap/);
 });
 
 test("visibility safeguards cover every high-risk interface state", () => {
