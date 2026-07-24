@@ -33,6 +33,22 @@ administrator.
 Accounts sign in with usernames. Usernames are lowercase and may contain
 letters, numbers, dots, underscores, and hyphens.
 
+## Reset administrator credentials
+
+To change a forgotten administrator username or password without deleting
+courses or participant history:
+
+1. Update `INITIAL_ADMIN_USERNAME` and `INITIAL_ADMIN_PASSWORD` under
+   **Project Settings → Script properties**.
+2. Replace the Apps Script project's `Code.gs` with the latest repository
+   version.
+3. Run `resetAdminCredentials()` from the Apps Script editor.
+4. Create a new web-app deployment version if the web app is not already using
+   the latest code.
+
+The reset creates a fresh password salt and hash and signs out existing
+sessions. The plaintext password is never stored in the spreadsheet or GitHub.
+
 The web app does not expose correct answers to participants. Passwords are
 salted and hashed, session tokens are stored as hashes, results are calculated
 server-side, and administrator actions require an administrator session.
