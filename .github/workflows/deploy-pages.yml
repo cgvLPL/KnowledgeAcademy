@@ -31,6 +31,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate Apps Script syntax
+        run: |
+          cp google-apps-script/Code.gs /tmp/cgv-code.js
+          node --check /tmp/cgv-code.js
+
+      - name: Run function contract audit
+        run: node --test tests/function-contract.test.mjs
+
       - name: Build static site
         run: npm run build:github-pages
         env:
