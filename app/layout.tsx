@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ButtonSafetyNet from "./button-safety-net";
+import CourseBuilderEnhancer from "./course-builder-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
 import "./button-safety-net.css";
 import "./scoreboard-visibility.css";
 import "./layout-guard.css";
+import "./course-builder-performance.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,6 +53,7 @@ export default function RootLayout({
       >
         {children}
         <ButtonSafetyNet />
+        <CourseBuilderEnhancer />
       </body>
     </html>
   );
