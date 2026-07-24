@@ -1,0 +1,57 @@
+name: Apply Dashboard formula fix
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: startsWith(github.head_ref, 'audit/fix-dashboard-formula')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout pull request branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply targeted formula patch
+        run: python3 scripts/apply-dashboard-formula-fix.py
+
+      - name: Validate Apps Script syntax
+        run: |
+          cp google-apps-script/Code.gs /tmp/cgv-code.js
+          node --check /tmp/cgv-code.js
+
+      - name: Run function contract audit
+        run: node --test tests/function-contract.test.mjs
+
+      - name: Build static application
+        run: npm run build:github-pages
+        env:
+          NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
+
+      - name: Commit verified formula patch
+        run: |
+          if git diff --quiet; then
+            echo "Formula already fixed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add google-apps-script/Code.gs
+          git commit -m "Fix Dashboard pass-rate formula"
+          git push origin HEAD:${{ github.head_ref }}
