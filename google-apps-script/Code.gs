@@ -191,6 +191,54 @@ function resetEvaluationPlatformToAdminOnly() {
   }
 }
 
+function resetAdminCredentials() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    ensurePepper_();
+    const properties = PropertiesService.getScriptProperties();
+    const username = normalizeUsername_(properties.getProperty("INITIAL_ADMIN_USERNAME"));
+    const password = String(properties.getProperty("INITIAL_ADMIN_PASSWORD") || "");
+
+    if (!isValidUsername_(username)) {
+      throw new Error("Set a valid INITIAL_ADMIN_USERNAME in Apps Script Properties.");
+    }
+    if (password.length < 8) {
+      throw new Error("Set INITIAL_ADMIN_PASSWORD to at least eight characters in Apps Script Properties.");
+    }
+
+    const usersSheet = getSheet_(APP.sheets.users);
+    const admin = rowsAsObjects_(usersSheet).find(function (user) {
+      return user.role === "admin" && user.status === "active";
+    }) || rowsAsObjects_(usersSheet).find(function (user) {
+      return user.role === "admin";
+    });
+    if (!admin) {
+      throw new Error("No administrator account exists. Run setupEvaluationPlatform() first.");
+    }
+
+    const salt = Utilities.getUuid();
+    updateObjectRow_(usersSheet, admin.__row, {
+      username: username,
+      password_hash: hashPassword_(password, salt),
+      salt: salt,
+      role: "admin",
+      status: "active",
+      last_login: "",
+    });
+    clearDataRows_(getSheet_(APP.sheets.sessions));
+    SpreadsheetApp.flush();
+
+    return {
+      ok: true,
+      adminUsername: username,
+      message: "Administrator credentials were reset and existing sessions were signed out.",
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function rebuildDashboard() {
   buildDashboard_();
   return { ok: true };
@@ -279,8 +327,12 @@ function resetPlatformDataToAdminOnly_() {
   const users = rowsAsObjects_(usersSheet);
   const properties = PropertiesService.getScriptProperties();
   const configuredUsername = normalizeUsername_(properties.getProperty("INITIAL_ADMIN_USERNAME"));
+  const configuredPassword = String(properties.getProperty("INITIAL_ADMIN_PASSWORD") || "");
   if (configuredUsername && !isValidUsername_(configuredUsername)) {
     throw new Error("INITIAL_ADMIN_USERNAME must be 3–40 characters using letters, numbers, dots, underscores, or hyphens.");
+  }
+  if (configuredPassword && configuredPassword.length < 8) {
+    throw new Error("INITIAL_ADMIN_PASSWORD must contain at least eight characters.");
   }
   let admin = users.find(function (user) {
     return user.role === "admin" && user.status === "active";
@@ -291,9 +343,8 @@ function resetPlatformDataToAdminOnly_() {
   if (!admin) {
     const adminEmail = normalizeEmail_(properties.getProperty("INITIAL_ADMIN_EMAIL"));
     const adminUsername = configuredUsername || usernameFromEmail_(adminEmail);
-    const adminPassword = String(properties.getProperty("INITIAL_ADMIN_PASSWORD") || "");
     const adminName = String(properties.getProperty("INITIAL_ADMIN_NAME") || "Administrator").trim();
-    if (!isValidUsername_(adminUsername) || adminPassword.length < 8) {
+    if (!isValidUsername_(adminUsername) || configuredPassword.length < 8) {
       throw new Error(
         "Set INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD (minimum 8 characters) in Apps Script Properties before setup.",
       );
@@ -303,7 +354,7 @@ function resetPlatformDataToAdminOnly_() {
       email: adminEmail,
       fullName: adminName,
       branch: String(properties.getProperty("INITIAL_ADMIN_BRANCH") || ""),
-      password: adminPassword,
+      password: configuredPassword,
       role: "admin",
       status: "active",
     });
@@ -324,11 +375,17 @@ function resetPlatformDataToAdminOnly_() {
   const preservedUsername = usernameCandidates.find(function (candidate) {
     return isValidUsername_(candidate);
   });
-  updateObjectRow_(usersSheet, preservedAdmin.__row, {
+  const adminUpdates = {
     role: "admin",
     status: "active",
     username: preservedUsername,
-  });
+  };
+  if (configuredPassword) {
+    const salt = Utilities.getUuid();
+    adminUpdates.salt = salt;
+    adminUpdates.password_hash = hashPassword_(configuredPassword, salt);
+  }
+  updateObjectRow_(usersSheet, preservedAdmin.__row, adminUpdates);
 
   [
     APP.sheets.courses,
