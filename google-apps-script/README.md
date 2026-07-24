@@ -11,8 +11,9 @@ scoreboard.
 4. In **Project Settings**, enable the manifest file and replace it with
    `appsscript.json`.
 5. In **Project Settings → Script properties**, add:
-   - `INITIAL_ADMIN_EMAIL`
+   - `INITIAL_ADMIN_USERNAME`
    - `INITIAL_ADMIN_PASSWORD` (at least eight characters)
+   - `INITIAL_ADMIN_EMAIL` (optional)
    - `INITIAL_ADMIN_NAME` (optional)
    - `INITIAL_ADMIN_BRANCH` (optional)
 6. Run `setupEvaluationPlatform()` once and approve the requested spreadsheet
@@ -28,6 +29,9 @@ administrator. To clean an existing workbook, run
 `resetEvaluationPlatformToAdminOnly()` once. It removes every participant,
 course, question, attempt, answer, and active session while preserving one
 administrator.
+
+Accounts sign in with usernames. Usernames are lowercase and may contain
+letters, numbers, dots, underscores, and hyphens.
 
 The web app does not expose correct answers to participants. Passwords are
 salted and hashed, session tokens are stored as hashes, results are calculated

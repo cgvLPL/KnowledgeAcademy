@@ -5,7 +5,7 @@ history, live rankings, and administrator-managed content.
 
 ## What is included
 
-- Participant and administrator sign-in workspaces
+- Username-based participant and administrator sign-in workspaces
 - Current, upcoming, completed, and draft evaluations
 - Responsive one-question-at-a-time quiz flow with progress and results
 - Personal score history for current and previous evaluations
@@ -46,7 +46,7 @@ all evaluation data come from the connected spreadsheet.
 
 ## Clean initial workspace
 
-The setup creates or preserves one administrator and removes seeded content,
+The setup creates or preserves one username-based administrator and removes seeded content,
 participants, attempts, answers, and sessions. Configure the initial
 administrator through Apps Script Properties as described in
 [google-apps-script/README.md](google-apps-script/README.md).

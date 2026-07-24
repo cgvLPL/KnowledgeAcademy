@@ -24,7 +24,6 @@ import {
   LayoutDashboard,
   LockKeyhole,
   LogOut,
-  Mail,
   Medal,
   Menu,
   MoreHorizontal,
@@ -96,7 +95,7 @@ type LeaderboardRow = {
 
 type ParticipantRow = {
   name: string;
-  email: string;
+  username: string;
   branch: string;
   attempts: number;
   average: number;
@@ -105,7 +104,7 @@ type ParticipantRow = {
 
 type AuthUser = {
   id: string;
-  email: string;
+  username: string;
   fullName: string;
   branch: string;
   role: Role;
@@ -231,10 +230,10 @@ function Initials({ name, size = "md" }: { name: string; size?: "sm" | "md" | "l
 function Login({
   onLogin,
 }: {
-  onLogin: (role: Role, email: string, password: string) => Promise<string | null>;
+  onLogin: (role: Role, username: string, password: string) => Promise<string | null>;
 }) {
   const [role, setRole] = useState<Role>("admin");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -242,16 +241,16 @@ function Login({
 
   function switchRole(nextRole: Role) {
     setRole(nextRole);
-    setEmail("");
+    setUsername("");
     setPassword("");
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    if (!username.trim() || !password.trim()) return;
     setSubmitting(true);
     setError("");
-    const nextError = await onLogin(role, email, password);
+    const nextError = await onLogin(role, username, password);
     if (nextError) setError(nextError);
     setSubmitting(false);
   }
@@ -299,15 +298,18 @@ function Login({
           </div>
 
           <label className="field-label">
-            Email address
+            Username
             <span className="input-shell">
-              <Mail size={18} />
+              <UserRound size={18} />
               <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="name@company.com"
-                autoComplete="email"
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Enter your username"
+                autoComplete="username"
+                minLength={3}
+                maxLength={40}
+                pattern="[A-Za-z0-9._-]+"
                 required
               />
             </span>
@@ -866,7 +868,7 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
         <div className="profile-copy">
           <span>PARTICIPANT PROFILE</span>
           <h2>{displayName}</h2>
-          <p>{user?.email || "No email"}{user?.branch ? ` · ${user.branch}` : ""}</p>
+          <p>@{user?.username || "participant"}{user?.branch ? ` · ${user.branch}` : ""}</p>
         </div>
         <div className="profile-stats">
           <div><strong>{average}%</strong><span>Average</span></div>
@@ -879,7 +881,7 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
           <div className="section-heading"><div><h3>Personal information</h3><p>Your account details and assignment information.</p></div></div>
           <div className="detail-grid">
             <label>Full name<strong>{displayName}</strong></label>
-            <label>Email address<strong>{user?.email || "—"}</strong></label>
+            <label>Username<strong>{user?.username ? `@${user.username}` : "—"}</strong></label>
             <label>Location / branch<strong>{user?.branch || "—"}</strong></label>
             <label>Account ID<strong>{user?.id || "—"}</strong></label>
             <label>Role<strong>Participant</strong></label>
@@ -1252,11 +1254,11 @@ function ParticipantsView({
   onAdd,
 }: {
   participantsData: ParticipantRow[];
-  onAdd: (participant: { name: string; email: string; branch: string; password: string }) => Promise<string | null>;
+  onAdd: (participant: { name: string; username: string; branch: string; password: string }) => Promise<string | null>;
 }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [branch, setBranch] = useState("");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
@@ -1266,7 +1268,7 @@ function ParticipantsView({
     event.preventDefault();
     setSaving(true);
     setError("");
-    const nextError = await onAdd({ name, email, branch, password });
+    const nextError = await onAdd({ name, username, branch, password });
     setSaving(false);
     if (nextError) {
       setError(nextError);
@@ -1274,7 +1276,7 @@ function ParticipantsView({
     }
     setAdding(false);
     setName("");
-    setEmail("");
+    setUsername("");
     setBranch("");
     setPassword("");
   }
@@ -1293,15 +1295,15 @@ function ParticipantsView({
         <article><span className="metric-icon blue"><Check size={20} /></span><div><p>Active accounts</p><strong>{active}</strong><small>{participantsData.length ? `${Math.round(active / participantsData.length * 100)}% active rate` : "No participants added"}</small></div></article>
         <article><span className="metric-icon orange"><ShieldCheck size={20} /></span><div><p>Inactive accounts</p><strong>{inactive}</strong><small>Access currently disabled</small></div></article>
       </section>
-      <div className="toolbar"><div className="admin-search"><Search size={17} /><input placeholder="Search name, email, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
+      <div className="toolbar"><div className="admin-search"><Search size={17} /><input placeholder="Search name, username, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
       <section className="table-card">
         <div className="responsive-table">
           <table>
             <thead><tr><th>Participant</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
             <tbody>
               {participantsData.map((person) => (
-              <tr key={person.email}>
-                <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>{person.email}</span></div></div></td>
+              <tr key={person.username}>
+                <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
                 <td>{person.branch}</td><td>{person.attempts}</td><td><strong className="table-score">{person.average}%</strong></td>
                 <td><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
                 <td><button className="icon-button"><MoreHorizontal size={18} /></button></td>
@@ -1332,7 +1334,7 @@ function ParticipantsView({
             <h2>Add participant</h2>
             <p>Create an account that can sign in and keep its own evaluation history.</p>
             <label className="field-label">Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Participant name" required /></label>
-            <label className="field-label">Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@cgv.co.id" required /></label>
+            <label className="field-label">Username<input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Lowercase letters, numbers, dots, _ or -" minLength={3} maxLength={40} pattern="[A-Za-z0-9._-]+" autoComplete="username" required /></label>
             <label className="field-label">Branch / location<input value={branch} onChange={(event) => setBranch(event.target.value)} placeholder="Branch or department" required /></label>
             <label className="field-label">Temporary password<input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" required /></label>
             {error && <p className="login-error" role="alert">{error}</p>}
@@ -1621,16 +1623,16 @@ export default function ExamClient() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  async function login(nextRole: Role, email: string, password: string): Promise<string | null> {
+  async function login(nextRole: Role, username: string, password: string): Promise<string | null> {
     try {
-      const response = await sheetsFetch({ action: "login", email, password });
+      const response = await sheetsFetch({ action: "login", username, password });
       const loginData = (await response.json()) as {
         ok?: boolean;
         error?: string;
         token?: string;
         user?: {
           id?: string;
-          email?: string;
+          username?: string;
           fullName?: string;
           branch?: string;
           role?: string;
@@ -1676,7 +1678,7 @@ export default function ExamClient() {
         setParticipantsData(dashboardData.participants.map((item) => {
           return {
             name: String(item.fullName || "Participant"),
-            email: String(item.email || ""),
+            username: String(item.username || item.email || ""),
             branch: String(item.branch || ""),
             attempts: Number(item.attempts || 0),
             average: Number(item.average || 0),
@@ -1689,7 +1691,7 @@ export default function ExamClient() {
       setBackendMode("sheets");
       setCurrentUser({
         id: String(loginData.user?.id || ""),
-        email: String(loginData.user?.email || email),
+        username: String(loginData.user?.username || username),
         fullName: String(loginData.user?.fullName || (authenticatedRole === "admin" ? "Administrator" : "Participant")),
         branch: String(loginData.user?.branch || ""),
         role: authenticatedRole,
@@ -1829,7 +1831,7 @@ export default function ExamClient() {
     setView("courses");
   }
 
-  async function addParticipant(input: { name: string; email: string; branch: string; password: string }): Promise<string | null> {
+  async function addParticipant(input: { name: string; username: string; branch: string; password: string }): Promise<string | null> {
     try {
       if (backendMode !== "sheets" || !sessionToken) {
         return "The Google Sheets backend is required to create an account.";
@@ -1841,7 +1843,7 @@ export default function ExamClient() {
         token: sessionToken,
         participant: {
           fullName: input.name,
-          email: input.email,
+          username: input.username,
           branch: input.branch,
           password: input.password,
           status: "active",
@@ -1849,7 +1851,7 @@ export default function ExamClient() {
       });
       setParticipantsData((items) => [{
         name: String(data.user.fullName || input.name),
-        email: String(data.user.email || input.email),
+        username: String(data.user.username || input.username),
         branch: String(data.user.branch || input.branch),
         attempts: 0,
         average: 0,

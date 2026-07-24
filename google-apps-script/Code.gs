@@ -40,6 +40,7 @@ const HEADERS = Object.freeze({
     "status",
     "created_at",
     "last_login",
+    "username",
   ],
   Courses: [
     "course_id",
@@ -160,7 +161,7 @@ function setupEvaluationPlatform() {
       sheets: spreadsheet.getSheets().map(function (sheet) {
         return sheet.getName();
       }),
-      adminEmail: admin.email,
+      adminUsername: admin.username,
     };
   } finally {
     lock.releaseLock();
@@ -182,7 +183,7 @@ function resetEvaluationPlatformToAdminOnly() {
     SpreadsheetApp.flush();
     return {
       ok: true,
-      adminEmail: admin.email,
+      adminUsername: admin.username,
       message: "All participant accounts, courses, questions, attempts, answers, and sessions were removed.",
     };
   } finally {
@@ -276,6 +277,11 @@ function ensurePepper_() {
 function resetPlatformDataToAdminOnly_() {
   const usersSheet = getSheet_(APP.sheets.users);
   const users = rowsAsObjects_(usersSheet);
+  const properties = PropertiesService.getScriptProperties();
+  const configuredUsername = normalizeUsername_(properties.getProperty("INITIAL_ADMIN_USERNAME"));
+  if (configuredUsername && !isValidUsername_(configuredUsername)) {
+    throw new Error("INITIAL_ADMIN_USERNAME must be 3–40 characters using letters, numbers, dots, underscores, or hyphens.");
+  }
   let admin = users.find(function (user) {
     return user.role === "admin" && user.status === "active";
   }) || users.find(function (user) {
@@ -283,16 +289,17 @@ function resetPlatformDataToAdminOnly_() {
   });
 
   if (!admin) {
-    const properties = PropertiesService.getScriptProperties();
     const adminEmail = normalizeEmail_(properties.getProperty("INITIAL_ADMIN_EMAIL"));
+    const adminUsername = configuredUsername || usernameFromEmail_(adminEmail);
     const adminPassword = String(properties.getProperty("INITIAL_ADMIN_PASSWORD") || "");
     const adminName = String(properties.getProperty("INITIAL_ADMIN_NAME") || "Administrator").trim();
-    if (!adminEmail || adminPassword.length < 8) {
+    if (!isValidUsername_(adminUsername) || adminPassword.length < 8) {
       throw new Error(
-        "Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD (minimum 8 characters) in Apps Script Properties before setup.",
+        "Set INITIAL_ADMIN_USERNAME and INITIAL_ADMIN_PASSWORD (minimum 8 characters) in Apps Script Properties before setup.",
       );
     }
     admin = createUserInternal_({
+      username: adminUsername,
       email: adminEmail,
       fullName: adminName,
       branch: String(properties.getProperty("INITIAL_ADMIN_BRANCH") || ""),
@@ -307,9 +314,20 @@ function resetPlatformDataToAdminOnly_() {
     .sort(function (a, b) { return b.__row - a.__row; })
     .forEach(function (user) { usersSheet.deleteRow(user.__row); });
 
-  updateObjectRow_(usersSheet, findById_(APP.sheets.users, "user_id", admin.user_id).__row, {
+  const preservedAdmin = findById_(APP.sheets.users, "user_id", admin.user_id);
+  const usernameCandidates = [
+    configuredUsername,
+    normalizeUsername_(preservedAdmin.username),
+    usernameFromEmail_(preservedAdmin.email),
+    "admin",
+  ];
+  const preservedUsername = usernameCandidates.find(function (candidate) {
+    return isValidUsername_(candidate);
+  });
+  updateObjectRow_(usersSheet, preservedAdmin.__row, {
     role: "admin",
     status: "active",
+    username: preservedUsername,
   });
 
   [
@@ -331,18 +349,28 @@ function clearDataRows_(sheet) {
 }
 
 function login_(body) {
-  const email = normalizeEmail_(body.email);
+  const username = normalizeUsername_(body.username || body.email);
   const password = String(body.password || "");
-  if (!email || !password) throw new Error("Email and password are required.");
+  if (!username || !password) throw new Error("Username and password are required.");
 
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     pruneSessions_();
-    const user = findUserByEmail_(email);
-    if (!user || user.status !== "active") throw new Error("Invalid email or password.");
+    let user = findUserByUsername_(username);
+    if (!user && username.indexOf("@") !== -1) user = findUserByEmail_(username);
+    if (!user && isValidUsername_(username)) {
+      user = rowsAsObjects_(getSheet_(APP.sheets.users)).find(function (candidate) {
+        return !candidate.username && usernameFromEmail_(candidate.email) === username;
+      }) || null;
+      if (user) {
+        updateObjectRow_(getSheet_(APP.sheets.users), user.__row, { username: username });
+        user.username = username;
+      }
+    }
+    if (!user || user.status !== "active") throw new Error("Invalid username or password.");
     if (hashPassword_(password, user.salt) !== user.password_hash) {
-      throw new Error("Invalid email or password.");
+      throw new Error("Invalid username or password.");
     }
     updateObjectRow_(getSheet_(APP.sheets.users), user.__row, { last_login: new Date() });
     const token = Utilities.getUuid() + Utilities.getUuid();
@@ -651,21 +679,17 @@ function adminSaveCourse_(body) {
 function adminSaveParticipant_(body) {
   requireSession_(body.token, "admin");
   const participant = body.participant || {};
+  const username = normalizeUsername_(participant.username);
   const email = normalizeEmail_(participant.email);
   const temporaryPassword = String(participant.password || "");
-  if (!email) throw new Error("Participant email is required.");
+  if (!isValidUsername_(username)) {
+    throw new Error("Username must be 3–40 characters using letters, numbers, dots, underscores, or hyphens.");
+  }
   if (!String(participant.fullName || "").trim()) throw new Error("Participant name is required.");
   if (temporaryPassword.length < 8) throw new Error("Temporary password must be at least eight characters.");
-  const existing = findUserByEmail_(email);
-  if (existing) {
-    updateObjectRow_(getSheet_(APP.sheets.users), existing.__row, {
-      full_name: String(participant.fullName).trim(),
-      branch: String(participant.branch || ""),
-      status: String(participant.status || "active"),
-    });
-    return { ok: true, user: publicUser_(findUserByEmail_(email)) };
-  }
+  if (findUserByUsername_(username)) throw new Error("An account already exists for this username.");
   const user = createUserInternal_({
+    username: username,
     email: email,
     fullName: String(participant.fullName).trim(),
     branch: String(participant.branch || ""),
@@ -673,7 +697,7 @@ function adminSaveParticipant_(body) {
     role: "participant",
     status: String(participant.status || "active"),
   });
-  return { ok: true, user: publicUser_(user), temporaryPassword: temporaryPassword };
+  return { ok: true, user: publicUser_(user) };
 }
 
 function adminResetPassword_(body) {
@@ -693,9 +717,11 @@ function adminResetPassword_(body) {
 }
 
 function createUserInternal_(input) {
+  const username = normalizeUsername_(input.username);
   const email = normalizeEmail_(input.email);
-  if (!email) throw new Error("A valid email is required.");
-  if (findUserByEmail_(email)) throw new Error("An account already exists for this email.");
+  if (!isValidUsername_(username)) throw new Error("A valid username is required.");
+  if (findUserByUsername_(username)) throw new Error("An account already exists for this username.");
+  if (email && findUserByEmail_(email)) throw new Error("An account already exists for this email.");
   const salt = makeSalt_();
   const record = {
     user_id: Utilities.getUuid(),
@@ -708,9 +734,10 @@ function createUserInternal_(input) {
     status: input.status === "inactive" ? "inactive" : "active",
     created_at: new Date(),
     last_login: "",
+    username: username,
   };
   appendObject_(getSheet_(APP.sheets.users), record);
-  return findUserByEmail_(email);
+  return findUserByUsername_(username);
 }
 
 function requireSession_(token, requiredRole) {
@@ -896,6 +923,12 @@ function findUserByEmail_(email) {
     .find(function (user) { return normalizeEmail_(user.email) === normalized; }) || null;
 }
 
+function findUserByUsername_(username) {
+  const normalized = normalizeUsername_(username);
+  return rowsAsObjects_(getSheet_(APP.sheets.users))
+    .find(function (user) { return normalizeUsername_(user.username) === normalized; }) || null;
+}
+
 function questionsForCourse_(courseId) {
   return rowsAsObjects_(getSheet_(APP.sheets.questions))
     .filter(function (question) { return question.course_id === courseId; })
@@ -922,6 +955,7 @@ function indexBy_(items, key) {
 function publicUser_(user) {
   return {
     id: user.user_id,
+    username: user.username,
     email: user.email,
     fullName: user.full_name,
     branch: user.branch,
@@ -975,6 +1009,21 @@ function summarizeAttempts_(attempts) {
 
 function normalizeEmail_(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeUsername_(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValidUsername_(value) {
+  return /^[a-z0-9._-]{3,40}$/.test(normalizeUsername_(value));
+}
+
+function usernameFromEmail_(value) {
+  return normalizeEmail_(value)
+    .split("@")[0]
+    .replace(/[^a-z0-9._-]/g, "")
+    .slice(0, 40);
 }
 
 function toIso_(value) {
