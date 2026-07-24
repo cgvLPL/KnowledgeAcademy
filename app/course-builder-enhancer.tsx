@@ -15,6 +15,11 @@ type PublishingSettings = {
   status: "draft" | "upcoming" | "live" | "completed";
 };
 
+type SaveContext = {
+  publishing: PublishingSettings;
+  questionCount: number;
+};
+
 function normalizeText(value: string | null | undefined) {
   return (value || "").replace(/\s+/g, " ").trim().toLowerCase();
 }
@@ -77,6 +82,7 @@ export default function CourseBuilderEnhancer() {
 
     const enhancedFetch: typeof window.fetch = async (input, init) => {
       let nextInit = init;
+      let saveContext: SaveContext | null = null;
 
       if (typeof init?.body === "string") {
         try {
@@ -87,6 +93,10 @@ export default function CourseBuilderEnhancer() {
               const questions = Array.isArray(payload.course.questions)
                 ? payload.course.questions
                 : [];
+              saveContext = {
+                publishing,
+                questionCount: questions.length,
+              };
               nextInit = {
                 ...init,
                 body: JSON.stringify({
@@ -100,6 +110,7 @@ export default function CourseBuilderEnhancer() {
                   },
                 }),
               };
+              document.querySelector(".builder-page")?.classList.add("cgv-saving-course");
             }
           }
         } catch {
@@ -107,7 +118,44 @@ export default function CourseBuilderEnhancer() {
         }
       }
 
-      return originalFetch(input, nextInit);
+      let response: Response;
+      try {
+        response = await originalFetch(input, nextInit);
+      } finally {
+        document.querySelector(".builder-page")?.classList.remove("cgv-saving-course");
+      }
+
+      if (!saveContext) return response;
+
+      try {
+        const responseData = await response.clone().json() as {
+          ok?: boolean;
+          course?: Record<string, unknown>;
+        };
+        if (responseData.ok !== false && responseData.course) {
+          const headers = new Headers(response.headers);
+          headers.delete("content-length");
+          headers.set("content-type", "application/json;charset=utf-8");
+          return new Response(JSON.stringify({
+            ...responseData,
+            course: {
+              ...responseData.course,
+              questionCount: saveContext.questionCount,
+              startAt: saveContext.publishing.startAt,
+              endAt: saveContext.publishing.endAt,
+              status: saveContext.publishing.status,
+            },
+          }), {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+          });
+        }
+      } catch {
+        // Keep the original backend response when it cannot be safely enhanced.
+      }
+
+      return response;
     };
 
     window.fetch = enhancedFetch;
@@ -207,9 +255,10 @@ export default function CourseBuilderEnhancer() {
       const visibleCard = builder.querySelector<HTMLElement>(
         ".builder-card, .builder-question-layout",
       );
-      const action = Array.from(
+      const actions = Array.from(
         visibleCard?.querySelectorAll<HTMLButtonElement>(".builder-footer button") || [],
-      ).at(-1);
+      );
+      const action = actions[actions.length - 1];
       if (action && !action.disabled) {
         event.preventDefault();
         action.click();
