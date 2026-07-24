@@ -26,6 +26,7 @@ export default function RuntimeFunctionalityEnhancer() {
     let quizTimer = 0;
     let remainingSeconds = -1;
     let currentQuizTitle = "";
+    let timedOutQuizTitle = "";
 
     const stopTimer = () => {
       window.clearInterval(quizTimer);
@@ -34,18 +35,25 @@ export default function RuntimeFunctionalityEnhancer() {
       currentQuizTitle = "";
     };
 
-    const forceSubmitAtTimeout = () => {
-      const finish = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-        .find((button) => normalized(button.textContent).includes("finish evaluation"));
-      if (finish) {
+    const clickFinishAndSubmit = () => {
+      const lastQuestion = document.querySelector<HTMLButtonElement>(
+        ".question-progress-bars button:last-child",
+      );
+      lastQuestion?.click();
+
+      window.setTimeout(() => {
+        const finish = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+          .find((button) => normalized(button.textContent).includes("finish evaluation"));
+        if (!finish) return;
         finish.disabled = false;
         finish.click();
-      }
-      window.setTimeout(() => {
-        const submit = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-          .find((button) => normalized(button.textContent).includes("submit evaluation"));
-        if (submit && !submit.disabled) submit.click();
-      }, 120);
+
+        window.setTimeout(() => {
+          const submit = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+            .find((button) => normalized(button.textContent).includes("submit evaluation"));
+          if (submit && !submit.disabled) submit.click();
+        }, 120);
+      }, 80);
     };
 
     const updateTimer = () => {
@@ -56,8 +64,9 @@ export default function RuntimeFunctionalityEnhancer() {
       timerText.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
       timerText.closest(".timer")?.classList.toggle("timer-warning", remainingSeconds <= 60);
       if (remainingSeconds <= 0) {
+        timedOutQuizTitle = currentQuizTitle;
         stopTimer();
-        forceSubmitAtTimeout();
+        clickFinishAndSubmit();
       }
     };
 
@@ -67,13 +76,19 @@ export default function RuntimeFunctionalityEnhancer() {
       const title = document.querySelector<HTMLElement>(".quiz-course-title strong")?.textContent || "";
       if (!quiz || !timerText) {
         if (quizTimer) stopTimer();
+        timedOutQuizTitle = "";
         return;
       }
+      if (title === timedOutQuizTitle) return;
       if (quizTimer && title === currentQuizTitle) return;
+
       stopTimer();
       currentQuizTitle = title;
       const initialMinutes = Number.parseInt(timerText.textContent || "", 10);
-      remainingSeconds = Math.max(1, Number.isFinite(initialMinutes) ? initialMinutes * 60 : 20 * 60);
+      remainingSeconds = Math.max(
+        1,
+        Number.isFinite(initialMinutes) ? initialMinutes * 60 : 20 * 60,
+      );
       updateTimer();
       quizTimer = window.setInterval(() => {
         remainingSeconds -= 1;
@@ -145,8 +160,11 @@ export default function RuntimeFunctionalityEnhancer() {
           return;
         }
         button.dataset.cgvSubmitting = "true";
-        button.disabled = true;
-        button.textContent = "Submitting…";
+        window.setTimeout(() => {
+          if (!document.body.contains(button)) return;
+          button.disabled = true;
+          button.textContent = "Submitting…";
+        }, 0);
         window.setTimeout(() => {
           if (document.body.contains(button)) {
             button.dataset.cgvSubmitting = "false";
@@ -164,7 +182,9 @@ export default function RuntimeFunctionalityEnhancer() {
         .then((response) => response.json())
         .then((data: { ok?: boolean; version?: string }) => {
           if (!data.ok || data.version !== EXPECTED_BACKEND_VERSION) {
-            setWarning(`Google Apps Script backend update required. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`);
+            setWarning(
+              `Google Apps Script backend update required. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`,
+            );
           }
         })
         .catch(() => setWarning("The Google Apps Script backend health check could not be completed."));
