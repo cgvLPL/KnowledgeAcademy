@@ -36,6 +36,7 @@ for exported_file in \
   sed -i \
     -e 's#/assets/#/CGV.Exams/assets/#g' \
     -e 's#/favicon\.svg#/CGV.Exams/favicon.svg#g' \
+    -e 's#/cgv-logo\.svg#/CGV.Exams/cgv-logo.svg#g' \
     "$exported_file"
 done
 
