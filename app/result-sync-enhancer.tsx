@@ -20,6 +20,11 @@ type DashboardData = {
 const TOKEN_KEY = "cgv-exams-session-token";
 const ROLE_KEY = "cgv-exams-session-role";
 const ENDPOINT_KEY = "cgv-exams-api-endpoint";
+const AUTO_REFRESH_KEY = "cgv-exams-auto-refresh";
+
+function autoRefreshEnabled() {
+  return window.localStorage.getItem(AUTO_REFRESH_KEY) !== "false";
+}
 
 function parsePayload(init?: RequestInit): RequestPayload | null {
   if (typeof init?.body !== "string") return null;
@@ -204,7 +209,8 @@ export default function ResultSyncEnhancer() {
     window.fetch = enhancedFetch;
 
     let refreshing = false;
-    const refreshAdmin = async () => {
+    const refreshAdmin = async (force = false) => {
+      if (!force && !autoRefreshEnabled()) return;
       if (refreshing || sessionStorage.getItem(ROLE_KEY) !== "admin") return;
       const token = sessionStorage.getItem(TOKEN_KEY);
       const endpoint = sessionStorage.getItem(ENDPOINT_KEY);
@@ -235,8 +241,12 @@ export default function ResultSyncEnhancer() {
     const timer = window.setInterval(() => void refreshAdmin(), 10000);
     const onFocus = () => void refreshAdmin();
     const onResult = () => void refreshAdmin();
+    const onSettingsChanged = () => void refreshAdmin();
+    const onManualRefresh = () => void refreshAdmin(true);
     window.addEventListener("focus", onFocus);
     window.addEventListener("cgv:result-synced", onResult);
+    window.addEventListener("cgv:settings-changed", onSettingsChanged);
+    window.addEventListener("cgv:settings-refresh-now", onManualRefresh);
     channel?.addEventListener("message", onResult);
 
     return () => {
@@ -244,6 +254,8 @@ export default function ResultSyncEnhancer() {
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("cgv:result-synced", onResult);
+      window.removeEventListener("cgv:settings-changed", onSettingsChanged);
+      window.removeEventListener("cgv:settings-refresh-now", onManualRefresh);
       channel?.removeEventListener("message", onResult);
       channel?.close();
     };
