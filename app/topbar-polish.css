@@ -1,0 +1,203 @@
+/* Final top-bar proportions and responsive behaviour.
+ * Loaded after the legacy theme and layout guards so the search, notification,
+ * avatar, account text and chevron remain aligned without awkward wrapping.
+ */
+
+.topbar {
+  gap: clamp(18px, 2.2vw, 34px);
+}
+
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 1 700px;
+  gap: 12px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.top-search {
+  flex: 1 1 280px;
+  height: 48px;
+  max-width: 340px;
+  min-width: 210px;
+  padding: 0 8px 0 16px;
+}
+
+.top-search > svg {
+  flex: 0 0 auto;
+}
+
+.top-search input {
+  flex: 1 1 auto;
+  font-size: 14px;
+  line-height: 1.2;
+  min-width: 0;
+  padding: 0;
+  width: auto;
+}
+
+.top-search kbd {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  height: 34px;
+  justify-content: center;
+  letter-spacing: 0;
+  line-height: 1;
+  min-width: 46px;
+  padding: 0 9px;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+.topbar .notification {
+  flex: 0 0 48px;
+  height: 48px;
+  width: 48px;
+}
+
+.topbar .notification span {
+  right: 8px;
+  top: 7px;
+}
+
+.user-chip {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  display: flex;
+  flex: 0 0 270px;
+  gap: 11px;
+  margin-left: 0;
+  max-width: 270px;
+  min-width: 240px;
+  overflow: hidden;
+  padding: 5px 8px 5px 5px;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.user-chip:hover,
+.user-chip:focus-visible {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.11);
+}
+
+.user-chip .avatar-sm {
+  font-size: 11px;
+  height: 40px;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  overflow: hidden;
+  width: 40px;
+}
+
+.user-chip > div {
+  flex: 1 1 auto;
+  gap: 3px;
+  min-width: 0;
+}
+
+.user-chip strong,
+.user-chip span {
+  display: block;
+  max-width: none !important;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-chip strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.user-chip span {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.user-chip > svg {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+@media (min-width: 981px) and (max-width: 1240px) {
+  .topbar {
+    gap: 18px;
+    padding-inline: 24px;
+  }
+
+  .page-title p {
+    display: none;
+  }
+
+  .topbar-actions {
+    flex-basis: 610px;
+  }
+
+  .top-search {
+    max-width: 285px;
+    min-width: 180px;
+  }
+
+  .user-chip {
+    flex-basis: 240px;
+    max-width: 240px;
+    min-width: 220px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 980px) {
+  .topbar {
+    padding-inline: 22px;
+  }
+
+  .topbar-actions {
+    gap: 10px;
+  }
+
+  .user-chip {
+    flex: 0 0 240px;
+    max-width: 240px;
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    gap: 10px;
+  }
+
+  .topbar-actions {
+    flex-basis: auto;
+    gap: 8px;
+  }
+
+  .topbar .notification {
+    flex-basis: 44px;
+    height: 44px;
+    width: 44px;
+  }
+
+  .user-chip {
+    border: 0;
+    flex: 0 0 40px;
+    max-width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+
+  .user-chip:hover,
+  .user-chip:focus-visible {
+    background: transparent;
+  }
+
+  .user-chip .avatar-sm {
+    height: 40px;
+    width: 40px;
+  }
+}
