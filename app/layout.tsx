@@ -4,6 +4,7 @@ import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
 import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
+import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -12,6 +13,7 @@ import "./scoreboard-visibility.css";
 import "./layout-guard.css";
 import "./course-builder-performance.css";
 import "./admin-functionality-enhancer.css";
+import "./runtime-functionality-enhancer.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,14 +53,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <ButtonSafetyNet />
         <CourseBuilderEnhancer />
         <ResultSyncEnhancer />
         <AdminFunctionalityEnhancer />
+        <RuntimeFunctionalityEnhancer />
       </body>
     </html>
   );
