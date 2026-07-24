@@ -5,6 +5,7 @@ import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
 import InteractionPerformanceEnhancer from "./interaction-performance-enhancer";
 import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
+import AdminAvatarEnhancer from "./admin-avatar-enhancer";
 import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
 import "./globals.css";
@@ -21,6 +22,7 @@ import "./topbar-polish.css";
 import "./settings-enhancer.css";
 import "./builder-header-polish.css";
 import "./course-table-containment.css";
+import "./admin-avatar-fix.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,6 +70,7 @@ export default function RootLayout({
         <ResultSyncEnhancer />
         <InteractionPerformanceEnhancer />
         <AdminFunctionalityEnhancer />
+        <AdminAvatarEnhancer />
         <RuntimeFunctionalityEnhancer />
       </body>
     </html>
