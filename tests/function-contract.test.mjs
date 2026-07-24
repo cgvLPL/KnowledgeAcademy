@@ -12,6 +12,7 @@ const runtime = read("app/runtime-functionality-enhancer.tsx");
 const adminTools = read("app/admin-functionality-enhancer.tsx");
 const builder = read("app/course-builder-enhancer.tsx");
 const safetyNet = read("app/button-safety-net.tsx");
+const visibility = read("app/visibility-audit.css");
 
 const requiredActions = [
   "health",
@@ -31,6 +32,26 @@ const requiredActions = [
   "adminSetUserStatus",
   "adminResetPassword",
 ];
+
+function cssVariable(name) {
+  const match = visibility.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`));
+  assert.ok(match, `Missing CSS colour variable ${name}`);
+  return match[1];
+}
+
+function relativeLuminance(hex) {
+  const values = hex.slice(1).match(/.{2}/g).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = values.map((value) => value <= 0.04045
+    ? value / 12.92
+    : ((value + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function contrastRatio(first, second) {
+  const a = relativeLuminance(first);
+  const b = relativeLuminance(second);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
 
 test("Apps Script registers every participant and administrator action", () => {
   for (const action of requiredActions) {
@@ -95,6 +116,40 @@ test("remaining global controls have explicit behavior", () => {
     assert.match(safetyNet.toLowerCase(), new RegExp(label.replace(/[?]/g, "\\?")));
   }
   assert.match(adminTools, /\.user-chip/);
+});
+
+test("visibility safeguards cover every high-risk interface state", () => {
+  assert.match(layout, /import "\.\/visibility-audit\.css";/);
+  for (const selector of [
+    ".confirm-modal",
+    ".cgv-function-modal",
+    ".cgv-preview-questions li.correct",
+    "input::placeholder",
+    "button:disabled",
+    ".status-draft",
+    ".status-upcoming",
+    ".status-live",
+    ".status-completed",
+    ".scoreboard-kpis strong",
+    "@media (forced-colors: active)",
+  ]) {
+    assert.ok(visibility.includes(selector), `Missing visibility safeguard for ${selector}`);
+  }
+  assert.match(visibility, /\.confirm-modal,[\s\S]*?background:[\s\S]*?linear-gradient/);
+  assert.match(visibility, /\.scoreboard-hero select,[\s\S]*?color-scheme:\s*light/);
+});
+
+test("audited colour pairs meet WCAG AA normal-text contrast", () => {
+  const surface = cssVariable("--cgv-a11y-surface");
+  const primary = cssVariable("--cgv-a11y-text");
+  const secondary = cssVariable("--cgv-a11y-secondary");
+  const muted = cssVariable("--cgv-a11y-muted");
+  const lime = cssVariable("--cgv-a11y-lime");
+
+  assert.ok(contrastRatio(primary, surface) >= 4.5, "Primary modal text contrast is below 4.5:1");
+  assert.ok(contrastRatio(secondary, surface) >= 4.5, "Secondary modal text contrast is below 4.5:1");
+  assert.ok(contrastRatio(muted, surface) >= 4.5, "Muted and placeholder text contrast is below 4.5:1");
+  assert.ok(contrastRatio("#10140e", lime) >= 4.5, "Lime button text contrast is below 4.5:1");
 });
 
 test("backend health exposes the audited version", () => {
