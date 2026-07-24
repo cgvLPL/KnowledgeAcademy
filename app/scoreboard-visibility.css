@@ -1,0 +1,50 @@
+/* Keep scoreboard controls and KPI values readable on the dark theme. */
+.scoreboard-hero select {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  color: #111412 !important;
+  -webkit-text-fill-color: #111412;
+}
+
+.scoreboard-hero select:disabled {
+  color: #111412 !important;
+  cursor: not-allowed;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #111412;
+}
+
+.scoreboard-hero select option {
+  background: #ffffff;
+  color: #111412;
+}
+
+.scoreboard-kpis div {
+  background: rgba(239, 243, 230, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #111412 !important;
+}
+
+.scoreboard-kpis span {
+  color: rgba(17, 20, 18, 0.64) !important;
+  opacity: 1 !important;
+}
+
+.scoreboard-kpis strong {
+  color: #111412 !important;
+}
+
+.scoreboard-kpis small {
+  color: rgba(17, 20, 18, 0.72) !important;
+  opacity: 1 !important;
+}
+
+@media (max-width: 760px) {
+  .scoreboard-hero select {
+    min-height: 52px;
+  }
+
+  .scoreboard-kpis div {
+    min-height: 104px;
+  }
+}
