@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
+import InteractionPerformanceEnhancer from "./interaction-performance-enhancer";
 import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
 import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
@@ -64,6 +65,7 @@ export default function RootLayout({
         <ButtonSafetyNet />
         <CourseBuilderEnhancer />
         <ResultSyncEnhancer />
+        <InteractionPerformanceEnhancer />
         <AdminFunctionalityEnhancer />
         <RuntimeFunctionalityEnhancer />
       </body>
