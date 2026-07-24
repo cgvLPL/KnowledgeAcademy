@@ -19,7 +19,6 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ok: false,
-        demo: true,
         error: "Google Sheets backend is not configured for this deployment.",
       },
       { status: 503 },

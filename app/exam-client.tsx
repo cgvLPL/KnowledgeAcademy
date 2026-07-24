@@ -44,7 +44,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { FormEvent, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
 type Role = "participant" | "admin";
 type ParticipantView = "home" | "evaluations" | "history" | "profile";
@@ -88,7 +88,10 @@ type LeaderboardRow = {
   name: string;
   branch: string;
   score: number;
+  correctCount: number;
+  totalQuestions: number;
   time: string;
+  submittedAt?: string;
 };
 
 type ParticipantRow = {
@@ -100,223 +103,14 @@ type ParticipantRow = {
   status: string;
 };
 
-const evaluationsSeed: Evaluation[] = [
-  {
-    id: "ops-2026",
-    title: "Operational Excellence 2026",
-    description:
-      "Core operating procedures, service standards, and daily readiness.",
-    category: "Operations",
-    questionCount: 8,
-    duration: 20,
-    due: "30 Jul 2026",
-    status: "Live",
-    participants: 84,
-    average: 82,
-    passingScore: 75,
-    color: "green",
-  },
-  {
-    id: "safety-2026",
-    title: "Workplace Safety Essentials",
-    description:
-      "Emergency response, incident prevention, and safe working practices.",
-    category: "Safety",
-    questionCount: 10,
-    duration: 15,
-    due: "08 Aug 2026",
-    status: "Live",
-    participants: 67,
-    average: 88,
-    passingScore: 80,
-    color: "orange",
-  },
-  {
-    id: "service-2026",
-    title: "Guest Service Fundamentals",
-    description:
-      "Create consistent, helpful, and memorable guest experiences.",
-    category: "Service",
-    questionCount: 12,
-    duration: 25,
-    due: "15 Aug 2026",
-    status: "Upcoming",
-    participants: 0,
-    average: 0,
-    passingScore: 75,
-    color: "blue",
-  },
-  {
-    id: "cyber-2026",
-    title: "Cybersecurity Awareness",
-    description:
-      "Protect accounts, customer information, and company systems.",
-    category: "Compliance",
-    questionCount: 10,
-    duration: 18,
-    due: "21 Jun 2026",
-    status: "Completed",
-    participants: 94,
-    average: 86,
-    passingScore: 80,
-    color: "violet",
-  },
-];
-
-const historySeed: HistoryItem[] = [
-  {
-    id: "h-1",
-    title: "Cybersecurity Awareness",
-    category: "Compliance",
-    date: "21 Jun 2026",
-    score: 92,
-    status: "Passed",
-    duration: "11m 42s",
-  },
-  {
-    id: "h-2",
-    title: "Guest Recovery Basics",
-    category: "Service",
-    date: "04 May 2026",
-    score: 78,
-    status: "Passed",
-    duration: "16m 08s",
-  },
-  {
-    id: "h-3",
-    title: "Food Safety Refresher",
-    category: "Safety",
-    date: "12 Mar 2026",
-    score: 88,
-    status: "Passed",
-    duration: "13m 15s",
-  },
-  {
-    id: "h-4",
-    title: "POS Operations",
-    category: "Operations",
-    date: "18 Jan 2026",
-    score: 68,
-    status: "Needs review",
-    duration: "19m 37s",
-  },
-];
-
-const questions: Question[] = [
-  {
-    id: "q-1",
-    prompt:
-      "A guest reports that their auditorium seat is damaged. What should you do first?",
-    options: [
-      "Ask the guest to return after the movie",
-      "Apologize, relocate the guest, and report the seat",
-      "Offer a refund without checking alternatives",
-      "Tell the guest to choose any available seat",
-    ],
-    correct: 1,
-  },
-  {
-    id: "q-2",
-    prompt:
-      "Which action best supports a smooth opening shift before guests arrive?",
-    options: [
-      "Wait for the first guest before checking equipment",
-      "Only inspect the lobby",
-      "Complete the readiness checklist and escalate exceptions",
-      "Skip the checklist if the previous shift was quiet",
-    ],
-    correct: 2,
-  },
-  {
-    id: "q-3",
-    prompt:
-      "What is the most appropriate response when a queue begins to grow quickly?",
-    options: [
-      "Activate the queue support plan and communicate wait times",
-      "Close one service point",
-      "Ask guests to come back later",
-      "Continue working without informing anyone",
-    ],
-    correct: 0,
-  },
-  {
-    id: "q-4",
-    prompt:
-      "When handling a cash discrepancy, which sequence is correct?",
-    options: [
-      "Replace the amount personally and say nothing",
-      "Recount, document, and notify the authorized supervisor",
-      "Ask another team member to take responsibility",
-      "Record it at the end of the month",
-    ],
-    correct: 1,
-  },
-  {
-    id: "q-5",
-    prompt:
-      "Which detail is most important when handing over an unresolved operational issue?",
-    options: [
-      "Only the name of the previous shift",
-      "A verbal note with no owner",
-      "Issue status, action taken, evidence, and next owner",
-      "The time the shift ended",
-    ],
-    correct: 2,
-  },
-  {
-    id: "q-6",
-    prompt:
-      "What should happen immediately after identifying a safety hazard in a guest area?",
-    options: [
-      "Secure the area and follow the reporting procedure",
-      "Wait until the next scheduled inspection",
-      "Post about it in the team group only",
-      "Move it out of sight",
-    ],
-    correct: 0,
-  },
-  {
-    id: "q-7",
-    prompt:
-      "Why are standard operating procedures reviewed during evaluations?",
-    options: [
-      "To make every task take longer",
-      "To replace supervisor guidance",
-      "To support safe, consistent, and measurable service",
-      "To reduce communication between shifts",
-    ],
-    correct: 2,
-  },
-  {
-    id: "q-8",
-    prompt:
-      "A system is temporarily unavailable. What is the best operational response?",
-    options: [
-      "Stop serving all guests without explanation",
-      "Use the approved contingency process and log the incident",
-      "Use a personal account to continue",
-      "Ignore the issue if the queue is short",
-    ],
-    correct: 1,
-  },
-];
-
-const leaderboard = [
-  { rank: 1, name: "Nadia Pratama", branch: "Grand Indonesia", score: 100, time: "08:41" },
-  { rank: 2, name: "Dimas Arya", branch: "Central Park", score: 96, time: "09:18" },
-  { rank: 3, name: "Salsa Nabila", branch: "Pacific Place", score: 96, time: "10:04" },
-  { rank: 4, name: "Rayhan Ardhana", branch: "Grand Indonesia", score: 92, time: "11:42" },
-  { rank: 5, name: "Kevin Wijaya", branch: "FX Sudirman", score: 88, time: "12:19" },
-  { rank: 6, name: "Alya Putri", branch: "Central Park", score: 84, time: "13:05" },
-];
-
-const participants = [
-  { name: "Nadia Pratama", email: "nadia.pratama@cgv.co.id", branch: "Grand Indonesia", attempts: 8, average: 94, status: "Active" },
-  { name: "Dimas Arya", email: "dimas.arya@cgv.co.id", branch: "Central Park", attempts: 8, average: 91, status: "Active" },
-  { name: "Salsa Nabila", email: "salsa.nabila@cgv.co.id", branch: "Pacific Place", attempts: 7, average: 89, status: "Active" },
-  { name: "Rayhan Ardhana", email: "rayhan.ardhana@cgv.co.id", branch: "Grand Indonesia", attempts: 7, average: 86, status: "Active" },
-  { name: "Kevin Wijaya", email: "kevin.wijaya@cgv.co.id", branch: "FX Sudirman", attempts: 6, average: 84, status: "Invited" },
-];
+type AuthUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  branch: string;
+  role: Role;
+  status: string;
+};
 
 const publicSheetsEndpoint =
   process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
@@ -362,6 +156,21 @@ function formatDuration(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+function apiScoreboardToLeaderboard(items: Record<string, unknown>[]): LeaderboardRow[] {
+  return items.map((item, index) => ({
+    rank: Number(item.rank || index + 1),
+    name: String(item.name || "Participant"),
+    branch: String(item.branch || ""),
+    score: Number(item.score || 0),
+    correctCount: Number(item.correctCount || 0),
+    totalQuestions: Number(item.totalQuestions || 0),
+    time: formatDuration(Number(item.durationSeconds || 0))
+      .replace("m ", ":")
+      .replace("s", ""),
+    submittedAt: formatApiDate(item.submittedAt, "—"),
+  }));
 }
 
 function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Evaluation {
@@ -424,7 +233,7 @@ function Login({
 }: {
   onLogin: (role: Role, email: string, password: string) => Promise<string | null>;
 }) {
-  const [role, setRole] = useState<Role>("participant");
+  const [role, setRole] = useState<Role>("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -449,93 +258,98 @@ function Login({
 
   return (
     <main className="login-page">
-      <div className="login-aurora aurora-one" />
-      <div className="login-aurora aurora-two" />
-
       <section className="login-layout">
-        <div className="login-card-wrap">
-          <div className="stack-card stack-card-two" />
-          <div className="stack-card stack-card-one" />
-          <form className="login-card" onSubmit={submit}>
-            <div className="login-card-heading">
-              <span className="card-kicker">WELCOME BACK</span>
-              <h2>Sign in to continue</h2>
-              <p>Choose your workspace and enter your account details.</p>
-            </div>
+        <form className="login-card" onSubmit={submit}>
+          <div className="login-brand-row">
+            <Logo />
+            <span>Secure portal</span>
+          </div>
+          <div className="login-progress" aria-hidden="true">
+            <span />
+          </div>
+          <div className="login-coach">
+            <Logo compact />
+            <p>Hello! Sign in to manage courses or complete your assigned evaluations.</p>
+          </div>
+          <div className="login-card-heading">
+            <span className="card-kicker">WELCOME BACK</span>
+            <h1>Ready to continue?</h1>
+            <p>Choose your workspace and enter your account details.</p>
+          </div>
 
-            <div className="role-switch" role="tablist" aria-label="Account type">
-              <button
-                type="button"
-                className={role === "participant" ? "active" : ""}
-                onClick={() => switchRole("participant")}
-                role="tab"
-                aria-selected={role === "participant"}
-              >
-                <UserRound size={17} /> Participant
-              </button>
-              <button
-                type="button"
-                className={role === "admin" ? "active" : ""}
-                onClick={() => switchRole("admin")}
-                role="tab"
-                aria-selected={role === "admin"}
-              >
-                <Gauge size={17} /> Admin
-              </button>
-            </div>
-
-            <label className="field-label">
-              Email address
-              <span className="input-shell">
-                <Mail size={18} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="name@company.com"
-                  required
-                />
-              </span>
-            </label>
-
-            <label className="field-label">
-              Password
-              <span className="input-shell">
-                <LockKeyhole size={18} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="input-action"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((value) => !value)}
-                >
-                  <Eye size={18} />
-                </button>
-              </span>
-            </label>
-
-            <div className="login-options">
-              <label className="check-label">
-                <input type="checkbox" defaultChecked />
-                <span><Check size={12} /></span>
-                Keep me signed in
-              </label>
-              <button type="button" className="text-button">Forgot password?</button>
-            </div>
-
-            {error && <p className="login-error" role="alert">{error}</p>}
-
-            <button className="primary-button login-button" type="submit" disabled={submitting}>
-              {submitting ? "Signing in…" : "Enter workspace"} {!submitting && <ArrowRight size={19} />}
+          <div className="role-switch" role="tablist" aria-label="Account type">
+            <button
+              type="button"
+              className={role === "admin" ? "active" : ""}
+              onClick={() => switchRole("admin")}
+              role="tab"
+              aria-selected={role === "admin"}
+            >
+              <Gauge size={17} /> Admin
             </button>
+            <button
+              type="button"
+              className={role === "participant" ? "active" : ""}
+              onClick={() => switchRole("participant")}
+              role="tab"
+              aria-selected={role === "participant"}
+            >
+              <UserRound size={17} /> Participant
+            </button>
+          </div>
 
-          </form>
-        </div>
+          <label className="field-label">
+            Email address
+            <span className="input-shell">
+              <Mail size={18} />
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="name@company.com"
+                autoComplete="email"
+                required
+              />
+            </span>
+          </label>
+
+          <label className="field-label">
+            Password
+            <span className="input-shell">
+              <LockKeyhole size={18} />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                className="input-action"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                <Eye size={18} />
+              </button>
+            </span>
+          </label>
+
+          <div className="login-options">
+            <label className="check-label">
+              <input type="checkbox" />
+              <span><Check size={12} /></span>
+              Keep me signed in
+            </label>
+            <button type="button" className="text-button">Forgot password?</button>
+          </div>
+
+          {error && <p className="login-error" role="alert">{error}</p>}
+
+          <button className="primary-button login-button" type="submit" disabled={submitting}>
+            {submitting ? "Signing in…" : "Continue"} {!submitting && <ArrowRight size={19} />}
+          </button>
+        </form>
       </section>
     </main>
   );
@@ -569,11 +383,13 @@ function Sidebar({
   view,
   setView,
   onLogout,
+  evaluationCount,
 }: {
   role: Role;
   view: View;
   setView: (view: View) => void;
   onLogout: () => void;
+  evaluationCount: number;
 }) {
   const participantItems: { id: ParticipantView; label: string; icon: typeof Home }[] = [
     { id: "home", label: "Overview", icon: Home },
@@ -609,7 +425,7 @@ function Sidebar({
             >
               <Icon size={19} />
               <span>{item.label}</span>
-              {item.id === "evaluations" && <small>2</small>}
+              {item.id === "evaluations" && evaluationCount > 0 && <small>{evaluationCount}</small>}
             </button>
           );
         })}
@@ -633,11 +449,14 @@ function Topbar({
   role,
   title,
   subtitle,
+  user,
 }: {
   role: Role;
   title: string;
   subtitle: string;
+  user: AuthUser | null;
 }) {
+  const displayName = user?.fullName || (role === "admin" ? "Administrator" : "Participant");
   return (
     <header className="topbar">
       <div className="mobile-brand">
@@ -661,9 +480,9 @@ function Topbar({
           <span />
         </button>
         <div className="user-chip">
-          <Initials name={role === "admin" ? "Alicia Tan" : "Rayhan Ardhana"} size="sm" />
+          <Initials name={displayName} size="sm" />
           <div>
-            <strong>{role === "admin" ? "Alicia Tan" : "Rayhan Ardhana"}</strong>
+            <strong>{displayName}</strong>
             <span>{role === "admin" ? "Learning Admin" : "Participant"}</span>
           </div>
           <ChevronRight size={15} />
@@ -696,59 +515,97 @@ function ScoreRing({ score, size = "md" }: { score: number; size?: "sm" | "md" |
   );
 }
 
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: typeof BookOpen;
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="empty-state">
+      <span><Icon size={23} /></span>
+      <h3>{title}</h3>
+      <p>{description}</p>
+      {action}
+    </div>
+  );
+}
+
 function ParticipantHome({
   onStart,
   setView,
   history,
+  evaluations,
+  user,
 }: {
   onStart: (evaluation: Evaluation) => void;
   setView: (view: ParticipantView) => void;
   history: HistoryItem[];
+  evaluations: Evaluation[];
+  user: AuthUser | null;
 }) {
-  const average = Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length);
+  const liveEvaluations = evaluations.filter((item) => item.status === "Live");
+  const featured = liveEvaluations[0] || null;
+  const average = history.length
+    ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
+    : 0;
+  const passed = history.filter((item) => item.status === "Passed").length;
+  const best = history.length ? Math.max(...history.map((item) => item.score)) : 0;
+  const firstName = user?.fullName?.split(" ")[0] || "there";
+  const today = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).format(new Date());
   return (
     <div className="content participant-home">
       <section className="welcome-row">
         <div>
           <span className="eyebrow dark-eyebrow">
-            <Sparkles size={15} /> FRIDAY, 24 JULY
+            <Sparkles size={15} /> {today.toUpperCase()}
           </span>
-          <h2>Good morning, Rayhan.</h2>
-          <p>You have two evaluations ready. Keep the momentum going.</p>
+          <h2>Welcome back, {firstName}.</h2>
+          <p>{liveEvaluations.length ? `${liveEvaluations.length} evaluation${liveEvaluations.length === 1 ? "" : "s"} ready for you.` : "No evaluations are assigned right now."}</p>
         </div>
         <button className="secondary-button" onClick={() => setView("history")}>
           View score history <ArrowRight size={17} />
         </button>
       </section>
 
-      <section className="hero-evaluation">
-        <div className="hero-noise" />
-        <div className="hero-copy">
-          <span className="live-pill"><span /> LIVE EVALUATION</span>
-          <p className="hero-overline">FEATURED COURSE</p>
-          <h3>Operational<br />Excellence 2026</h3>
-          <p className="hero-description">
-            Review daily readiness, service standards, and essential operating
-            procedures.
-          </p>
-          <div className="hero-meta">
-            <span><FileText size={16} /> 8 questions</span>
-            <span><Clock3 size={16} /> 20 minutes</span>
-            <span><CalendarDays size={16} /> Due 30 Jul</span>
+      {featured ? (
+        <section className="hero-evaluation">
+          <div className="hero-copy">
+            <span className="live-pill"><span /> READY TO START</span>
+            <p className="hero-overline">{featured.category.toUpperCase()}</p>
+            <h3>{featured.title}</h3>
+            <p className="hero-description">{featured.description}</p>
+            <div className="hero-meta">
+              <span><FileText size={16} /> {featured.questionCount} questions</span>
+              <span><Clock3 size={16} /> {featured.duration} minutes</span>
+              <span><CalendarDays size={16} /> Due {featured.due}</span>
+            </div>
+            <button className="hero-button" onClick={() => onStart(featured)}>
+              Start evaluation <span><ArrowRight size={19} /></span>
+            </button>
           </div>
-          <button className="hero-button" onClick={() => onStart(evaluationsSeed[0])}>
-            Start evaluation <span><ArrowRight size={19} /></span>
-          </button>
-        </div>
-        <div className="hero-orbit" aria-hidden="true">
-          <div className="orbit-ring orbit-ring-one" />
-          <div className="orbit-ring orbit-ring-two" />
-          <div className="orbit-centre"><GraduationCap size={44} /></div>
-          <span className="orbit-dot dot-one" />
-          <span className="orbit-dot dot-two" />
-          <span className="orbit-dot dot-three" />
-        </div>
-      </section>
+          <div className="hero-orbit" aria-hidden="true">
+            <div className="orbit-centre"><GraduationCap size={44} /></div>
+          </div>
+        </section>
+      ) : (
+        <section className="section-block">
+          <EmptyState
+            icon={BookOpen}
+            title="No evaluations assigned"
+            description="New evaluations will appear here when an administrator publishes them."
+          />
+        </section>
+      )}
 
       <section className="metric-grid">
         <article className="metric-card">
@@ -756,29 +613,24 @@ function ParticipantHome({
           <div>
             <p>Average score</p>
             <strong>{average}<small>%</small></strong>
-            <span className="positive">↑ 4% from last quarter</span>
-          </div>
-          <div className="sparkline green-line">
-            {[25, 42, 35, 56, 49, 68, 64, 84].map((height, index) => <i key={index} style={{ height }} />)}
+            <span>{history.length ? `Across ${history.length} completed evaluation${history.length === 1 ? "" : "s"}` : "No completed evaluations"}</span>
           </div>
         </article>
         <article className="metric-card">
           <span className="metric-icon orange"><Medal size={20} /></span>
           <div>
             <p>Evaluations passed</p>
-            <strong>7<small>/8</small></strong>
-            <span>One course needs review</span>
+            <strong>{passed}<small>/{history.length}</small></strong>
+            <span>{history.length ? `${history.length - passed} need${history.length - passed === 1 ? "s" : ""} review` : "No results yet"}</span>
           </div>
-          <div className="mini-donut"><span>88%</span></div>
         </article>
         <article className="metric-card">
           <span className="metric-icon blue"><Trophy size={20} /></span>
           <div>
             <p>Best score</p>
-            <strong>96<small>%</small></strong>
-            <span>Top 12% of participants</span>
+            <strong>{best}<small>%</small></strong>
+            <span>{history.length ? "Your personal best" : "Complete an evaluation to begin"}</span>
           </div>
-          <span className="rank-chip">#14</span>
         </article>
       </section>
 
@@ -793,7 +645,7 @@ function ParticipantHome({
           </button>
         </div>
         <div className="evaluation-list">
-          {evaluationsSeed.slice(0, 2).map((evaluation, index) => (
+          {liveEvaluations.slice(0, 2).map((evaluation, index) => (
             <article className="evaluation-row" key={evaluation.id}>
               <EvaluationIcon color={evaluation.color} icon={index === 1 ? "shield" : "book"} />
               <div className="evaluation-main">
@@ -814,6 +666,13 @@ function ParticipantHome({
               </button>
             </article>
           ))}
+          {!liveEvaluations.length && (
+            <EmptyState
+              icon={BookOpen}
+              title="Nothing due"
+              description="There are no live evaluations assigned to this account."
+            />
+          )}
         </div>
       </section>
 
@@ -843,6 +702,13 @@ function ParticipantHome({
               </button>
             </article>
           ))}
+          {!history.length && (
+            <EmptyState
+              icon={History}
+              title="No score history"
+              description="Completed evaluations and scores will appear here."
+            />
+          )}
         </div>
       </section>
     </div>
@@ -907,13 +773,24 @@ function EvaluationsView({
             </div>
           </article>
         ))}
+        {!shown.length && (
+          <EmptyState
+            icon={BookOpen}
+            title="No evaluations found"
+            description={filter === "All" ? "Published evaluations will appear here." : `There are no ${filter.toLowerCase()} evaluations.`}
+          />
+        )}
       </div>
     </div>
   );
 }
 
 function HistoryView({ history }: { history: HistoryItem[] }) {
-  const average = Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length);
+  const average = history.length
+    ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
+    : 0;
+  const passed = history.filter((item) => item.status === "Passed").length;
+  const best = history.length ? Math.max(...history.map((item) => item.score)) : 0;
   return (
     <div className="content">
       <section className="page-intro history-intro">
@@ -929,13 +806,13 @@ function HistoryView({ history }: { history: HistoryItem[] }) {
           <ScoreRing score={average} size="lg" />
           <div>
             <span>Overall average</span>
-            <h3>Strong performance</h3>
-            <p>You are 6 points above the company average.</p>
+            <h3>{history.length ? "Your current average" : "No results yet"}</h3>
+            <p>{history.length ? "Calculated from every completed evaluation." : "Complete an evaluation to start your score history."}</p>
           </div>
         </div>
         <div className="history-stat"><span>Completed</span><strong>{history.length}</strong><small>evaluations</small></div>
-        <div className="history-stat"><span>Passed</span><strong>{history.filter((item) => item.status === "Passed").length}</strong><small>{Math.round(history.filter((item) => item.status === "Passed").length / history.length * 100)}% pass rate</small></div>
-        <div className="history-stat"><span>Best score</span><strong>{Math.max(...history.map((item) => item.score))}%</strong><small>personal best</small></div>
+        <div className="history-stat"><span>Passed</span><strong>{passed}</strong><small>{history.length ? `${Math.round(passed / history.length * 100)}% pass rate` : "No attempts"}</small></div>
+        <div className="history-stat"><span>Best score</span><strong>{best}%</strong><small>personal best</small></div>
       </section>
       <section className="table-card">
         <div className="table-card-header">
@@ -956,6 +833,17 @@ function HistoryView({ history }: { history: HistoryItem[] }) {
                   <td><button className="icon-button"><ChevronRight size={17} /></button></td>
                 </tr>
               ))}
+              {!history.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={History}
+                      title="No results recorded"
+                      description="Your completed evaluations will be listed here."
+                    />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -964,40 +852,44 @@ function HistoryView({ history }: { history: HistoryItem[] }) {
   );
 }
 
-function ProfileView() {
+function ProfileView({ user, history }: { user: AuthUser | null; history: HistoryItem[] }) {
+  const displayName = user?.fullName || "Participant";
+  const average = history.length
+    ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
+    : 0;
+  const passed = history.filter((item) => item.status === "Passed").length;
   return (
     <div className="content">
       <section className="profile-hero">
         <div className="profile-aurora" />
-        <Initials name="Rayhan Ardhana" size="lg" />
+        <Initials name={displayName} size="lg" />
         <div className="profile-copy">
           <span>PARTICIPANT PROFILE</span>
-          <h2>Rayhan Ardhana</h2>
-          <p>rayhan.ardhana@cgv.co.id · Grand Indonesia</p>
+          <h2>{displayName}</h2>
+          <p>{user?.email || "No email"}{user?.branch ? ` · ${user.branch}` : ""}</p>
         </div>
-        <button className="profile-edit"><Pencil size={17} /> Edit profile</button>
         <div className="profile-stats">
-          <div><strong>86%</strong><span>Average</span></div>
-          <div><strong>7</strong><span>Passed</span></div>
-          <div><strong>#14</strong><span>Current rank</span></div>
+          <div><strong>{average}%</strong><span>Average</span></div>
+          <div><strong>{passed}</strong><span>Passed</span></div>
+          <div><strong>{history.length}</strong><span>Completed</span></div>
         </div>
       </section>
       <div className="profile-grid">
         <section className="settings-card">
           <div className="section-heading"><div><h3>Personal information</h3><p>Your account details and assignment information.</p></div></div>
           <div className="detail-grid">
-            <label>Full name<strong>Rayhan Ardhana</strong></label>
-            <label>Email address<strong>rayhan.ardhana@cgv.co.id</strong></label>
-            <label>Location / branch<strong>Grand Indonesia</strong></label>
-            <label>Participant ID<strong>CGV-P-0042</strong></label>
-            <label>Role<strong>Business Support</strong></label>
-            <label>Account status<strong className="active-text"><span /> Active</strong></label>
+            <label>Full name<strong>{displayName}</strong></label>
+            <label>Email address<strong>{user?.email || "—"}</strong></label>
+            <label>Location / branch<strong>{user?.branch || "—"}</strong></label>
+            <label>Account ID<strong>{user?.id || "—"}</strong></label>
+            <label>Role<strong>Participant</strong></label>
+            <label>Account status<strong className="active-text"><span /> {user?.status || "Active"}</strong></label>
           </div>
         </section>
         <section className="settings-card">
           <div className="section-heading"><div><h3>Account security</h3><p>Manage your password and active access.</p></div></div>
-          <button className="settings-row"><span className="metric-icon violet"><LockKeyhole size={19} /></span><div><strong>Change password</strong><small>Last changed 52 days ago</small></div><ChevronRight size={18} /></button>
-          <button className="settings-row"><span className="metric-icon blue"><ShieldCheck size={19} /></span><div><strong>Active sessions</strong><small>1 signed-in device</small></div><ChevronRight size={18} /></button>
+          <button className="settings-row"><span className="metric-icon violet"><LockKeyhole size={19} /></span><div><strong>Change password</strong><small>Update your account password.</small></div><ChevronRight size={18} /></button>
+          <button className="settings-row"><span className="metric-icon blue"><ShieldCheck size={19} /></span><div><strong>Account access</strong><small>Contact an administrator for access changes.</small></div><ChevronRight size={18} /></button>
         </section>
       </div>
     </div>
@@ -1020,7 +912,22 @@ function Quiz({
   const [showSubmit, setShowSubmit] = useState(false);
   const current = questionsData[index];
   const answered = Object.keys(answers).length;
-  const progress = Math.round(((index + 1) / questionsData.length) * 100);
+  const progress = questionsData.length
+    ? Math.round(((index + 1) / questionsData.length) * 100)
+    : 0;
+
+  if (!current) {
+    return (
+      <main className="quiz-page">
+        <EmptyState
+          icon={BookOpen}
+          title="No questions available"
+          description="This evaluation does not contain any published questions."
+          action={<button className="primary-button" onClick={onExit}>Return to evaluations</button>}
+        />
+      </main>
+    );
+  }
 
   async function submitQuiz() {
     const scorable = questionsData.every((question) => question.correct !== undefined);
@@ -1042,7 +949,7 @@ function Quiz({
           <strong>{evaluation.title}</strong>
         </div>
         <div className="quiz-header-actions">
-          <span className="timer"><Clock3 size={18} /><strong>18:42</strong></span>
+          <span className="timer"><Clock3 size={18} /><strong>{evaluation.duration} min limit</strong></span>
           <button className="icon-button" onClick={onExit} aria-label="Exit evaluation"><X size={20} /></button>
         </div>
       </header>
@@ -1075,6 +982,10 @@ function Quiz({
                 />
               ))}
             </div>
+            <div className="quiz-coach">
+              <Logo compact />
+              <p>Take a moment to read the question, then choose one answer.</p>
+            </div>
             <div className="question-number-row">
               <span>QUESTION {String(index + 1).padStart(2, "0")}</span>
               <small>SELECT ONE ANSWER</small>
@@ -1090,7 +1001,9 @@ function Quiz({
                 >
                   <span className="answer-letter">{String.fromCharCode(65 + optionIndex)}</span>
                   <strong>{option}</strong>
-                  <span className="answer-radio">{answers[index] === optionIndex && <Check size={15} />}</span>
+                  <span className="answer-radio">
+                    {answers[index] === optionIndex ? <Check size={15} /> : <ArrowRight size={15} />}
+                  </span>
                 </button>
               ))}
             </div>
@@ -1111,7 +1024,7 @@ function Quiz({
                   disabled={answers[index] === undefined}
                   onClick={() => setIndex((value) => Math.min(questionsData.length - 1, value + 1))}
                 >
-                  Next <ArrowRight size={18} />
+                  Continue <ArrowRight size={18} />
                 </button>
               ) : (
                 <button
@@ -1120,7 +1033,7 @@ function Quiz({
                   disabled={answered !== questionsData.length}
                   onClick={() => setShowSubmit(true)}
                 >
-                  Finish <Check size={18} />
+                  Finish evaluation <Check size={18} />
                 </button>
               )}
             </footer>
@@ -1163,6 +1076,11 @@ function Result({
       <div className="result-aurora" />
       <header className="result-header"><Logo /><span>Evaluation complete</span></header>
       <section className="result-card">
+        <div className="result-progress"><span /></div>
+        <div className="result-coach">
+          <Logo compact />
+          <p>Your evaluation has been submitted and the result is ready.</p>
+        </div>
         <span className="result-spark"><Sparkles size={34} /></span>
         <span className="card-kicker">{passed ? "WELL DONE" : "KEEP LEARNING"}</span>
         <h1>{passed ? "You passed." : "Almost there."}</h1>
@@ -1173,9 +1091,9 @@ function Result({
           <span>{passed ? "Your score has been added to your evaluation history." : `The passing score is ${evaluation.passingScore}%. Review the course and try again.`}</span>
         </div>
         <div className="result-stats">
-          <div><span>Correct</span><strong>{Math.round(score / 100 * evaluation.questionCount)}/{evaluation.questionCount}</strong></div>
-          <div><span>Time used</span><strong>11:18</strong></div>
-          <div><span>Standing</span><strong>Top 18%</strong></div>
+          <div><span>Your score</span><strong>{score}%</strong></div>
+          <div><span>Passing score</span><strong>{evaluation.passingScore}%</strong></div>
+          <div><span>Outcome</span><strong>{passed ? "Passed" : "Review"}</strong></div>
         </div>
         <div className="result-actions">
           <button className="secondary-button" onClick={onHistory}>View score history</button>
@@ -1190,11 +1108,22 @@ function AdminOverview({
   setView,
   onCreate,
   leaderboardData,
+  evaluations,
+  participantsData,
 }: {
   setView: (view: AdminView) => void;
   onCreate: () => void;
   leaderboardData: LeaderboardRow[];
+  evaluations: Evaluation[];
+  participantsData: ParticipantRow[];
 }) {
+  const liveCourses = evaluations.filter((item) => item.status === "Live").length;
+  const averageScore = leaderboardData.length
+    ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
+    : 0;
+  const topScore = leaderboardData.length
+    ? Math.max(...leaderboardData.map((item) => item.score))
+    : 0;
   return (
     <div className="content admin-overview">
       <section className="welcome-row">
@@ -1206,50 +1135,43 @@ function AdminOverview({
         <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
       </section>
       <section className="admin-metrics">
-        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Active participants</p><strong>128</strong><small className="positive">↑ 12 this month</small></div></article>
-        <article><span className="metric-icon orange"><BookOpen size={20} /></span><div><p>Live evaluations</p><strong>4</strong><small>2 close this week</small></div></article>
-        <article><span className="metric-icon blue"><BarChart3 size={20} /></span><div><p>Average score</p><strong>84<em>%</em></strong><small className="positive">↑ 3.2% this quarter</small></div></article>
-        <article><span className="metric-icon violet"><Check size={20} /></span><div><p>Completion rate</p><strong>92<em>%</em></strong><small>Across active courses</small></div></article>
+        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Active participants</p><strong>{participantsData.filter((item) => item.status === "Active").length}</strong><small>{participantsData.length} total accounts</small></div></article>
+        <article><span className="metric-icon orange"><BookOpen size={20} /></span><div><p>Live evaluations</p><strong>{liveCourses}</strong><small>{evaluations.length} courses total</small></div></article>
+        <article><span className="metric-icon blue"><BarChart3 size={20} /></span><div><p>Average score</p><strong>{averageScore}<em>%</em></strong><small>{leaderboardData.length} submitted attempts</small></div></article>
+        <article><span className="metric-icon violet"><Trophy size={20} /></span><div><p>Top score</p><strong>{topScore}<em>%</em></strong><small>Current scoreboard</small></div></article>
       </section>
       <div className="admin-dashboard-grid">
         <section className="analytics-card">
           <div className="section-heading">
-            <div><h3>Evaluation performance</h3><p>Average score and completion over the last six months.</p></div>
-            <button className="select-button">Last 6 months <ChevronRight size={15} /></button>
+            <div><h3>Set up your workspace</h3><p>Create content first, then invite participants when you are ready.</p></div>
           </div>
-          <div className="chart-legend"><span><i className="green-dot" /> Average score</span><span><i className="gray-dot" /> Completion</span></div>
-          <div className="line-chart">
-            <div className="chart-grid"><i /><i /><i /><i /><i /></div>
-            <svg viewBox="0 0 700 230" preserveAspectRatio="none" aria-label="Performance trend chart">
-              <path className="chart-area" d="M0 188 C78 176 94 139 164 151 S256 112 330 126 S424 72 495 91 S594 66 700 42 L700 230 L0 230 Z" />
-              <path className="chart-line primary" d="M0 188 C78 176 94 139 164 151 S256 112 330 126 S424 72 495 91 S594 66 700 42" />
-              <path className="chart-line secondary" d="M0 209 C78 198 102 180 164 186 S262 169 330 175 S424 135 495 150 S604 118 700 126" />
-              {[0, 164, 330, 495, 700].map((x, index) => <circle key={x} cx={x} cy={[188,151,126,91,42][index]} r="5" />)}
-            </svg>
-            <div className="chart-labels"><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span></div>
+          <div className="setup-actions">
+            <button onClick={onCreate}><span>01</span><div><strong>Create a quiz course</strong><small>Add questions, scoring, and access rules.</small></div><ArrowRight size={18} /></button>
+            <button onClick={() => setView("participants")}><span>02</span><div><strong>Add participants</strong><small>Create accounts only when the workspace is ready.</small></div><ArrowRight size={18} /></button>
+            <button onClick={() => setView("scoreboard")}><span>03</span><div><strong>Review submitted scores</strong><small>Results appear automatically after submissions.</small></div><ArrowRight size={18} /></button>
           </div>
         </section>
         <section className="completion-card">
-          <div className="section-heading"><div><h3>Completion today</h3><p>Operational Excellence 2026</p></div><button className="icon-button"><MoreHorizontal size={18} /></button></div>
-          <div className="big-donut"><div><strong>84</strong><span>of 128</span></div></div>
-          <div className="completion-legend">
-            <div><span><i className="green-dot" /> Completed</span><strong>84</strong></div>
-            <div><span><i className="orange-dot" /> In progress</span><strong>18</strong></div>
-            <div><span><i className="gray-dot" /> Not started</span><strong>26</strong></div>
+          <div className="section-heading"><div><h3>Workspace status</h3><p>Live data from Google Sheets.</p></div></div>
+          <div className="workspace-summary">
+            <div><span>Courses</span><strong>{evaluations.length}</strong></div>
+            <div><span>Participants</span><strong>{participantsData.length}</strong></div>
+            <div><span>Submissions</span><strong>{leaderboardData.length}</strong></div>
           </div>
           <button className="secondary-button full" onClick={() => setView("scoreboard")}>View live scoreboard <ArrowRight size={17} /></button>
         </section>
       </div>
       <section className="table-card leaderboard-card">
         <div className="table-card-header">
-          <div><h3>Top performers</h3><p>Operational Excellence 2026 · live ranking</p></div>
+          <div><h3>Top performers</h3><p>Live ranking from submitted evaluations.</p></div>
           <button className="text-link" onClick={() => setView("scoreboard")}>Full scoreboard <ArrowRight size={16} /></button>
         </div>
         <div className="responsive-table">
           <table>
             <thead><tr><th>Rank</th><th>Participant</th><th>Branch</th><th>Score</th><th>Time</th><th /></tr></thead>
-            <tbody>{leaderboardData.slice(0, 5).map((item) => (
-              <tr key={item.rank}>
+            <tbody>
+              {leaderboardData.slice(0, 5).map((item) => (
+              <tr key={`${item.rank}-${item.name}`}>
                 <td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td>
                 <td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td>
                 <td>{item.branch}</td>
@@ -1257,7 +1179,15 @@ function AdminOverview({
                 <td>{item.time}</td>
                 <td><button className="icon-button"><ChevronRight size={17} /></button></td>
               </tr>
-            ))}</tbody>
+              ))}
+              {!leaderboardData.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={6}>
+                    <EmptyState icon={Trophy} title="No scores yet" description="Submitted evaluations will populate this scoreboard." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </section>
@@ -1286,7 +1216,8 @@ function CoursesView({
         <div className="responsive-table">
           <table>
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
-            <tbody>{evaluations.map((course, index) => (
+            <tbody>
+              {evaluations.map((course, index) => (
               <tr key={course.id}>
                 <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
@@ -1295,7 +1226,20 @@ function CoursesView({
                 <td><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
                 <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button aria-label="Edit"><Pencil size={17} /></button><button aria-label="More"><MoreHorizontal size={17} /></button></div></td>
               </tr>
-            ))}</tbody>
+              ))}
+              {!evaluations.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={Layers3}
+                      title="No quiz courses"
+                      description="Create your first course to start building the evaluation workspace."
+                      action={<button className="primary-button" onClick={onCreate}><Plus size={17} /> Create course</button>}
+                    />
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </section>
@@ -1308,12 +1252,13 @@ function ParticipantsView({
   onAdd,
 }: {
   participantsData: ParticipantRow[];
-  onAdd: (participant: { name: string; email: string; branch: string }) => Promise<string | null>;
+  onAdd: (participant: { name: string; email: string; branch: string; password: string }) => Promise<string | null>;
 }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [branch, setBranch] = useState("");
+  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -1321,7 +1266,7 @@ function ParticipantsView({
     event.preventDefault();
     setSaving(true);
     setError("");
-    const nextError = await onAdd({ name, email, branch });
+    const nextError = await onAdd({ name, email, branch, password });
     setSaving(false);
     if (nextError) {
       setError(nextError);
@@ -1331,7 +1276,11 @@ function ParticipantsView({
     setName("");
     setEmail("");
     setBranch("");
+    setPassword("");
   }
+
+  const active = participantsData.filter((item) => item.status === "Active").length;
+  const inactive = participantsData.length - active;
 
   return (
     <div className="content">
@@ -1340,23 +1289,37 @@ function ParticipantsView({
         <button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={18} /> Add participant</button>
       </section>
       <section className="admin-metrics compact">
-        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Total accounts</p><strong>128</strong><small>Across 8 locations</small></div></article>
-        <article><span className="metric-icon blue"><Check size={20} /></span><div><p>Active this month</p><strong>116</strong><small className="positive">90.6% active rate</small></div></article>
-        <article><span className="metric-icon orange"><Mail size={20} /></span><div><p>Pending invites</p><strong>12</strong><small>Resend from the table</small></div></article>
+        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Total accounts</p><strong>{participantsData.length}</strong><small>Participant accounts only</small></div></article>
+        <article><span className="metric-icon blue"><Check size={20} /></span><div><p>Active accounts</p><strong>{active}</strong><small>{participantsData.length ? `${Math.round(active / participantsData.length * 100)}% active rate` : "No participants added"}</small></div></article>
+        <article><span className="metric-icon orange"><ShieldCheck size={20} /></span><div><p>Inactive accounts</p><strong>{inactive}</strong><small>Access currently disabled</small></div></article>
       </section>
       <div className="toolbar"><div className="admin-search"><Search size={17} /><input placeholder="Search name, email, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
       <section className="table-card">
         <div className="responsive-table">
           <table>
             <thead><tr><th>Participant</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
-            <tbody>{participantsData.map((person) => (
+            <tbody>
+              {participantsData.map((person) => (
               <tr key={person.email}>
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>{person.email}</span></div></div></td>
                 <td>{person.branch}</td><td>{person.attempts}</td><td><strong className="table-score">{person.average}%</strong></td>
                 <td><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
                 <td><button className="icon-button"><MoreHorizontal size={18} /></button></td>
               </tr>
-            ))}</tbody>
+              ))}
+              {!participantsData.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={6}>
+                    <EmptyState
+                      icon={Users}
+                      title="Admin is the only account"
+                      description="No participant accounts have been created."
+                      action={<button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={17} /> Add participant</button>}
+                    />
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </section>
@@ -1370,13 +1333,13 @@ function ParticipantsView({
             <p>Create an account that can sign in and keep its own evaluation history.</p>
             <label className="field-label">Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Participant name" required /></label>
             <label className="field-label">Email address<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@cgv.co.id" required /></label>
-            <label className="field-label">Branch / location<input value={branch} onChange={(event) => setBranch(event.target.value)} placeholder="e.g. Grand Indonesia" required /></label>
+            <label className="field-label">Branch / location<input value={branch} onChange={(event) => setBranch(event.target.value)} placeholder="Branch or department" required /></label>
+            <label className="field-label">Temporary password<input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" required /></label>
             {error && <p className="login-error" role="alert">{error}</p>}
             <div className="modal-actions">
               <button className="secondary-button" type="button" onClick={() => setAdding(false)}>Cancel</button>
               <button className="primary-button" type="submit" disabled={saving}>{saving ? "Creating…" : "Create account"} {!saving && <ArrowRight size={17} />}</button>
             </div>
-            <small className="temporary-password-note">New accounts receive the temporary password <strong>Welcome123!</strong></small>
           </form>
         </div>
       )}
@@ -1386,12 +1349,36 @@ function ParticipantsView({
 
 function ScoreboardView({
   leaderboardData,
-  connected,
+  evaluations,
+  onEvaluationChange,
 }: {
   leaderboardData: LeaderboardRow[];
-  connected: boolean;
+  evaluations: Evaluation[];
+  onEvaluationChange: (evaluationId: string) => Promise<string | null>;
 }) {
-  const [evaluation, setEvaluation] = useState("Operational Excellence 2026");
+  const [evaluation, setEvaluation] = useState(evaluations[0]?.id || "");
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || evaluations[0] || null;
+  const average = leaderboardData.length
+    ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
+    : 0;
+  const topScore = leaderboardData.length
+    ? Math.max(...leaderboardData.map((item) => item.score))
+    : 0;
+  const passRate = leaderboardData.length && selectedEvaluation
+    ? Math.round(leaderboardData.filter((item) => item.score >= selectedEvaluation.passingScore).length / leaderboardData.length * 100)
+    : 0;
+
+  async function selectEvaluation(evaluationId: string) {
+    setEvaluation(evaluationId);
+    setLoading(true);
+    setLoadError("");
+    const error = await onEvaluationChange(evaluationId);
+    if (error) setLoadError(error);
+    setLoading(false);
+  }
+
   return (
     <div className="content">
       <section className="page-intro">
@@ -1401,16 +1388,22 @@ function ScoreboardView({
       <section className="scoreboard-hero">
         <div>
           <span className="card-kicker">SELECT EVALUATION</span>
-          <select value={evaluation} onChange={(event) => setEvaluation(event.target.value)}>
-            {evaluationsSeed.map((item) => <option key={item.id}>{item.title}</option>)}
+          <select
+            value={evaluation}
+            onChange={(event) => void selectEvaluation(event.target.value)}
+            disabled={!evaluations.length || loading}
+          >
+            {!evaluations.length && <option value="">No evaluations available</option>}
+            {evaluations.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
           </select>
-          <p>{connected ? "Last synced with Google Sheets · just now" : "Interactive demo data · connect Google Sheets to sync live results"}</p>
+          <p>{loading ? "Loading this scoreboard…" : "Live results synced from Google Sheets."}</p>
+          {loadError && <p className="scoreboard-error" role="alert">{loadError}</p>}
         </div>
         <div className="scoreboard-kpis">
-          <div><span>Participants</span><strong>84<small>/128</small></strong></div>
-          <div><span>Average</span><strong>82<small>%</small></strong></div>
-          <div><span>Pass rate</span><strong>89<small>%</small></strong></div>
-          <div><span>Top score</span><strong>100<small>%</small></strong></div>
+          <div><span>Submissions</span><strong>{leaderboardData.length}</strong></div>
+          <div><span>Average</span><strong>{average}<small>%</small></strong></div>
+          <div><span>Pass rate</span><strong>{passRate}<small>%</small></strong></div>
+          <div><span>Top score</span><strong>{topScore}<small>%</small></strong></div>
         </div>
       </section>
       <div className="podium-grid">
@@ -1430,9 +1423,18 @@ function ScoreboardView({
         <div className="responsive-table">
           <table>
             <thead><tr><th>Rank</th><th>Participant</th><th>Branch</th><th>Score</th><th>Correct</th><th>Time</th><th>Completed</th></tr></thead>
-            <tbody>{leaderboardData.map((item) => (
-              <tr key={item.rank}><td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td><td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td><td>{item.branch}</td><td><strong className="table-score">{item.score}%</strong></td><td>{Math.round(item.score / 10)}/10</td><td>{item.time}</td><td>24 Jul 2026</td></tr>
-            ))}</tbody>
+            <tbody>
+              {leaderboardData.map((item) => (
+                <tr key={`${item.rank}-${item.name}`}><td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td><td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td><td>{item.branch || "—"}</td><td><strong className="table-score">{item.score}%</strong></td><td>{item.totalQuestions ? `${item.correctCount}/${item.totalQuestions}` : "—"}</td><td>{item.time}</td><td>{item.submittedAt || "—"}</td></tr>
+              ))}
+              {!leaderboardData.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={7}>
+                    <EmptyState icon={Trophy} title="No submitted scores" description="The scoreboard will populate after participants complete an evaluation." />
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </section>
@@ -1455,6 +1457,7 @@ function CourseBuilder({
   const [category, setCategory] = useState("Operations");
   const [duration, setDuration] = useState(20);
   const [passingScore, setPassingScore] = useState(75);
+  const [builderError, setBuilderError] = useState("");
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([
     { prompt: "", options: ["", "", "", ""], correct: 0 },
   ]);
@@ -1466,10 +1469,21 @@ function CourseBuilder({
     setDraftQuestions((items) => items.map((item, itemIndex) => itemIndex === questionIndex ? { ...item, options: item.options.map((option, index) => index === optionIndex ? value : option) } : item));
   }
   function saveCourse() {
+    if (!title.trim()) {
+      setBuilderError("Enter a course title.");
+      setStep(1);
+      return;
+    }
+    if (draftQuestions.some((question) => !question.prompt.trim() || question.options.some((option) => !option.trim()))) {
+      setBuilderError("Complete every question and answer choice before saving.");
+      setStep(2);
+      return;
+    }
+    setBuilderError("");
     onSave({
       id: `course-${Date.now()}`,
-      title: title || "Untitled evaluation",
-      description: description || "New evaluation course.",
+      title: title.trim(),
+      description: description.trim(),
       category,
       questionCount: draftQuestions.length,
       duration,
@@ -1486,7 +1500,7 @@ function CourseBuilder({
     <div className="builder-page">
       <header className="builder-header">
         <div className="builder-brand"><Logo /><span>New quiz course</span></div>
-        <div className="builder-actions"><span>Draft saved</span><button className="secondary-button" onClick={onClose}>Close</button><button className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
+        <div className="builder-actions"><button className="secondary-button" onClick={onClose}>Close</button><button className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
       </header>
       <div className="builder-progress">
         {[["Course details", 1], ["Questions", 2], ["Schedule & access", 3]].map(([label, number]) => (
@@ -1496,11 +1510,12 @@ function CourseBuilder({
         ))}
       </div>
       <main className="builder-content">
+        {builderError && <p className="builder-error" role="alert">{builderError}</p>}
         {step === 1 && (
           <section className="builder-card">
             <div className="builder-card-heading"><span className="card-kicker">STEP 01</span><h1>Course details</h1><p>Give the evaluation a clear title and set its scoring rules.</p></div>
             <div className="builder-form-grid">
-              <label className="field-label full">Course title<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Operational Excellence 2026" /></label>
+              <label className="field-label full">Course title<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Evaluation title" /></label>
               <label className="field-label full">Description<textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="What should participants learn or demonstrate?" rows={4} /></label>
               <label className="field-label">Category<select value={category} onChange={(event) => setCategory(event.target.value)}><option>Operations</option><option>Safety</option><option>Service</option><option>Compliance</option></select></label>
               <label className="field-label">Time limit (minutes)<input type="number" min={1} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
@@ -1544,8 +1559,8 @@ function CourseBuilder({
           <section className="builder-card">
             <div className="builder-card-heading"><span className="card-kicker">STEP 03</span><h1>Schedule & access</h1><p>Choose when the evaluation opens and who should receive it.</p></div>
             <div className="builder-form-grid">
-              <label className="field-label">Opens on<input type="date" defaultValue="2026-07-25" /></label>
-              <label className="field-label">Closes on<input type="date" defaultValue="2026-08-08" /></label>
+              <label className="field-label">Opens on<input type="date" /></label>
+              <label className="field-label">Closes on<input type="date" /></label>
               <label className="field-label full">Assign to<select><option>All active participants</option><option>Selected branches</option><option>Selected participants</option></select></label>
               <label className="toggle-row full"><div><strong>Publish immediately</strong><span>Make the course visible when saved.</span></div><input type="checkbox" /></label>
               <label className="toggle-row full"><div><strong>Email notification</strong><span>Notify assigned participants after publishing.</span></div><input type="checkbox" defaultChecked /></label>
@@ -1579,15 +1594,16 @@ export default function ExamClient() {
   const [view, setView] = useState<View>("home");
   const [activeQuiz, setActiveQuiz] = useState<Evaluation | null>(null);
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
-  const [quizQuestions, setQuizQuestions] = useState<Question[]>(questions);
+  const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [result, setResult] = useState<{ evaluation: Evaluation; score: number } | null>(null);
-  const [history, setHistory] = useState(historySeed);
-  const [evaluations, setEvaluations] = useState(evaluationsSeed);
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardRow[]>(leaderboard);
-  const [participantsData, setParticipantsData] = useState<ParticipantRow[]>(participants);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardRow[]>([]);
+  const [participantsData, setParticipantsData] = useState<ParticipantRow[]>([]);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [backendMode, setBackendMode] = useState<"demo" | "sheets">("demo");
+  const [backendMode, setBackendMode] = useState<"unavailable" | "sheets">("unavailable");
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   const titleMap = useMemo<Record<View, [string, string]>>(() => ({
     home: ["Overview", "Your evaluation snapshot"],
@@ -1610,18 +1626,18 @@ export default function ExamClient() {
       const response = await sheetsFetch({ action: "login", email, password });
       const loginData = (await response.json()) as {
         ok?: boolean;
-        demo?: boolean;
         error?: string;
         token?: string;
-        user?: { role?: string };
+        user?: {
+          id?: string;
+          email?: string;
+          fullName?: string;
+          branch?: string;
+          role?: string;
+          status?: string;
+        };
       };
 
-      if (response.status === 503 && loginData.demo) {
-        setBackendMode("demo");
-        setRole(nextRole);
-        setView(nextRole === "admin" ? "overview" : "home");
-        return null;
-      }
       if (!response.ok || loginData.ok === false || !loginData.token) {
         return loginData.error || "Unable to sign in.";
       }
@@ -1655,24 +1671,15 @@ export default function ExamClient() {
           scoreboard: Record<string, unknown>[];
         }>("adminGetDashboard", { token: loginData.token });
         setEvaluations(dashboardData.courses.map(apiCourseToEvaluation));
-        const liveLeaderboard = dashboardData.scoreboard.map((item, index) => ({
-          rank: Number(item.rank || index + 1),
-          name: String(item.name || "Participant"),
-          branch: String(item.branch || ""),
-          score: Number(item.score || 0),
-          time: formatDuration(Number(item.durationSeconds || 0)).replace("m ", ":").replace("s", ""),
-        }));
+        const liveLeaderboard = apiScoreboardToLeaderboard(dashboardData.scoreboard);
         setLeaderboardData(liveLeaderboard);
         setParticipantsData(dashboardData.participants.map((item) => {
-          const scores = liveLeaderboard.filter((row) => row.name === String(item.fullName || ""));
           return {
             name: String(item.fullName || "Participant"),
             email: String(item.email || ""),
             branch: String(item.branch || ""),
-            attempts: scores.length,
-            average: scores.length
-              ? Math.round(scores.reduce((sum, row) => sum + row.score, 0) / scores.length)
-              : 0,
+            attempts: Number(item.attempts || 0),
+            average: Number(item.average || 0),
             status: String(item.status || "active") === "active" ? "Active" : "Inactive",
           };
         }));
@@ -1680,6 +1687,14 @@ export default function ExamClient() {
 
       setSessionToken(loginData.token);
       setBackendMode("sheets");
+      setCurrentUser({
+        id: String(loginData.user?.id || ""),
+        email: String(loginData.user?.email || email),
+        fullName: String(loginData.user?.fullName || (authenticatedRole === "admin" ? "Administrator" : "Participant")),
+        branch: String(loginData.user?.branch || ""),
+        role: authenticatedRole,
+        status: String(loginData.user?.status || "active"),
+      });
       setRole(authenticatedRole);
       setView(authenticatedRole === "admin" ? "overview" : "home");
       return null;
@@ -1694,7 +1709,12 @@ export default function ExamClient() {
     }
     setRole(null);
     setSessionToken(null);
-    setBackendMode("demo");
+    setBackendMode("unavailable");
+    setCurrentUser(null);
+    setHistory([]);
+    setEvaluations([]);
+    setLeaderboardData([]);
+    setParticipantsData([]);
     setActiveQuiz(null);
     setActiveAttemptId(null);
     setResult(null);
@@ -1726,9 +1746,7 @@ export default function ExamClient() {
         return;
       }
     }
-    setQuizQuestions(questions);
-    setActiveAttemptId(null);
-    setActiveQuiz({ ...evaluation, questionCount: questions.length });
+    window.alert("The Google Sheets backend is required to start an evaluation.");
   }
 
   async function completeQuiz(score: number, answers: Record<number, number>) {
@@ -1753,6 +1771,9 @@ export default function ExamClient() {
         window.alert(error instanceof Error ? error.message : "Unable to submit this evaluation.");
         return;
       }
+    } else {
+      window.alert("The Google Sheets backend is required to submit this evaluation.");
+      return;
     }
     const completedEvaluation = activeQuiz;
     const newResult = { evaluation: completedEvaluation, score: finalScore };
@@ -1761,88 +1782,101 @@ export default function ExamClient() {
       id: `history-${Date.now()}`,
       title: completedEvaluation.title,
       category: completedEvaluation.category,
-      date: "24 Jul 2026",
+      date: formatApiDate(new Date()),
       score: finalScore,
       status: finalScore >= completedEvaluation.passingScore ? "Passed" : "Needs review",
-      duration: "11m 18s",
+      duration: "Recorded online",
     }, ...items]);
     setActiveQuiz(null);
     setActiveAttemptId(null);
   }
 
   async function saveCourse(evaluation: Evaluation, draftQuestions: DraftQuestion[]) {
+    if (backendMode !== "sheets" || !sessionToken) {
+      window.alert("The Google Sheets backend is required to save a course.");
+      return;
+    }
     let savedEvaluation = evaluation;
-    if (backendMode === "sheets" && sessionToken) {
-      try {
-        const data = await sheetsRequest<{
-          ok: boolean;
-          course: Record<string, unknown>;
-        }>("adminSaveCourse", {
-          token: sessionToken,
-          course: {
-            id: evaluation.id,
-            title: evaluation.title,
-            description: evaluation.description,
-            category: evaluation.category,
-            passingScore: evaluation.passingScore,
-            duration: evaluation.duration,
-            status: evaluation.status.toLowerCase(),
-            questions: draftQuestions.map((question) => ({
-              prompt: question.prompt,
-              options: question.options,
-              correct: String.fromCharCode(65 + question.correct),
-              points: 1,
-            })),
-          },
-        });
-        savedEvaluation = apiCourseToEvaluation(data.course);
-      } catch (error) {
-        window.alert(error instanceof Error ? error.message : "Unable to save this course.");
-        return;
-      }
+    try {
+      const data = await sheetsRequest<{
+        ok: boolean;
+        course: Record<string, unknown>;
+      }>("adminSaveCourse", {
+        token: sessionToken,
+        course: {
+          id: evaluation.id,
+          title: evaluation.title,
+          description: evaluation.description,
+          category: evaluation.category,
+          passingScore: evaluation.passingScore,
+          duration: evaluation.duration,
+          status: evaluation.status.toLowerCase(),
+          questions: draftQuestions.map((question) => ({
+            prompt: question.prompt,
+            options: question.options,
+            correct: String.fromCharCode(65 + question.correct),
+            points: 1,
+          })),
+        },
+      });
+      savedEvaluation = apiCourseToEvaluation(data.course);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Unable to save this course.");
+      return;
     }
     setEvaluations((items) => [savedEvaluation, ...items]);
     setBuilderOpen(false);
     setView("courses");
   }
 
-  async function addParticipant(input: { name: string; email: string; branch: string }): Promise<string | null> {
+  async function addParticipant(input: { name: string; email: string; branch: string; password: string }): Promise<string | null> {
     try {
-      if (backendMode === "sheets" && sessionToken) {
-        const data = await sheetsRequest<{
-          ok: boolean;
-          user: Record<string, unknown>;
-        }>("adminSaveParticipant", {
-          token: sessionToken,
-          participant: {
-            fullName: input.name,
-            email: input.email,
-            branch: input.branch,
-            password: "Welcome123!",
-            status: "active",
-          },
-        });
-        setParticipantsData((items) => [{
-          name: String(data.user.fullName || input.name),
-          email: String(data.user.email || input.email),
-          branch: String(data.user.branch || input.branch),
-          attempts: 0,
-          average: 0,
-          status: "Active",
-        }, ...items]);
-      } else {
-        setParticipantsData((items) => [{
-          name: input.name,
+      if (backendMode !== "sheets" || !sessionToken) {
+        return "The Google Sheets backend is required to create an account.";
+      }
+      const data = await sheetsRequest<{
+        ok: boolean;
+        user: Record<string, unknown>;
+      }>("adminSaveParticipant", {
+        token: sessionToken,
+        participant: {
+          fullName: input.name,
           email: input.email,
           branch: input.branch,
-          attempts: 0,
-          average: 0,
-          status: "Active",
-        }, ...items]);
-      }
+          password: input.password,
+          status: "active",
+        },
+      });
+      setParticipantsData((items) => [{
+        name: String(data.user.fullName || input.name),
+        email: String(data.user.email || input.email),
+        branch: String(data.user.branch || input.branch),
+        attempts: 0,
+        average: 0,
+        status: "Active",
+      }, ...items]);
       return null;
     } catch (error) {
       return error instanceof Error ? error.message : "Unable to create this participant.";
+    }
+  }
+
+  async function loadScoreboard(evaluationId: string): Promise<string | null> {
+    if (backendMode !== "sheets" || !sessionToken) {
+      return "The Google Sheets backend is required to load a scoreboard.";
+    }
+    try {
+      const data = await sheetsRequest<{
+        ok: boolean;
+        scoreboard: Record<string, unknown>[];
+      }>("adminGetDashboard", {
+        token: sessionToken,
+        courseId: evaluationId,
+      });
+      setLeaderboardData(apiScoreboardToLeaderboard(data.scoreboard));
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Unable to load this scoreboard.";
     }
   }
 
@@ -1855,17 +1889,17 @@ export default function ExamClient() {
   const [title, subtitle] = titleMap[view];
   return (
     <div className="app-shell">
-      <Sidebar role={role} view={view} setView={setView} onLogout={logout} />
+      <Sidebar role={role} view={view} setView={setView} onLogout={logout} evaluationCount={evaluations.filter((item) => item.status === "Live").length} />
       <div className="main-shell">
-        <Topbar role={role} title={title} subtitle={subtitle} />
-        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} setView={setView} history={history} />}
+        <Topbar role={role} title={title} subtitle={subtitle} user={currentUser} />
+        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
         {role === "participant" && view === "evaluations" && <EvaluationsView evaluations={evaluations} onStart={startQuiz} />}
         {role === "participant" && view === "history" && <HistoryView history={history} />}
-        {role === "participant" && view === "profile" && <ProfileView />}
-        {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} />}
+        {role === "participant" && view === "profile" && <ProfileView user={currentUser} history={history} />}
+        {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} evaluations={evaluations} participantsData={participantsData} />}
         {role === "admin" && view === "courses" && <CoursesView evaluations={evaluations} onCreate={() => setBuilderOpen(true)} />}
         {role === "admin" && view === "participants" && <ParticipantsView participantsData={participantsData} onAdd={addParticipant} />}
-        {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} connected={backendMode === "sheets"} />}
+        {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} evaluations={evaluations} onEvaluationChange={loadScoreboard} />}
       </div>
       <MobileNav role={role} view={view} setView={setView} />
     </div>

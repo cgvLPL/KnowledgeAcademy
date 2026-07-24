@@ -41,20 +41,15 @@ Follow [google-apps-script/README.md](google-apps-script/README.md) to create th
 spreadsheet backend and deploy its Apps Script Web App. Set the resulting
 `/exec` URL as `GOOGLE_APPS_SCRIPT_URL` in the hosted site.
 
-Until that variable is configured, the site automatically opens in interactive
-demo mode using the prefilled participant and administrator credentials. Demo
-mode is for visual and workflow review; connected mode authenticates against
-the spreadsheet and records scores online.
+The application does not contain offline or demo accounts. Authentication and
+all evaluation data come from the connected spreadsheet.
 
-## Temporary setup accounts
+## Clean initial workspace
 
-Running `setupEvaluationPlatform()` creates:
-
-- Administrator: `admin@cgv.co.id` / `ChangeMe123!`
-- Participant: `rayhan.ardhana@cgv.co.id` / `participant123`
-
-Change the administrator password immediately after setup. New participant
-accounts receive `Welcome123!` until an administrator resets the password.
+The setup creates or preserves one administrator and removes seeded content,
+participants, attempts, answers, and sessions. Configure the initial
+administrator through Apps Script Properties as described in
+[google-apps-script/README.md](google-apps-script/README.md).
 
 ## Data model
 

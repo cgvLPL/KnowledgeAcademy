@@ -150,7 +150,7 @@ function setupEvaluationPlatform() {
     });
     ensureSettings_();
     ensurePepper_();
-    seedDemoData_();
+    const admin = resetPlatformDataToAdminOnly_();
     buildDashboard_();
 
     SpreadsheetApp.flush();
@@ -160,10 +160,30 @@ function setupEvaluationPlatform() {
       sheets: spreadsheet.getSheets().map(function (sheet) {
         return sheet.getName();
       }),
-      adminEmail: "admin@cgv.co.id",
-      temporaryAdminPassword: "ChangeMe123!",
-      participantEmail: "rayhan.ardhana@cgv.co.id",
-      temporaryParticipantPassword: "participant123",
+      adminEmail: admin.email,
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function resetEvaluationPlatformToAdminOnly() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    Object.keys(HEADERS).forEach(function (sheetName) {
+      ensureDataSheet_(spreadsheet, sheetName, HEADERS[sheetName]);
+    });
+    ensureSettings_();
+    ensurePepper_();
+    const admin = resetPlatformDataToAdminOnly_();
+    buildDashboard_();
+    SpreadsheetApp.flush();
+    return {
+      ok: true,
+      adminEmail: admin.email,
+      message: "All participant accounts, courses, questions, attempts, answers, and sessions were removed.",
     };
   } finally {
     lock.releaseLock();
@@ -253,120 +273,61 @@ function ensurePepper_() {
   }
 }
 
-function seedDemoData_() {
-  const users = rowsAsObjects_(getSheet_(APP.sheets.users));
-  if (!users.length) {
-    createUserInternal_({
-      email: "admin@cgv.co.id",
-      fullName: "Alicia Tan",
-      branch: "Head Office",
-      password: "ChangeMe123!",
+function resetPlatformDataToAdminOnly_() {
+  const usersSheet = getSheet_(APP.sheets.users);
+  const users = rowsAsObjects_(usersSheet);
+  let admin = users.find(function (user) {
+    return user.role === "admin" && user.status === "active";
+  }) || users.find(function (user) {
+    return user.role === "admin";
+  });
+
+  if (!admin) {
+    const properties = PropertiesService.getScriptProperties();
+    const adminEmail = normalizeEmail_(properties.getProperty("INITIAL_ADMIN_EMAIL"));
+    const adminPassword = String(properties.getProperty("INITIAL_ADMIN_PASSWORD") || "");
+    const adminName = String(properties.getProperty("INITIAL_ADMIN_NAME") || "Administrator").trim();
+    if (!adminEmail || adminPassword.length < 8) {
+      throw new Error(
+        "Set INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD (minimum 8 characters) in Apps Script Properties before setup.",
+      );
+    }
+    admin = createUserInternal_({
+      email: adminEmail,
+      fullName: adminName,
+      branch: String(properties.getProperty("INITIAL_ADMIN_BRANCH") || ""),
+      password: adminPassword,
       role: "admin",
       status: "active",
     });
-    createUserInternal_({
-      email: "rayhan.ardhana@cgv.co.id",
-      fullName: "Rayhan Ardhana",
-      branch: "Grand Indonesia",
-      password: "participant123",
-      role: "participant",
-      status: "active",
-    });
-    [
-      ["nadia.pratama@cgv.co.id", "Nadia Pratama", "Grand Indonesia"],
-      ["dimas.arya@cgv.co.id", "Dimas Arya", "Central Park"],
-      ["salsa.nabila@cgv.co.id", "Salsa Nabila", "Pacific Place"],
-      ["kevin.wijaya@cgv.co.id", "Kevin Wijaya", "FX Sudirman"],
-    ].forEach(function (item) {
-      createUserInternal_({
-        email: item[0],
-        fullName: item[1],
-        branch: item[2],
-        password: "Welcome123!",
-        role: "participant",
-        status: "active",
-      });
-    });
   }
 
-  const coursesSheet = getSheet_(APP.sheets.courses);
-  if (coursesSheet.getLastRow() === 1) {
-    const admin = findUserByEmail_("admin@cgv.co.id");
-    const courseId = Utilities.getUuid();
-    const now = new Date();
-    coursesSheet.appendRow([
-      courseId,
-      "Operational Excellence 2026",
-      "Core operating procedures, service standards, and daily readiness.",
-      "Operations",
-      75,
-      20,
-      new Date("2026-07-20T00:00:00+07:00"),
-      new Date("2026-07-30T23:59:59+07:00"),
-      "live",
-      admin.user_id,
-      now,
-      now,
-    ]);
-    seedQuestions_(courseId);
-    seedAttempts_(courseId);
-  }
-}
+  rowsAsObjects_(usersSheet)
+    .filter(function (user) { return user.user_id !== admin.user_id; })
+    .sort(function (a, b) { return b.__row - a.__row; })
+    .forEach(function (user) { usersSheet.deleteRow(user.__row); });
 
-function seedQuestions_(courseId) {
-  const sheet = getSheet_(APP.sheets.questions);
-  const items = [
-    ["A guest reports that their auditorium seat is damaged. What should you do first?", "Ask the guest to return after the movie", "Apologize, relocate the guest, and report the seat", "Offer a refund without checking alternatives", "Tell the guest to choose any available seat", "B"],
-    ["Which action best supports a smooth opening shift before guests arrive?", "Wait for the first guest before checking equipment", "Only inspect the lobby", "Complete the readiness checklist and escalate exceptions", "Skip the checklist if the previous shift was quiet", "C"],
-    ["What is the most appropriate response when a queue begins to grow quickly?", "Activate the queue support plan and communicate wait times", "Close one service point", "Ask guests to come back later", "Continue working without informing anyone", "A"],
-    ["When handling a cash discrepancy, which sequence is correct?", "Replace the amount personally and say nothing", "Recount, document, and notify the authorized supervisor", "Ask another team member to take responsibility", "Record it at the end of the month", "B"],
-    ["Which detail is most important when handing over an unresolved operational issue?", "Only the name of the previous shift", "A verbal note with no owner", "Issue status, action taken, evidence, and next owner", "The time the shift ended", "C"],
-    ["What should happen immediately after identifying a safety hazard in a guest area?", "Secure the area and follow the reporting procedure", "Wait until the next scheduled inspection", "Post about it in the team group only", "Move it out of sight", "A"],
-    ["Why are standard operating procedures reviewed during evaluations?", "To make every task take longer", "To replace supervisor guidance", "To support safe, consistent, and measurable service", "To reduce communication between shifts", "C"],
-    ["A system is temporarily unavailable. What is the best operational response?", "Stop serving all guests without explanation", "Use the approved contingency process and log the incident", "Use a personal account to continue", "Ignore the issue if the queue is short", "B"],
-  ];
-  sheet.getRange(2, 1, items.length, HEADERS.Questions.length).setValues(
-    items.map(function (item, index) {
-      return [
-        Utilities.getUuid(),
-        courseId,
-        index + 1,
-        item[0],
-        item[1],
-        item[2],
-        item[3],
-        item[4],
-        item[5],
-        1,
-        "",
-      ];
-    }),
-  );
-}
-
-function seedAttempts_(courseId) {
-  const users = rowsAsObjects_(getSheet_(APP.sheets.users))
-    .filter(function (user) { return user.role === "participant"; });
-  const scores = [100, 96, 96, 92, 88];
-  const durations = [521, 558, 604, 702, 739];
-  const sheet = getSheet_(APP.sheets.attempts);
-  users.slice(0, 5).forEach(function (user, index) {
-    const submitted = new Date(Date.now() - index * 3600000);
-    const started = new Date(submitted.getTime() - durations[index] * 1000);
-    sheet.appendRow([
-      Utilities.getUuid(),
-      courseId,
-      user.user_id,
-      started,
-      submitted,
-      "submitted",
-      scores[index],
-      Math.round(scores[index] / 100 * 8),
-      8,
-      durations[index],
-      "{}",
-    ]);
+  updateObjectRow_(usersSheet, findById_(APP.sheets.users, "user_id", admin.user_id).__row, {
+    role: "admin",
+    status: "active",
   });
+
+  [
+    APP.sheets.courses,
+    APP.sheets.questions,
+    APP.sheets.attempts,
+    APP.sheets.answers,
+    APP.sheets.sessions,
+  ].forEach(function (sheetName) {
+    clearDataRows_(getSheet_(sheetName));
+  });
+
+  return findById_(APP.sheets.users, "user_id", admin.user_id);
+}
+
+function clearDataRows_(sheet) {
+  const rowCount = sheet.getLastRow() - 1;
+  if (rowCount > 0) sheet.deleteRows(2, rowCount);
 }
 
 function login_(body) {
@@ -558,12 +519,20 @@ function adminGetDashboard_(body) {
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses));
   const users = rowsAsObjects_(getSheet_(APP.sheets.users))
     .filter(function (user) { return user.role === "participant"; });
+  const allSubmittedAttempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(function (attempt) { return attempt.status === "submitted"; });
   const selectedCourseId = String(body.courseId || (courses[0] && courses[0].course_id) || "");
-  const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+  const attempts = allSubmittedAttempts
     .filter(function (attempt) {
-      return attempt.course_id === selectedCourseId && attempt.status === "submitted";
+      return attempt.course_id === selectedCourseId;
     });
   const userMap = indexBy_(users, "user_id");
+  const participantStats = allSubmittedAttempts.reduce(function (stats, attempt) {
+    if (!stats[attempt.user_id]) stats[attempt.user_id] = { attempts: 0, scoreTotal: 0 };
+    stats[attempt.user_id].attempts += 1;
+    stats[attempt.user_id].scoreTotal += Number(attempt.score || 0);
+    return stats;
+  }, {});
   const scoreboard = attempts
     .map(function (attempt) {
       const user = userMap[attempt.user_id] || {};
@@ -590,7 +559,13 @@ function adminGetDashboard_(body) {
   return {
     ok: true,
     courses: courses.map(publicCourse_),
-    participants: users.map(publicUser_),
+    participants: users.map(function (user) {
+      const publicUser = publicUser_(user);
+      const stats = participantStats[user.user_id] || { attempts: 0, scoreTotal: 0 };
+      publicUser.attempts = stats.attempts;
+      publicUser.average = stats.attempts ? Math.round(stats.scoreTotal / stats.attempts) : 0;
+      return publicUser;
+    }),
     scoreboard: scoreboard,
     summary: {
       participants: users.length,
@@ -677,8 +652,10 @@ function adminSaveParticipant_(body) {
   requireSession_(body.token, "admin");
   const participant = body.participant || {};
   const email = normalizeEmail_(participant.email);
+  const temporaryPassword = String(participant.password || "");
   if (!email) throw new Error("Participant email is required.");
   if (!String(participant.fullName || "").trim()) throw new Error("Participant name is required.");
+  if (temporaryPassword.length < 8) throw new Error("Temporary password must be at least eight characters.");
   const existing = findUserByEmail_(email);
   if (existing) {
     updateObjectRow_(getSheet_(APP.sheets.users), existing.__row, {
@@ -688,7 +665,6 @@ function adminSaveParticipant_(body) {
     });
     return { ok: true, user: publicUser_(findUserByEmail_(email)) };
   }
-  const temporaryPassword = String(participant.password || "Welcome123!");
   const user = createUserInternal_({
     email: email,
     fullName: String(participant.fullName).trim(),
