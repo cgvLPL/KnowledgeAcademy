@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
+import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -10,6 +11,7 @@ import "./button-safety-net.css";
 import "./scoreboard-visibility.css";
 import "./layout-guard.css";
 import "./course-builder-performance.css";
+import "./admin-functionality-enhancer.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,6 +58,7 @@ export default function RootLayout({
         <ButtonSafetyNet />
         <CourseBuilderEnhancer />
         <ResultSyncEnhancer />
+        <AdminFunctionalityEnhancer />
       </body>
     </html>
   );
