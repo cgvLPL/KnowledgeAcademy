@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const endpointFromBuild = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const TOKEN_KEY = "cgv-exams-session-token";
@@ -27,6 +27,8 @@ type ApiCourse = {
   endAt?: string;
   status?: string;
   questionCount?: number;
+  participants?: number;
+  average?: number;
 };
 
 type ApiQuestion = {
@@ -50,35 +52,40 @@ type ModalState =
   | { type: "admin" }
   | { type: "account"; user: ApiUser }
   | { type: "preview"; course: ApiCourse; questions: ApiQuestion[] }
-  | { type: "edit"; course: ApiCourse; questions: ApiQuestion[] }
+  | { type: "edit"; course: ApiCourse; questions: ApiQuestion[]; originalTitle: string }
   | { type: "courseActions"; course: ApiCourse }
   | { type: "userActions"; user: ApiUser }
   | { type: "message"; title: string; message: string }
   | null;
 
-function labelOf(button: HTMLButtonElement) {
-  return (button.getAttribute("aria-label") || button.textContent || "")
-    .replace(/\s+/g, " ")
+function normalize(value: string | null | undefined) {
+  return (value || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function buttonLabel(button: HTMLButtonElement) {
+  return normalize(button.getAttribute("aria-label") || button.textContent);
+}
+
+function courseTitleFromRow(element: Element) {
+  return element.closest("tr")?.querySelector(".table-title-cell strong")?.textContent?.trim() || "";
+}
+
+function usernameFromRow(element: Element) {
+  return (element.closest("tr")?.querySelector(".participant-cell span")?.textContent || "")
+    .replace(/^@/, "")
     .trim()
     .toLowerCase();
 }
 
 function dateInput(value: string | undefined) {
   if (!value) return "";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return parsed.toISOString().slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
 
-function courseTitleFromRow(button: Element) {
-  return button.closest("tr")?.querySelector(".table-title-cell strong")?.textContent?.trim() || "";
-}
-
-function usernameFromRow(button: Element) {
-  return (button.closest("tr")?.querySelector(".participant-cell span")?.textContent || "")
-    .replace(/^@/, "")
-    .trim()
-    .toLowerCase();
+function statusLabel(value: string | undefined) {
+  const status = normalize(value) || "draft";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 async function api<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
@@ -86,14 +93,58 @@ async function api<T>(action: string, payload: Record<string, unknown> = {}): Pr
   const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
   if (!token) throw new Error("Your administrator session has expired. Please sign in again.");
   if (!endpoint) throw new Error("The Google Apps Script endpoint is not configured.");
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action, token, ...payload }),
   });
   const data = await response.json() as T & { ok?: boolean; error?: string };
-  if (!response.ok || data.ok === false) throw new Error(data.error || "The action could not be completed.");
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || "The action could not be completed.");
+  }
   return data;
+}
+
+function findCourseRow(title: string) {
+  return Array.from(document.querySelectorAll<HTMLTableRowElement>("tbody tr"))
+    .find((row) => row.querySelector(".table-title-cell strong")?.textContent?.trim() === title) || null;
+}
+
+function findUserRow(username: string) {
+  return Array.from(document.querySelectorAll<HTMLTableRowElement>("tbody tr"))
+    .find((row) => normalize(row.querySelector(".participant-cell span")?.textContent).replace(/^@/, "") === normalize(username)) || null;
+}
+
+function updateCourseRow(originalTitle: string, course: ApiCourse) {
+  const row = findCourseRow(originalTitle) || findCourseRow(String(course.title || ""));
+  if (!row) return;
+  const title = row.querySelector<HTMLElement>(".table-title-cell strong");
+  const subtitle = row.querySelector<HTMLElement>(".table-title-cell span");
+  const status = row.querySelector<HTMLElement>(".status-pill");
+  const schedule = row.querySelector<HTMLElement>(".date-cell strong");
+  const duration = row.querySelector<HTMLElement>(".date-cell span");
+  const cells = row.querySelectorAll<HTMLTableCellElement>("td");
+
+  if (title) title.textContent = String(course.title || originalTitle);
+  if (subtitle) subtitle.textContent = `${course.category || "General"} · ${Number(course.questionCount || 0)} questions`;
+  if (status) {
+    status.textContent = statusLabel(course.status);
+    status.className = `status-pill status-${normalize(course.status) || "draft"}`;
+  }
+  if (schedule) schedule.textContent = course.endAt ? new Date(course.endAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not scheduled";
+  if (duration) duration.textContent = `${Number(course.duration || 20)} minute limit`;
+  if (cells[3]) cells[3].textContent = Number(course.participants || 0) ? String(course.participants) : "—";
+  if (cells[4]) cells[4].textContent = Number(course.average || 0) ? `${course.average}%` : "—";
+}
+
+function updateUserRow(user: ApiUser) {
+  const row = findUserRow(String(user.username || ""));
+  const pill = row?.querySelector<HTMLElement>(".outcome-pill");
+  if (!pill) return;
+  const active = normalize(user.status) === "active";
+  pill.textContent = active ? "Active" : "Inactive";
+  pill.className = `outcome-pill ${active ? "pass" : "neutral"}`;
 }
 
 export default function AdminFunctionalityEnhancer() {
@@ -110,11 +161,6 @@ export default function AdminFunctionalityEnhancer() {
   const [editCourse, setEditCourse] = useState<ApiCourse | null>(null);
   const [editQuestions, setEditQuestions] = useState<ApiQuestion[]>([]);
   const [resetPassword, setResetPassword] = useState("");
-
-  const isAdmin = useMemo(
-    () => typeof window !== "undefined" && window.sessionStorage.getItem(ROLE_KEY) === "admin",
-    [modal],
-  );
 
   function closeModal() {
     if (busy) return;
@@ -134,28 +180,29 @@ export default function AdminFunctionalityEnhancer() {
     return api<DashboardData>("adminGetDashboard");
   }
 
-  async function findCourse(button: Element) {
-    const title = courseTitleFromRow(button);
+  async function locateCourse(element: Element) {
+    const title = courseTitleFromRow(element);
     const data = await dashboard();
     const course = (data.courses || []).find((item) => String(item.title || "") === title);
     if (!course?.id) throw new Error("The selected course could not be found.");
     return course;
   }
 
-  async function findUser(button: Element) {
-    const username = usernameFromRow(button);
+  async function locateUser(element: Element) {
+    const username = usernameFromRow(element);
     const data = await dashboard();
     const user = (data.participants || []).find(
-      (item) => String(item.username || "").toLowerCase() === username,
+      (item) => normalize(item.username) === username,
     );
     if (!user?.id) throw new Error("The selected account could not be found.");
     return user;
   }
 
   useEffect(() => {
-    const sync = () => {
+    const injectControls = () => {
+      if (window.sessionStorage.getItem(ROLE_KEY) !== "admin") return;
       const addParticipant = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-        .find((button) => labelOf(button) === "add participant");
+        .find((button) => buttonLabel(button) === "add participant");
       if (addParticipant && !document.querySelector("[data-cgv-add-admin]")) {
         const button = document.createElement("button");
         button.type = "button";
@@ -165,20 +212,17 @@ export default function AdminFunctionalityEnhancer() {
         addParticipant.parentElement?.appendChild(button);
       }
 
-      const remember = document.querySelector<HTMLElement>(".login-options .check-label");
-      if (remember) remember.hidden = true;
-
-      const userChip = document.querySelector<HTMLElement>(".user-chip");
-      if (userChip) {
-        userChip.tabIndex = 0;
-        userChip.setAttribute("role", "button");
-        userChip.setAttribute("aria-label", "Open account");
+      const chip = document.querySelector<HTMLElement>(".user-chip");
+      if (chip) {
+        chip.tabIndex = 0;
+        chip.setAttribute("role", "button");
+        chip.setAttribute("aria-label", "Open account");
       }
     };
 
-    const observer = new MutationObserver(sync);
+    const observer = new MutationObserver(injectControls);
     observer.observe(document.body, { childList: true, subtree: true });
-    sync();
+    injectControls();
 
     const onClick = async (event: MouseEvent) => {
       const target = event.target;
@@ -189,13 +233,17 @@ export default function AdminFunctionalityEnhancer() {
         event.preventDefault();
         if (window.sessionStorage.getItem(ROLE_KEY) === "participant") {
           Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-            .find((button) => /my profile|profile/.test(labelOf(button)))?.click();
+            .find((button) => /my profile|profile/.test(buttonLabel(button)))?.click();
         } else {
           try {
             const data = await dashboard();
             setModal({ type: "account", user: data.user || {} });
           } catch (nextError) {
-            setModal({ type: "message", title: "Account", message: nextError instanceof Error ? nextError.message : "Unable to load account details." });
+            setModal({
+              type: "message",
+              title: "Account",
+              message: nextError instanceof Error ? nextError.message : "Unable to load account details.",
+            });
           }
         }
         return;
@@ -211,41 +259,65 @@ export default function AdminFunctionalityEnhancer() {
         return;
       }
 
-      const action = labelOf(button);
-      const isCourseAction = Boolean(button.closest(".inline-actions") && button.closest("tr")?.querySelector(".table-title-cell"));
-      const isParticipantMore = Boolean(button.querySelector(".lucide-more-horizontal") && button.closest("tr")?.querySelector(".participant-cell"));
-      if (!isCourseAction && !isParticipantMore) return;
+      const action = buttonLabel(button);
+      const courseAction = Boolean(
+        button.closest(".inline-actions") && button.closest("tr")?.querySelector(".table-title-cell"),
+      );
+      const participantAction = Boolean(
+        button.querySelector(".lucide-more-horizontal") && button.closest("tr")?.querySelector(".participant-cell"),
+      );
+      if (!courseAction && !participantAction) return;
 
       event.preventDefault();
       event.stopImmediatePropagation();
       setBusy(true);
       setError("");
       try {
-        if (isParticipantMore) {
-          setModal({ type: "userActions", user: await findUser(button) });
+        if (participantAction) {
+          setModal({ type: "userActions", user: await locateUser(button) });
           return;
         }
 
-        const course = await findCourse(button);
+        const course = await locateCourse(button);
         if (action === "duplicate") {
-          await api("adminDuplicateCourse", { courseId: course.id });
+          const result = await api<{ course: ApiCourse }>("adminDuplicateCourse", { courseId: course.id });
+          const sourceRow = button.closest<HTMLTableRowElement>("tr");
+          if (sourceRow && result.course) {
+            const clone = sourceRow.cloneNode(true) as HTMLTableRowElement;
+            sourceRow.parentElement?.insertBefore(clone, sourceRow);
+            updateCourseRow(course.title || "", result.course);
+          }
           toast("Course duplicated as a draft.");
-          window.setTimeout(() => window.location.reload(), 700);
           return;
         }
+
         if (action === "preview" || action === "edit") {
-          const data = await api<{ course: ApiCourse; questions: ApiQuestion[] }>("adminGetCourse", { courseId: course.id });
-          if (action === "preview") setModal({ type: "preview", course: data.course, questions: data.questions || [] });
-          else {
+          const data = await api<{ course: ApiCourse; questions: ApiQuestion[] }>(
+            "adminGetCourse",
+            { courseId: course.id },
+          );
+          if (action === "preview") {
+            setModal({ type: "preview", course: data.course, questions: data.questions || [] });
+          } else {
             setEditCourse(data.course);
             setEditQuestions(data.questions || []);
-            setModal({ type: "edit", course: data.course, questions: data.questions || [] });
+            setModal({
+              type: "edit",
+              course: data.course,
+              questions: data.questions || [],
+              originalTitle: course.title || "",
+            });
           }
           return;
         }
+
         setModal({ type: "courseActions", course });
       } catch (nextError) {
-        setModal({ type: "message", title: "Action failed", message: nextError instanceof Error ? nextError.message : "The action could not be completed." });
+        setModal({
+          type: "message",
+          title: "Action failed",
+          message: nextError instanceof Error ? nextError.message : "The action could not be completed.",
+        });
       } finally {
         setBusy(false);
       }
@@ -253,7 +325,10 @@ export default function AdminFunctionalityEnhancer() {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeModal();
-      if ((event.key === "Enter" || event.key === " ") && document.activeElement?.classList.contains("user-chip")) {
+      if (
+        (event.key === "Enter" || event.key === " ") &&
+        document.activeElement?.classList.contains("user-chip")
+      ) {
         event.preventDefault();
         (document.activeElement as HTMLElement).click();
       }
@@ -266,7 +341,7 @@ export default function AdminFunctionalityEnhancer() {
       document.removeEventListener("click", onClick, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [busy]);
 
   async function createAdmin(event: FormEvent) {
     event.preventDefault();
@@ -297,22 +372,29 @@ export default function AdminFunctionalityEnhancer() {
   }
 
   function updateQuestion(index: number, patch: Partial<ApiQuestion>) {
-    setEditQuestions((items) => items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
+    setEditQuestions((items) => items.map((item, itemIndex) => (
+      itemIndex === index ? { ...item, ...patch } : item
+    )));
   }
 
   function updateOption(questionIndex: number, optionIndex: number, value: string) {
-    setEditQuestions((items) => items.map((item, itemIndex) => itemIndex === questionIndex
-      ? { ...item, options: item.options.map((option, index) => index === optionIndex ? value : option) }
-      : item));
+    setEditQuestions((items) => items.map((item, itemIndex) => (
+      itemIndex === questionIndex
+        ? {
+            ...item,
+            options: item.options.map((option, index) => index === optionIndex ? value : option),
+          }
+        : item
+    )));
   }
 
   async function saveEditedCourse(event: FormEvent) {
     event.preventDefault();
-    if (!editCourse?.id) return;
+    if (!editCourse?.id || modal?.type !== "edit") return;
     setBusy(true);
     setError("");
     try {
-      await api("adminSaveCourse", {
+      const data = await api<{ course: ApiCourse }>("adminSaveCourse", {
         course: {
           id: editCourse.id,
           title: editCourse.title,
@@ -322,7 +404,7 @@ export default function AdminFunctionalityEnhancer() {
           duration: Number(editCourse.duration || 20),
           startAt: editCourse.startAt || "",
           endAt: editCourse.endAt || "",
-          status: String(editCourse.status || "draft").toLowerCase(),
+          status: normalize(editCourse.status) || "draft",
           questions: editQuestions.map((question) => ({
             prompt: question.prompt,
             options: question.options,
@@ -332,9 +414,9 @@ export default function AdminFunctionalityEnhancer() {
           })),
         },
       });
+      updateCourseRow(modal.originalTitle, data.course);
       toast("Course changes saved.");
       setModal(null);
-      window.setTimeout(() => window.location.reload(), 700);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to save this course.");
     } finally {
@@ -347,10 +429,13 @@ export default function AdminFunctionalityEnhancer() {
     setBusy(true);
     setError("");
     try {
-      await api("adminSetCourseStatus", { courseId: course.id, status });
+      const data = await api<{ course: ApiCourse }>("adminSetCourseStatus", {
+        courseId: course.id,
+        status,
+      });
+      updateCourseRow(course.title || "", data.course);
       toast(`Course status changed to ${status}.`);
       setModal(null);
-      window.setTimeout(() => window.location.reload(), 600);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to change course status.");
     } finally {
@@ -359,13 +444,24 @@ export default function AdminFunctionalityEnhancer() {
   }
 
   async function removeCourse(course: ApiCourse) {
-    if (!course.id || !window.confirm(`Delete ${course.title || "this course"}? Courses with results will be archived instead.`)) return;
+    if (
+      !course.id ||
+      !window.confirm(`Delete ${course.title || "this course"}? Courses with results will be archived instead.`)
+    ) return;
     setBusy(true);
+    setError("");
     try {
-      const result = await api<{ message?: string }>("adminDeleteCourse", { courseId: course.id });
+      const result = await api<{ archived?: boolean; deleted?: boolean; message?: string }>(
+        "adminDeleteCourse",
+        { courseId: course.id },
+      );
+      if (result.archived) {
+        updateCourseRow(course.title || "", { ...course, status: "completed" });
+      } else {
+        findCourseRow(course.title || "")?.remove();
+      }
       toast(result.message || "Course removed.");
       setModal(null);
-      window.setTimeout(() => window.location.reload(), 700);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to remove this course.");
     } finally {
@@ -378,10 +474,13 @@ export default function AdminFunctionalityEnhancer() {
     setBusy(true);
     setError("");
     try {
-      await api("adminSetUserStatus", { userId: user.id, status });
+      const data = await api<{ user: ApiUser }>("adminSetUserStatus", {
+        userId: user.id,
+        status,
+      });
+      updateUserRow(data.user);
       toast(`Account ${status === "active" ? "activated" : "deactivated"}.`);
       setModal(null);
-      window.setTimeout(() => window.location.reload(), 600);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to change account status.");
     } finally {
@@ -413,7 +512,12 @@ export default function AdminFunctionalityEnhancer() {
       {notice && <div className="cgv-function-toast" role="status">{notice}</div>}
       {modal && (
         <div className="modal-backdrop cgv-function-backdrop" onMouseDown={closeModal}>
-          <section className={`confirm-modal cgv-function-modal ${modal.type === "edit" ? "cgv-course-editor-modal" : ""}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+          <section
+            className={`confirm-modal cgv-function-modal ${modal.type === "edit" ? "cgv-course-editor-modal" : ""}`}
+            onMouseDown={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
             <button type="button" className="modal-close" onClick={closeModal} aria-label="Close dialog">×</button>
 
             {modal.type === "admin" && (
@@ -426,53 +530,145 @@ export default function AdminFunctionalityEnhancer() {
                 <label className="field-label">Branch / department<input value={adminBranch} onChange={(event) => setAdminBranch(event.target.value)} /></label>
                 <label className="field-label">Temporary password<input required type="password" minLength={8} value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} /></label>
                 {error && <p className="login-error">{error}</p>}
-                <div className="modal-actions"><button type="button" className="secondary-button" onClick={closeModal}>Cancel</button><button type="submit" className="primary-button" disabled={busy}>{busy ? "Creating…" : "Create administrator"}</button></div>
+                <div className="modal-actions">
+                  <button type="button" className="secondary-button" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="primary-button" disabled={busy}>{busy ? "Creating…" : "Create administrator"}</button>
+                </div>
               </form>
             )}
 
             {modal.type === "account" && (
-              <><span className="card-kicker">SIGNED IN</span><h2>{modal.user.fullName || "Administrator"}</h2><p>@{modal.user.username || "admin"}{modal.user.branch ? ` · ${modal.user.branch}` : ""}</p><div className="cgv-account-summary"><div><span>Role</span><strong>{modal.user.role || "admin"}</strong></div><div><span>Status</span><strong>{modal.user.status || "active"}</strong></div><div><span>Account ID</span><strong>{modal.user.id || "—"}</strong></div></div><div className="modal-actions"><button className="primary-button" onClick={closeModal}>Done</button></div></>
+              <>
+                <span className="card-kicker">SIGNED IN</span>
+                <h2>{modal.user.fullName || "Administrator"}</h2>
+                <p>@{modal.user.username || "admin"}{modal.user.branch ? ` · ${modal.user.branch}` : ""}</p>
+                <div className="cgv-account-summary">
+                  <div><span>Role</span><strong>{modal.user.role || "admin"}</strong></div>
+                  <div><span>Status</span><strong>{modal.user.status || "active"}</strong></div>
+                  <div><span>Account ID</span><strong>{modal.user.id || "—"}</strong></div>
+                </div>
+                <div className="modal-actions"><button className="primary-button" onClick={closeModal}>Done</button></div>
+              </>
             )}
 
             {modal.type === "preview" && (
-              <><span className="card-kicker">COURSE PREVIEW</span><h2>{modal.course.title}</h2><p>{modal.course.description || "No description."}</p><div className="cgv-account-summary"><div><span>Status</span><strong>{modal.course.status}</strong></div><div><span>Duration</span><strong>{modal.course.duration} min</strong></div><div><span>Passing score</span><strong>{modal.course.passingScore}%</strong></div></div><div className="cgv-preview-questions">{modal.questions.map((question, index) => <article key={question.id || index}><strong>{index + 1}. {question.prompt}</strong><ol type="A">{question.options.map((option, optionIndex) => <li className={question.correct === String.fromCharCode(65 + optionIndex) ? "correct" : ""} key={optionIndex}>{option}</li>)}</ol></article>)}</div><div className="modal-actions"><button className="primary-button" onClick={closeModal}>Close preview</button></div></>
+              <>
+                <span className="card-kicker">COURSE PREVIEW</span>
+                <h2>{modal.course.title}</h2>
+                <p>{modal.course.description || "No description."}</p>
+                <div className="cgv-account-summary">
+                  <div><span>Status</span><strong>{statusLabel(modal.course.status)}</strong></div>
+                  <div><span>Duration</span><strong>{modal.course.duration} min</strong></div>
+                  <div><span>Passing score</span><strong>{modal.course.passingScore}%</strong></div>
+                </div>
+                <div className="cgv-preview-questions">
+                  {modal.questions.map((question, index) => (
+                    <article key={question.id || index}>
+                      <strong>{index + 1}. {question.prompt}</strong>
+                      <ol type="A">
+                        {question.options.map((option, optionIndex) => (
+                          <li
+                            className={question.correct === String.fromCharCode(65 + optionIndex) ? "correct" : ""}
+                            key={optionIndex}
+                          >
+                            {option}
+                          </li>
+                        ))}
+                      </ol>
+                    </article>
+                  ))}
+                </div>
+                <div className="modal-actions"><button className="primary-button" onClick={closeModal}>Close preview</button></div>
+              </>
             )}
 
             {modal.type === "edit" && editCourse && (
               <form onSubmit={saveEditedCourse}>
-                <span className="card-kicker">EDIT COURSE</span><h2>{editCourse.title}</h2>
+                <span className="card-kicker">EDIT COURSE</span>
+                <h2>{editCourse.title}</h2>
                 <div className="cgv-edit-grid">
                   <label className="field-label full">Title<input required value={editCourse.title || ""} onChange={(event) => setEditCourse({ ...editCourse, title: event.target.value })} /></label>
                   <label className="field-label full">Description<textarea rows={3} value={editCourse.description || ""} onChange={(event) => setEditCourse({ ...editCourse, description: event.target.value })} /></label>
                   <label className="field-label">Category<input value={editCourse.category || ""} onChange={(event) => setEditCourse({ ...editCourse, category: event.target.value })} /></label>
                   <label className="field-label">Duration<input type="number" min={1} value={editCourse.duration || 20} onChange={(event) => setEditCourse({ ...editCourse, duration: Number(event.target.value) })} /></label>
                   <label className="field-label">Passing score<input type="number" min={1} max={100} value={editCourse.passingScore || 75} onChange={(event) => setEditCourse({ ...editCourse, passingScore: Number(event.target.value) })} /></label>
-                  <label className="field-label">Status<select value={String(editCourse.status || "draft").toLowerCase()} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="upcoming">Upcoming</option><option value="live">Live</option><option value="completed">Completed</option></select></label>
+                  <label className="field-label">Status<select value={normalize(editCourse.status) || "draft"} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="upcoming">Upcoming</option><option value="live">Live</option><option value="completed">Completed</option></select></label>
                   <label className="field-label">Opens on<input type="date" value={dateInput(editCourse.startAt)} onChange={(event) => setEditCourse({ ...editCourse, startAt: event.target.value ? new Date(`${event.target.value}T00:00:00`).toISOString() : "" })} /></label>
                   <label className="field-label">Closes on<input type="date" value={dateInput(editCourse.endAt)} onChange={(event) => setEditCourse({ ...editCourse, endAt: event.target.value ? new Date(`${event.target.value}T23:59:59`).toISOString() : "" })} /></label>
                 </div>
-                <div className="cgv-edit-questions">{editQuestions.map((question, questionIndex) => <article key={question.id || questionIndex}><div><strong>Question {questionIndex + 1}</strong>{editQuestions.length > 1 && <button type="button" onClick={() => setEditQuestions((items) => items.filter((_, index) => index !== questionIndex))}>Remove</button>}</div><textarea required rows={2} value={question.prompt} onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} />{question.options.map((option, optionIndex) => <label key={optionIndex}><input type="radio" name={`edit-correct-${questionIndex}`} checked={question.correct === String.fromCharCode(65 + optionIndex)} onChange={() => updateQuestion(questionIndex, { correct: String.fromCharCode(65 + optionIndex) })} /><span>{String.fromCharCode(65 + optionIndex)}</span><input required value={option} onChange={(event) => updateOption(questionIndex, optionIndex, event.target.value)} /></label>)}</article>)}</div>
+                <div className="cgv-edit-questions">
+                  {editQuestions.map((question, questionIndex) => (
+                    <article key={question.id || questionIndex}>
+                      <div>
+                        <strong>Question {questionIndex + 1}</strong>
+                        {editQuestions.length > 1 && (
+                          <button type="button" onClick={() => setEditQuestions((items) => items.filter((_, index) => index !== questionIndex))}>Remove</button>
+                        )}
+                      </div>
+                      <textarea required rows={2} value={question.prompt} onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} />
+                      {question.options.map((option, optionIndex) => (
+                        <label key={optionIndex}>
+                          <input type="radio" name={`edit-correct-${questionIndex}`} checked={question.correct === String.fromCharCode(65 + optionIndex)} onChange={() => updateQuestion(questionIndex, { correct: String.fromCharCode(65 + optionIndex) })} />
+                          <span>{String.fromCharCode(65 + optionIndex)}</span>
+                          <input required value={option} onChange={(event) => updateOption(questionIndex, optionIndex, event.target.value)} />
+                        </label>
+                      ))}
+                    </article>
+                  ))}
+                </div>
                 <button type="button" className="secondary-button full" onClick={() => setEditQuestions((items) => [...items, { prompt: "", options: ["", "", "", ""], correct: "A", points: 1 }])}>Add question</button>
                 {error && <p className="login-error">{error}</p>}
-                <div className="modal-actions"><button type="button" className="secondary-button" onClick={closeModal}>Cancel</button><button type="submit" className="primary-button" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button></div>
+                <div className="modal-actions">
+                  <button type="button" className="secondary-button" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="primary-button" disabled={busy}>{busy ? "Saving…" : "Save changes"}</button>
+                </div>
               </form>
             )}
 
             {modal.type === "courseActions" && (
-              <><span className="card-kicker">COURSE ACTIONS</span><h2>{modal.course.title}</h2><p>Change availability or remove the course. Courses with submitted results are archived instead of permanently deleted.</p>{error && <p className="login-error">{error}</p>}<div className="cgv-action-grid"><button disabled={busy} onClick={() => void setCourseStatus(modal.course, "live")}>Publish live</button><button disabled={busy} onClick={() => void setCourseStatus(modal.course, "draft")}>Move to draft</button><button disabled={busy} onClick={() => void setCourseStatus(modal.course, "completed")}>Mark completed</button><button disabled={busy} className="danger" onClick={() => void removeCourse(modal.course)}>Delete / archive</button></div></>
+              <>
+                <span className="card-kicker">COURSE ACTIONS</span>
+                <h2>{modal.course.title}</h2>
+                <p>Change availability or remove the course. Courses with submitted results are archived instead of permanently deleted.</p>
+                {error && <p className="login-error">{error}</p>}
+                <div className="cgv-action-grid">
+                  <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "live")}>Publish live</button>
+                  <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "draft")}>Move to draft</button>
+                  <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "completed")}>Mark completed</button>
+                  <button disabled={busy} className="danger" onClick={() => void removeCourse(modal.course)}>Delete / archive</button>
+                </div>
+              </>
             )}
 
             {modal.type === "userActions" && (
-              <><span className="card-kicker">ACCOUNT ACTIONS</span><h2>{modal.user.fullName}</h2><p>@{modal.user.username} · {modal.user.branch || "No branch"}</p><div className="cgv-action-grid"><button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button><button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button></div><label className="field-label">New password<input type="password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} placeholder="Minimum 8 characters" /></label>{error && <p className="login-error">{error}</p>}<div className="modal-actions"><button className="secondary-button" onClick={closeModal}>Cancel</button><button className="primary-button" disabled={busy || resetPassword.length < 8} onClick={() => void resetUserPassword(modal.user)}>{busy ? "Saving…" : "Reset password"}</button></div></>
+              <>
+                <span className="card-kicker">ACCOUNT ACTIONS</span>
+                <h2>{modal.user.fullName}</h2>
+                <p>@{modal.user.username} · {modal.user.branch || "No branch"}</p>
+                <div className="cgv-action-grid">
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button>
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button>
+                </div>
+                <label className="field-label">New password<input type="password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} placeholder="Minimum 8 characters" /></label>
+                {error && <p className="login-error">{error}</p>}
+                <div className="modal-actions">
+                  <button className="secondary-button" onClick={closeModal}>Cancel</button>
+                  <button className="primary-button" disabled={busy || resetPassword.length < 8} onClick={() => void resetUserPassword(modal.user)}>{busy ? "Saving…" : "Reset password"}</button>
+                </div>
+              </>
             )}
 
             {modal.type === "message" && (
-              <><span className="card-kicker">CGV EXAMS</span><h2>{modal.title}</h2><p>{modal.message}</p><div className="modal-actions"><button className="primary-button" onClick={closeModal}>Done</button></div></>
+              <>
+                <span className="card-kicker">CGV EXAMS</span>
+                <h2>{modal.title}</h2>
+                <p>{modal.message}</p>
+                <div className="modal-actions"><button className="primary-button" onClick={closeModal}>Done</button></div>
+              </>
             )}
           </section>
         </div>
       )}
-      {!isAdmin && null}
     </div>
   );
 }
