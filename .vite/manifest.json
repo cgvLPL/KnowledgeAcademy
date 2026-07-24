@@ -11,7 +11,7 @@
     "name": "rolldown-runtime"
   },
   "app/exam-client.tsx": {
-    "file": "assets/exam-client-rlU0jgK-.js",
+    "file": "assets/exam-client-DRbHzky3.js",
     "name": "exam-client",
     "src": "app/exam-client.tsx",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-DoKGinXz.js",
+    "file": "assets/layout-segment-context-DVbrOzU7.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -32,7 +32,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-C3AsaKZ6.js",
+    "file": "assets/index-Dk3m2Bak.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
