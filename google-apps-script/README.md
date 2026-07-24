@@ -1,13 +1,13 @@
 # Google Sheets backend
 
-This folder turns a Google Spreadsheet into the CGV Exams database and
+This folder turns a Google Spreadsheet into the CGV Exams database and live
 scoreboard.
 
 ## Set up
 
 1. Create a blank Google Spreadsheet named **CGV Exams Data**.
 2. Open **Extensions → Apps Script**.
-3. Replace the default `Code.gs` with this folder's `Code.gs`.
+3. Replace the default `Code.gs` with this folder's latest `Code.gs`.
 4. In **Project Settings**, enable the manifest file and replace it with
    `appsscript.json`.
 5. In **Project Settings → Script properties**, add:
@@ -24,11 +24,9 @@ scoreboard.
 8. Copy the `/exec` deployment URL and set it as the hosted site's
    `GOOGLE_APPS_SCRIPT_URL` environment variable.
 
-`setupEvaluationPlatform()` creates a clean workspace containing only the
-administrator. To clean an existing workbook, run
-`resetEvaluationPlatformToAdminOnly()` once. It removes every participant,
-course, question, attempt, answer, and active session while preserving one
-administrator.
+`setupEvaluationPlatform()` creates the required tabs without deleting existing
+courses or users. To intentionally return to one administrator and no other
+data, run `resetEvaluationPlatformToAdminOnly()`.
 
 Accounts sign in with usernames. Usernames are lowercase and may contain
 letters, numbers, dots, underscores, and hyphens.
@@ -46,16 +44,38 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 5. Keep the same `/exec` URL so the website configuration does not need to
    change.
 
-Open the `/exec` URL directly after deployment. The health response should show
-`"version":"2026.07.24-results-sync"`. Until that version appears, the live
-website is still connected to the older backend and quiz results may not reach
-the `Attempts` and `Answers` tabs.
+Open the `/exec` URL directly after deployment. The health response must show:
 
-The current backend confirms every result only after `SpreadsheetApp.flush()`,
-safely accepts a repeated submission without creating duplicate rows, and uses
-short write locks so concurrent participants cannot claim the same sheet row.
-The admin overview returns submissions across all courses, while the scoreboard
-can still request one selected course.
+```json
+{"ok":true,"service":"CGV Exams","version":"2026.07.24-functional-audit"}
+```
+
+The response contains additional fields, but the version value must match.
+Until it does, the website is still connected to an older backend and newer
+administrator or course functions will not work.
+
+## Audited API functions
+
+Participant functions:
+
+- Sign in and sign out.
+- Load currently available evaluations and score history.
+- Start or resume one unfinished attempt for the same course.
+- Submit answers with server-side scoring.
+- Retry a submission safely without creating duplicate rows.
+
+Administrator functions:
+
+- Load courses, participants, administrators, scores, and aggregate statistics.
+- Create participant and administrator accounts.
+- Reset passwords and activate or deactivate accounts.
+- Create, inspect, edit, duplicate, publish, complete, archive, or delete a
+  course.
+- Preserve submitted results by archiving courses that already have attempts.
+
+The backend confirms writes only after `SpreadsheetApp.flush()`. Short script
+locks protect attempt, answer, course, account, and session writes when multiple
+participants submit at nearly the same time.
 
 ## Reset administrator credentials
 
@@ -67,8 +87,7 @@ courses or participant history:
 2. Replace the Apps Script project's `Code.gs` with the latest repository
    version.
 3. Run `resetAdminCredentials()` from the Apps Script editor.
-4. Create a new web-app deployment version if the web app is not already using
-   the latest code.
+4. Create a new web-app deployment version.
 
 The reset creates a fresh password salt and hash and signs out existing
 sessions. The plaintext password is never stored in the spreadsheet or GitHub.
@@ -80,11 +99,11 @@ server-side, and administrator actions require an administrator session.
 ## Workbook tabs
 
 - `Dashboard` — evaluation selector, KPIs, participant leaderboard, and score
-  distribution chart.
+  distribution.
 - `Users` — participant and administrator accounts.
 - `Courses` — course metadata, schedule, status, time limit, and passing score.
 - `Questions` — four-option question bank and correct-answer keys.
-- `Attempts` — one row per started/submitted evaluation.
+- `Attempts` — one row per started or submitted evaluation.
 - `Answers` — participant answer audit trail.
 - `Sessions` — expiring hashed login sessions.
 - `Settings` — app-level configuration.
