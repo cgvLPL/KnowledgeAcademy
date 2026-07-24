@@ -14,6 +14,27 @@
   white-space: nowrap;
 }
 
+.cgv-saving-course .cgv-builder-save-state {
+  color: #ffffff;
+}
+
+.cgv-saving-course .cgv-builder-save-state::before {
+  animation: cgv-course-saving 0.8s linear infinite;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  border-top-color: #afff2f;
+  content: "";
+  height: 12px;
+  margin-right: 7px;
+  width: 12px;
+}
+
+.cgv-saving-course .builder-actions button,
+.cgv-saving-course .builder-footer button:last-child {
+  opacity: 0.58;
+  pointer-events: none;
+}
+
 .question-editor {
   contain: layout paint style;
   scroll-margin-top: 112px;
@@ -51,6 +72,12 @@
 .completion-card {
   content-visibility: auto;
   contain-intrinsic-size: auto 260px;
+}
+
+@keyframes cgv-course-saving {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 760px) {
