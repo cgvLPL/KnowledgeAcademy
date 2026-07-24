@@ -31,21 +31,33 @@
   width: 164px !important;
 }
 
+/* Loading screen: compact, centred lockup with balanced vertical rhythm. */
 .boot-content {
   align-items: center !important;
   display: flex !important;
   flex-direction: column !important;
-  width: min(470px, calc(100vw - 44px)) !important;
+  justify-content: center !important;
+  width: min(420px, calc(100vw - 44px)) !important;
 }
 
 .boot-content img {
+  display: block !important;
   height: auto !important;
-  margin: 0 0 40px !important;
-  width: min(430px, 84vw) !important;
+  margin: 0 auto 24px !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  width: min(360px, 72vw) !important;
 }
 
-.boot-bar,
+.boot-bar {
+  margin-top: 0 !important;
+  max-width: 380px;
+  width: 100%;
+}
+
 .boot-content p {
+  margin-top: 14px !important;
+  text-align: center;
   width: 100%;
 }
 
@@ -81,8 +93,21 @@
     align-items: flex-start;
   }
 
+  .boot-content {
+    width: min(350px, calc(100vw - 36px)) !important;
+  }
+
   .boot-content img {
-    width: min(360px, 88vw) !important;
+    margin-bottom: 20px !important;
+    width: min(292px, 76vw) !important;
+  }
+
+  .boot-bar {
+    max-width: 320px;
+  }
+
+  .boot-content p {
+    margin-top: 12px !important;
   }
 }
 
@@ -99,5 +124,9 @@
   .quiz-header .brand-logo,
   .result-header .brand-logo {
     width: 116px !important;
+  }
+
+  .boot-content img {
+    width: min(260px, 76vw) !important;
   }
 }
