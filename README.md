@@ -1,3 +1,11 @@
+<table align="center">
+  <tr>
+    <td bgcolor="#050706" align="center">
+      <img src="public/cgv-logo.svg" alt="CGV (exams)" width="520">
+    </td>
+  </tr>
+</table>
+
 # CGV Exams
 
 An online evaluation platform for quiz courses, participant accounts, score
