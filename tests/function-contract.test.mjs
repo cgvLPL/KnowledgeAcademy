@@ -49,7 +49,7 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
 
 test("quiz timing, exit protection, and duplicate-submit protection are active", () => {
   assert.match(runtime, /remainingSeconds/);
-  assert.match(runtime, /forceSubmitAtTimeout/);
+  assert.match(runtime, /clickFinishAndSubmit/);
   assert.match(runtime, /Exit this evaluation\?/);
   assert.match(runtime, /cgvSubmitting/);
   assert.match(layout, /RuntimeFunctionalityEnhancer/);
