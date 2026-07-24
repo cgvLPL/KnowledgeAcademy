@@ -6,6 +6,7 @@ import "./reference-theme.css";
 import "./logo-lockup.css";
 import "./button-safety-net.css";
 import "./scoreboard-visibility.css";
+import "./layout-guard.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
