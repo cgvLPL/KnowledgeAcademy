@@ -1,0 +1,115 @@
+.button-safety-dialog-backdrop {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.button-safety-dialog {
+  background: #101411;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 26px;
+  color: var(--ink);
+  max-width: 470px;
+  padding: 32px;
+  position: relative;
+  width: min(100%, 470px);
+}
+
+.button-safety-dialog > span {
+  color: var(--lime);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin-bottom: 12px;
+}
+
+.button-safety-dialog h2 {
+  font-size: 32px;
+  margin: 0 40px 14px 0;
+}
+
+.button-safety-dialog p {
+  color: #b6bdb3;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 24px;
+}
+
+.button-safety-dialog-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 24px;
+  height: 42px;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 42px;
+}
+
+.button-safety-toast {
+  background: var(--lime);
+  border-radius: 999px;
+  bottom: 24px;
+  color: #10140e;
+  font-size: 12px;
+  font-weight: 750;
+  left: 50%;
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 1100;
+}
+
+.button-safety-menu-overlay {
+  background: rgba(0, 0, 0, 0.58);
+  border: 0;
+  inset: 0;
+  position: fixed;
+  z-index: 79;
+}
+
+body.cgv-mobile-menu-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  body.cgv-mobile-menu-open .sidebar {
+    background: #070a08;
+    display: flex !important;
+    height: 100dvh;
+    inset: 0 auto 0 0;
+    max-width: 330px;
+    overflow-y: auto;
+    position: fixed;
+    width: 84vw;
+    z-index: 80;
+  }
+
+  .button-safety-dialog-backdrop {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .button-safety-dialog {
+    width: 100%;
+  }
+
+  .button-safety-toast {
+    bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 761px) {
+  .button-safety-menu-overlay {
+    display: none;
+  }
+}
