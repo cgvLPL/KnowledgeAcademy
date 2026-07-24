@@ -33,6 +33,30 @@ administrator.
 Accounts sign in with usernames. Usernames are lowercase and may contain
 letters, numbers, dots, underscores, and hyphens.
 
+## Apply backend updates
+
+GitHub Pages deploys the frontend automatically, but it cannot replace an
+existing Google Apps Script web-app version. After `Code.gs` changes:
+
+1. Copy the latest repository `google-apps-script/Code.gs` into the Apps Script
+   editor.
+2. Select **Deploy → Manage deployments**.
+3. Edit the existing web-app deployment.
+4. Choose **New version**, then press **Deploy**.
+5. Keep the same `/exec` URL so the website configuration does not need to
+   change.
+
+Open the `/exec` URL directly after deployment. The health response should show
+`"version":"2026.07.24-results-sync"`. Until that version appears, the live
+website is still connected to the older backend and quiz results may not reach
+the `Attempts` and `Answers` tabs.
+
+The current backend confirms every result only after `SpreadsheetApp.flush()`,
+safely accepts a repeated submission without creating duplicate rows, and uses
+short write locks so concurrent participants cannot claim the same sheet row.
+The admin overview returns submissions across all courses, while the scoreboard
+can still request one selected course.
+
 ## Reset administrator credentials
 
 To change a forgotten administrator username or password without deleting
