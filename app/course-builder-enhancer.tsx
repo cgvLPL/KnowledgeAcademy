@@ -36,6 +36,21 @@ function findBuilderLabel(builder: Element, text: string) {
     .find((label) => normalizeText(label.textContent).includes(normalizedText));
 }
 
+function getPublishImmediatelyCheckbox(builder: Element) {
+  return findBuilderLabel(builder, "publish immediately")
+    ?.querySelector<HTMLInputElement>('input[type="checkbox"]') || null;
+}
+
+function ensurePublishImmediatelyDefault(builder: Element) {
+  const checkbox = getPublishImmediatelyCheckbox(builder);
+  if (!checkbox || checkbox.dataset.cgvPublishDefault === "set") return;
+
+  checkbox.dataset.cgvPublishDefault = "set";
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new Event("input", { bubbles: true }));
+  checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
 function readPublishingSettings(): PublishingSettings | null {
   const builder = document.querySelector(".builder-page");
   if (!builder) return null;
@@ -44,10 +59,10 @@ function readPublishingSettings(): PublishingSettings | null {
     ?.querySelector<HTMLInputElement>('input[type="date"]')?.value || "";
   const endValue = findBuilderLabel(builder, "closes on")
     ?.querySelector<HTMLInputElement>('input[type="date"]')?.value || "";
-  const publishImmediately = Boolean(
-    findBuilderLabel(builder, "publish immediately")
-      ?.querySelector<HTMLInputElement>('input[type="checkbox"]')?.checked,
-  );
+  const publishCheckbox = getPublishImmediatelyCheckbox(builder);
+  // Courses publish live by default, even when Save is used before Step 3 is opened.
+  // Once the toggle is visible, the user's explicit checked/unchecked choice wins.
+  const publishImmediately = publishCheckbox ? publishCheckbox.checked : true;
 
   const startAt = localDateToIso(startValue);
   const endAt = localDateToIso(endValue, true);
@@ -167,6 +182,8 @@ export default function CourseBuilderEnhancer() {
     const syncBuilder = () => {
       const builder = document.querySelector(".builder-page");
       if (!builder) return;
+
+      ensurePublishImmediatelyDefault(builder);
 
       const editors = Array.from(builder.querySelectorAll<HTMLElement>(".question-editor"));
       const outlineButtons = Array.from(
