@@ -1,0 +1,137 @@
+/* Final containment for course icons and title cells.
+ * Prevents inherited sizing, browser text inflation, or later theme rules from
+ * expanding the course icon and metadata over the table row.
+ */
+
+.evaluation-icon {
+  align-items: center !important;
+  aspect-ratio: 1 / 1;
+  block-size: 42px !important;
+  display: inline-flex !important;
+  flex: 0 0 42px !important;
+  font-size: 0 !important;
+  inline-size: 42px !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  max-block-size: 42px !important;
+  max-inline-size: 42px !important;
+  min-block-size: 42px !important;
+  min-inline-size: 42px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+
+.evaluation-icon > svg {
+  block-size: 20px !important;
+  flex: 0 0 20px !important;
+  inline-size: 20px !important;
+  max-block-size: 20px !important;
+  max-inline-size: 20px !important;
+  min-block-size: 20px !important;
+  min-inline-size: 20px !important;
+}
+
+.table-card .table-title-cell {
+  align-items: center !important;
+  contain: layout paint;
+  display: grid !important;
+  gap: 0 11px !important;
+  grid-template-columns: 38px minmax(0, 1fr) !important;
+  max-width: 100%;
+  min-width: 220px;
+  overflow: hidden;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+.table-card .table-title-cell > .evaluation-icon {
+  block-size: 38px !important;
+  flex-basis: 38px !important;
+  inline-size: 38px !important;
+  max-block-size: 38px !important;
+  max-inline-size: 38px !important;
+  min-block-size: 38px !important;
+  min-inline-size: 38px !important;
+}
+
+.table-card .table-title-cell > .evaluation-icon > svg {
+  block-size: 18px !important;
+  flex-basis: 18px !important;
+  inline-size: 18px !important;
+  max-block-size: 18px !important;
+  max-inline-size: 18px !important;
+  min-block-size: 18px !important;
+  min-inline-size: 18px !important;
+}
+
+.table-card .table-title-cell > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.table-card .table-title-cell strong {
+  display: -webkit-box;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.table-card .table-title-cell span {
+  display: block;
+  font-size: 9px !important;
+  line-height: 1.35 !important;
+  margin: 0 !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Participant course cards use the same icon component. */
+.course-card {
+  min-width: 0;
+  overflow: hidden;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+.course-card h3,
+.course-card > p,
+.course-card .course-category,
+.course-card .course-meta,
+.course-card .course-card-footer {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.course-card .course-meta {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .table-card .table-title-cell {
+    grid-template-columns: 36px minmax(0, 1fr) !important;
+    min-width: 200px;
+  }
+
+  .table-card .table-title-cell > .evaluation-icon {
+    block-size: 36px !important;
+    inline-size: 36px !important;
+    max-block-size: 36px !important;
+    max-inline-size: 36px !important;
+    min-block-size: 36px !important;
+    min-inline-size: 36px !important;
+  }
+}
