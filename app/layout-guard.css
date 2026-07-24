@@ -1,0 +1,245 @@
+/* Final responsive layout guard.
+ * Prevent the wide CGV (exams) SVG from expanding the sidebar or header.
+ */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.app-shell,
+.main-shell,
+.topbar,
+.topbar-actions,
+.mobile-brand,
+.brand-lockup {
+  min-width: 0;
+}
+
+.brand-lockup,
+.brand-logo {
+  max-width: 100%;
+}
+
+.brand-logo {
+  display: block;
+}
+
+@media (min-width: 981px) {
+  .app-shell {
+    align-items: stretch;
+    display: flex !important;
+    width: 100%;
+  }
+
+  .sidebar {
+    display: flex !important;
+    flex: 0 0 242px !important;
+    max-width: 242px !important;
+    min-width: 242px !important;
+    overflow: hidden;
+    width: 242px !important;
+  }
+
+  .sidebar-top,
+  .sidebar .brand-lockup {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .sidebar .brand-logo {
+    height: auto !important;
+    max-width: 100% !important;
+    width: 184px !important;
+  }
+
+  .main-shell {
+    flex: 1 1 auto !important;
+    max-width: calc(100vw - 242px);
+    min-width: 0 !important;
+    width: calc(100% - 242px) !important;
+  }
+
+  .mobile-brand {
+    display: none !important;
+  }
+
+  .page-title {
+    display: block !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar {
+    display: flex !important;
+    max-width: 100%;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    max-width: min(100%, 670px);
+  }
+
+  .top-search {
+    flex: 0 1 310px;
+    max-width: 310px;
+    min-width: 190px;
+  }
+
+  .top-search input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .user-chip {
+    max-width: 250px;
+    min-width: 0;
+  }
+
+  .user-chip > div {
+    min-width: 0;
+  }
+
+  .user-chip strong,
+  .user-chip span {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 980px) {
+  .app-shell {
+    align-items: stretch;
+    display: flex !important;
+    width: 100%;
+  }
+
+  .sidebar {
+    display: flex !important;
+    flex: 0 0 210px !important;
+    max-width: 210px !important;
+    min-width: 210px !important;
+    overflow: hidden;
+    width: 210px !important;
+  }
+
+  .sidebar-top,
+  .sidebar .brand-lockup {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .sidebar .brand-logo {
+    height: auto !important;
+    max-width: 100% !important;
+    width: 166px !important;
+  }
+
+  .main-shell {
+    flex: 1 1 auto !important;
+    max-width: calc(100vw - 210px);
+    min-width: 0 !important;
+    width: calc(100% - 210px) !important;
+  }
+
+  .mobile-brand,
+  .top-search {
+    display: none !important;
+  }
+
+  .page-title {
+    display: block !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar {
+    max-width: 100%;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    display: block !important;
+    width: 100%;
+  }
+
+  .sidebar {
+    display: none !important;
+    overflow-x: hidden;
+  }
+
+  body.cgv-mobile-menu-open .sidebar {
+    display: flex !important;
+    max-width: 320px !important;
+    min-width: 0 !important;
+    width: min(84vw, 320px) !important;
+  }
+
+  body.cgv-mobile-menu-open .sidebar-top,
+  body.cgv-mobile-menu-open .sidebar .brand-lockup {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.cgv-mobile-menu-open .sidebar .brand-logo {
+    height: auto !important;
+    max-width: 100% !important;
+    width: min(156px, 68vw) !important;
+  }
+
+  .main-shell {
+    max-width: 100vw;
+    min-width: 0;
+    width: 100% !important;
+  }
+
+  .topbar {
+    max-width: 100vw;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .mobile-brand {
+    display: flex !important;
+    flex: 1 1 auto;
+    max-width: calc(100vw - 112px);
+    overflow: hidden;
+  }
+
+  .mobile-brand .brand-lockup {
+    max-width: calc(100vw - 166px);
+    overflow: hidden;
+  }
+
+  .mobile-brand .brand-logo {
+    height: auto !important;
+    max-width: 100% !important;
+    width: min(128px, 34vw) !important;
+  }
+
+  .page-title,
+  .top-search,
+  .user-chip > div,
+  .user-chip > svg {
+    display: none !important;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+}
