@@ -1,0 +1,360 @@
+/*
+ * Application-wide visibility safeguards.
+ * Loaded last so every legacy light surface and cinematic dark surface uses
+ * an explicit, readable foreground/background pair.
+ */
+
+:root {
+  --cgv-a11y-text: #f4f6ef;
+  --cgv-a11y-secondary: #bcc4b9;
+  --cgv-a11y-muted: #9aa397;
+  --cgv-a11y-surface: #101511;
+  --cgv-a11y-raised: #182019;
+  --cgv-a11y-border: rgba(244, 246, 239, 0.18);
+  --cgv-a11y-lime: #b8ff36;
+  --cgv-a11y-danger: #ffb4ad;
+}
+
+/* Native controls and universal states */
+input,
+textarea,
+select,
+button {
+  opacity: 1;
+}
+
+input::placeholder,
+textarea::placeholder,
+.top-search input::placeholder,
+.admin-search input::placeholder {
+  color: var(--cgv-a11y-muted) !important;
+  opacity: 1 !important;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  opacity: 0.72 !important;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid var(--cgv-a11y-lime) !important;
+  outline-offset: 3px;
+}
+
+.field-label > input,
+.field-label > textarea,
+.field-label > select,
+.input-shell,
+.top-search,
+.admin-search {
+  color: var(--cgv-a11y-text);
+}
+
+.field-label > select option,
+.scoreboard-hero select option {
+  background: #ffffff;
+  color: #111412;
+}
+
+.field-label > input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  opacity: 0.9;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--cgv-a11y-text) !important;
+  box-shadow: 0 0 0 1000px #182019 inset !important;
+  caret-color: var(--cgv-a11y-text);
+}
+
+/* Every confirmation, account, course, participant and quiz dialog */
+.modal-backdrop {
+  background: rgba(1, 4, 2, 0.78) !important;
+  backdrop-filter: blur(13px) saturate(90%);
+}
+
+.confirm-modal,
+.cgv-function-modal {
+  background:
+    radial-gradient(circle at 85% 0%, rgba(184, 255, 54, 0.12), transparent 18rem),
+    linear-gradient(155deg, #182019 0%, #0d120e 62%, #090d0a 100%) !important;
+  border: 1px solid var(--cgv-a11y-border) !important;
+  box-shadow: 0 34px 110px rgba(0, 0, 0, 0.68) !important;
+  color: var(--cgv-a11y-text) !important;
+  color-scheme: dark;
+  position: relative;
+}
+
+.confirm-modal h1,
+.confirm-modal h2,
+.confirm-modal h3,
+.confirm-modal h4,
+.confirm-modal strong,
+.cgv-function-modal h1,
+.cgv-function-modal h2,
+.cgv-function-modal h3,
+.cgv-function-modal h4,
+.cgv-function-modal strong {
+  color: var(--cgv-a11y-text) !important;
+}
+
+.confirm-modal p,
+.confirm-modal small,
+.cgv-function-modal p,
+.cgv-function-modal small {
+  color: var(--cgv-a11y-secondary) !important;
+  opacity: 1 !important;
+}
+
+.confirm-modal .card-kicker,
+.cgv-function-modal .card-kicker {
+  color: var(--cgv-a11y-lime) !important;
+}
+
+.modal-close {
+  background: #232b24 !important;
+  border: 1px solid var(--cgv-a11y-border) !important;
+  color: var(--cgv-a11y-text) !important;
+}
+
+.modal-close:hover {
+  background: #303a31 !important;
+}
+
+.confirm-modal .field-label,
+.cgv-function-modal .field-label {
+  color: #e6ebe3 !important;
+  text-align: left;
+}
+
+.confirm-modal .field-label > input,
+.confirm-modal .field-label > textarea,
+.confirm-modal .field-label > select,
+.cgv-function-modal .field-label > input,
+.cgv-function-modal .field-label > textarea,
+.cgv-function-modal .field-label > select,
+.cgv-edit-questions input,
+.cgv-edit-questions textarea {
+  background: #171e18 !important;
+  border: 1px solid rgba(244, 246, 239, 0.2) !important;
+  color: var(--cgv-a11y-text) !important;
+  -webkit-text-fill-color: var(--cgv-a11y-text);
+}
+
+.confirm-modal .field-label > input:focus,
+.confirm-modal .field-label > textarea:focus,
+.confirm-modal .field-label > select:focus,
+.cgv-function-modal .field-label > input:focus,
+.cgv-function-modal .field-label > textarea:focus,
+.cgv-function-modal .field-label > select:focus,
+.cgv-edit-questions input:focus,
+.cgv-edit-questions textarea:focus {
+  border-color: var(--cgv-a11y-lime) !important;
+  box-shadow: 0 0 0 4px rgba(184, 255, 54, 0.16) !important;
+}
+
+.confirm-modal .primary-button,
+.cgv-function-modal .primary-button {
+  background: var(--cgv-a11y-lime) !important;
+  border-color: var(--cgv-a11y-lime) !important;
+  color: #10140e !important;
+}
+
+.confirm-modal .secondary-button,
+.cgv-function-modal .secondary-button,
+.cgv-action-grid button {
+  background: #202821 !important;
+  border-color: rgba(244, 246, 239, 0.2) !important;
+  color: var(--cgv-a11y-text) !important;
+}
+
+.confirm-modal .secondary-button:hover,
+.cgv-function-modal .secondary-button:hover,
+.cgv-action-grid button:hover {
+  background: #2a342b !important;
+  border-color: rgba(184, 255, 54, 0.55) !important;
+}
+
+.cgv-action-grid button.danger,
+.cgv-edit-questions article > div:first-child button {
+  color: var(--cgv-a11y-danger) !important;
+}
+
+.login-error,
+.builder-error,
+.scoreboard-error {
+  background: rgba(238, 46, 36, 0.16) !important;
+  border: 1px solid rgba(255, 180, 173, 0.42) !important;
+  color: var(--cgv-a11y-danger) !important;
+}
+
+/* Preview and account details */
+.cgv-account-summary,
+.cgv-preview-questions,
+.cgv-edit-questions {
+  text-align: left;
+}
+
+.cgv-account-summary > div,
+.cgv-preview-questions article,
+.cgv-edit-questions article {
+  background: var(--cgv-a11y-raised) !important;
+  border-color: var(--cgv-a11y-border) !important;
+  color: var(--cgv-a11y-text) !important;
+}
+
+.cgv-account-summary span {
+  color: var(--cgv-a11y-muted) !important;
+  opacity: 1 !important;
+}
+
+.cgv-account-summary strong,
+.cgv-preview-questions article > strong,
+.cgv-edit-questions article strong {
+  color: var(--cgv-a11y-text) !important;
+}
+
+.cgv-preview-questions ol {
+  color: var(--cgv-a11y-secondary);
+}
+
+.cgv-preview-questions li {
+  border-radius: 9px;
+  color: var(--cgv-a11y-secondary) !important;
+  line-height: 1.45;
+  margin-block: 3px;
+  padding: 5px 9px;
+}
+
+.cgv-preview-questions li::marker {
+  color: var(--cgv-a11y-muted);
+  font-weight: 700;
+}
+
+.cgv-preview-questions li.correct {
+  background: rgba(184, 255, 54, 0.12);
+  color: #d9ff9e !important;
+  outline: 1px solid rgba(184, 255, 54, 0.28);
+}
+
+.cgv-preview-questions li.correct::marker {
+  color: var(--cgv-a11y-lime);
+}
+
+.cgv-edit-questions label > span {
+  color: var(--cgv-a11y-text) !important;
+}
+
+/* Status and result labels must never rely on opacity alone */
+.status-pill,
+.outcome-pill,
+.rank-badge,
+.live-pill,
+.eyebrow,
+.dark-eyebrow {
+  opacity: 1 !important;
+}
+
+.status-draft,
+.outcome-pill.neutral {
+  background: rgba(196, 204, 194, 0.14) !important;
+  color: #d7ddd4 !important;
+}
+
+.status-upcoming,
+.outcome-pill.review {
+  background: rgba(255, 138, 69, 0.16) !important;
+  color: #ffc09b !important;
+}
+
+.status-live,
+.outcome-pill.pass {
+  background: rgba(184, 255, 54, 0.15) !important;
+  color: #d2ff88 !important;
+}
+
+.status-completed {
+  background: rgba(114, 160, 255, 0.17) !important;
+  color: #bad0ff !important;
+}
+
+/* Tables, empty states and helper text */
+.table-card th {
+  color: #aeb6ab !important;
+}
+
+.table-card td,
+.table-card strong,
+.table-title-cell strong,
+.participant-cell strong,
+.date-cell strong {
+  color: var(--cgv-a11y-text) !important;
+}
+
+.table-title-cell span,
+.participant-cell span,
+.date-cell span,
+.empty-state p,
+.temporary-password-note,
+.question-footer > span,
+.quiz-key span {
+  color: var(--cgv-a11y-secondary) !important;
+  opacity: 1 !important;
+}
+
+/* Explicit light surfaces retain dark foregrounds. */
+.scoreboard-hero select,
+.scoreboard-kpis > div {
+  color-scheme: light;
+}
+
+.scoreboard-hero select,
+.scoreboard-hero select:disabled,
+.scoreboard-kpis strong,
+.scoreboard-kpis span,
+.scoreboard-kpis small {
+  color: #111412 !important;
+  -webkit-text-fill-color: #111412;
+  opacity: 1 !important;
+}
+
+/* Forced-colour users keep system-level contrast. */
+@media (forced-colors: active) {
+  .confirm-modal,
+  .cgv-function-modal,
+  .cgv-account-summary > div,
+  .cgv-preview-questions article,
+  .cgv-edit-questions article {
+    border: 1px solid CanvasText !important;
+  }
+
+  .cgv-preview-questions li.correct {
+    outline: 2px solid Highlight;
+  }
+}
+
+@media (max-width: 760px) {
+  .confirm-modal,
+  .cgv-function-modal {
+    padding: 28px 20px !important;
+  }
+
+  .modal-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions > button {
+    min-height: 48px;
+    width: 100%;
+  }
+}
