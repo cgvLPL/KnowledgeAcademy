@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
+import ResultSyncEnhancer from "./result-sync-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -54,6 +55,7 @@ export default function RootLayout({
         {children}
         <ButtonSafetyNet />
         <CourseBuilderEnhancer />
+        <ResultSyncEnhancer />
       </body>
     </html>
   );
