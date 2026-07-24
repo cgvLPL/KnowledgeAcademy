@@ -20,6 +20,7 @@ import "./visibility-audit.css";
 import "./topbar-polish.css";
 import "./settings-enhancer.css";
 import "./builder-header-polish.css";
+import "./course-table-containment.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
