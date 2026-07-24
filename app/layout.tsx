@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import ButtonSafetyNet from "./button-safety-net";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
+import "./button-safety-net.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +48,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <ButtonSafetyNet />
       </body>
     </html>
   );
