@@ -1,0 +1,265 @@
+/* Final selector-level release layer.
+   This file is loaded after every historical stylesheet. */
+
+:root {
+  --cgv-warm-amber: #ffb11f;
+  --cgv-warm-orange: #ff6a22;
+  --cgv-warm-red: #e6322f;
+  --cgv-warm-soft: rgba(255, 106, 34, 0.14);
+  --cgv-sidebar-width: 242px;
+}
+
+/* Desktop application shell: the sidebar stays attached to the viewport while
+   only the main workspace scrolls. */
+@media (min-width: 761px) {
+  .app-shell {
+    display: block !important;
+    min-height: 100dvh !important;
+    width: 100% !important;
+  }
+
+  .app-shell > .sidebar,
+  .sidebar {
+    bottom: 0 !important;
+    height: 100dvh !important;
+    inset: 0 auto 0 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    position: fixed !important;
+    scrollbar-gutter: stable;
+    top: 0 !important;
+    width: var(--cgv-sidebar-width) !important;
+    z-index: 100 !important;
+  }
+
+  .app-shell > .main-shell,
+  .main-shell {
+    margin-left: var(--cgv-sidebar-width) !important;
+    min-height: 100dvh !important;
+    width: calc(100% - var(--cgv-sidebar-width)) !important;
+  }
+
+  .main-shell > .topbar {
+    left: 0;
+    position: sticky !important;
+    top: 0 !important;
+    width: 100%;
+  }
+}
+
+/* Any class name that still advertises the historical green palette is
+   force-mapped to the approved amber/orange/red treatment. */
+[class*="icon-green"],
+[class*="accent-green"],
+[class*="metric-green"],
+[class*="badge-green"],
+[class*="status-green"],
+[class*="colour-green"],
+[class*="color-green"],
+[class~="green"] {
+  background-color: var(--cgv-warm-orange) !important;
+  background-image: linear-gradient(145deg, var(--cgv-warm-amber), var(--cgv-warm-orange) 58%, var(--cgv-warm-red)) !important;
+  border-color: rgba(255, 130, 49, 0.34) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 28px rgba(224, 56, 30, 0.2) !important;
+}
+
+[class*="icon-green"] svg,
+[class*="accent-green"] svg,
+[class*="metric-green"] svg,
+[class*="badge-green"] svg,
+[class*="status-green"] svg,
+[class*="colour-green"] svg,
+[class*="color-green"] svg,
+[class~="green"] svg {
+  color: #fff !important;
+  fill: none;
+  stroke: currentColor !important;
+}
+
+/* Course-card colour variants. */
+.course-card.accent-green,
+.course-card[class*="accent-green"],
+.evaluation-row[class*="accent-green"],
+.history-preview-card[class*="accent-green"] {
+  border-color: rgba(255, 122, 47, 0.2) !important;
+  box-shadow: inset 3px 0 0 rgba(255, 106, 34, 0.7) !important;
+}
+
+.course-card.accent-green::before,
+.course-card[class*="accent-green"]::before,
+.evaluation-row[class*="accent-green"]::before,
+.history-preview-card[class*="accent-green"]::before {
+  background: linear-gradient(180deg, var(--cgv-warm-amber), var(--cgv-warm-orange), var(--cgv-warm-red)) !important;
+}
+
+/* Success, live, active, passed and correct states. */
+.status-live,
+.status-active,
+.status-passed,
+.status-pass,
+.status-success,
+.active-status,
+.badge-active,
+.badge-success,
+.live-pill,
+.pass,
+.passed,
+.success,
+.correct,
+.answer-correct,
+.result-correct,
+.history-preview-card .pass,
+.participant-status.active,
+.account-status.active,
+.scoreboard-status.active,
+[data-status="live"],
+[data-status="active"],
+[data-status="passed"],
+[data-status="success"],
+[data-state="correct"],
+[data-state="complete"] {
+  background-color: var(--cgv-warm-soft) !important;
+  background-image: none !important;
+  border-color: rgba(255, 128, 48, 0.28) !important;
+  color: #ffad70 !important;
+}
+
+.status-live::before,
+.status-active::before,
+.status-passed::before,
+.status-pass::before,
+.status-success::before,
+.badge-active::before,
+.badge-success::before,
+.live-pill > span,
+.pass::before,
+.passed::before,
+.success::before,
+.correct::before,
+.answer-correct::before,
+.result-correct::before {
+  background: var(--cgv-warm-orange) !important;
+  border-color: #ff9b58 !important;
+  box-shadow: 0 0 12px rgba(255, 105, 34, 0.54) !important;
+}
+
+/* Progress bars, chart fills, score indicators and completion graphics. */
+.question-progress-bars button.answered,
+.quiz-key .done,
+.quiz-key i.done,
+.progress-check,
+.completed-marker,
+.answer-complete,
+.answer-list button.correct,
+.answer-list button.correct .answer-letter,
+.answer-list button.correct .answer-radio,
+.chart-bar,
+.chart-bar-fill,
+.bar-fill,
+.mini-bar span,
+.analytics-bar span,
+.analytics-bars span,
+.completion-bar span,
+.progress-bar span,
+.scoreboard-bar span,
+.result-progress span,
+.vertical-progress span,
+.orbit-dot,
+.live-dot,
+.active-dot,
+.success-dot {
+  background-color: var(--cgv-warm-orange) !important;
+  background-image: linear-gradient(90deg, var(--cgv-warm-amber), var(--cgv-warm-orange), var(--cgv-warm-red)) !important;
+  border-color: #ff9b58 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.score-ring,
+.completion-ring,
+.progress-ring {
+  background: conic-gradient(var(--cgv-warm-orange) var(--score, var(--progress, 0deg)), rgba(255, 255, 255, 0.09) 0) !important;
+}
+
+/* Historical lime buttons and selected controls. */
+.primary-button,
+.hero-button,
+.row-button:not(:disabled),
+.select-button.active,
+.role-switch button.active,
+.filter-tabs button.active,
+.sidebar-nav button.active,
+.question-outline button.active,
+.builder-progress .active,
+.question-progress-bars button.current,
+.check-label input:checked + span,
+input[type="checkbox"]:checked,
+input[type="radio"]:checked,
+.toggle input:checked + span,
+.switch input:checked + span,
+.settings-toggle input:checked + span {
+  background-color: var(--cgv-warm-orange) !important;
+  background-image: linear-gradient(100deg, var(--cgv-warm-amber), var(--cgv-warm-orange), var(--cgv-warm-red)) !important;
+  border-color: rgba(255, 128, 48, 0.56) !important;
+  color: #fff !important;
+}
+
+/* Remaining decorative and form-level green values. */
+.hero-evaluation,
+.login-page,
+.profile-page,
+.quiz-page,
+.result-page,
+.builder-page,
+.app-shell {
+  --lime: var(--cgv-warm-orange) !important;
+  --lime-dark: #2b1208 !important;
+  --green: #ff8b42 !important;
+  --success: #ff8b42 !important;
+}
+
+.input-shell:focus-within,
+.field-label > input:focus,
+.field-label > textarea:focus,
+.field-label > select:focus,
+.admin-search:focus-within,
+.top-search:focus-within {
+  border-color: #ff7a32 !important;
+  box-shadow: 0 0 0 4px rgba(255, 107, 34, 0.14) !important;
+}
+
+.sidebar-nav button small,
+.evaluation-count,
+.notification-count,
+.count-badge {
+  background: linear-gradient(135deg, var(--cgv-warm-orange), var(--cgv-warm-red)) !important;
+  color: #fff !important;
+}
+
+/* Phone layout remains full width and uses the existing compact navigation. */
+@media (max-width: 760px) {
+  :root {
+    --cgv-sidebar-width: 0px;
+  }
+
+  .app-shell > .sidebar,
+  .sidebar {
+    display: none !important;
+    position: static !important;
+  }
+
+  .app-shell > .main-shell,
+  .main-shell {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .sidebar,
+  .main-shell {
+    forced-color-adjust: auto;
+  }
+}
