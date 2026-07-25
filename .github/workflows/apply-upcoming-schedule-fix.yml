@@ -1,0 +1,58 @@
+name: Apply upcoming schedule repair
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/apply-upcoming-schedule-fix.mjs
+      - .github/workflows/apply-upcoming-schedule-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply source repair
+        run: node scripts/apply-upcoming-schedule-fix.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Apps Script syntax
+        run: |
+          cp google-apps-script/Code.gs /tmp/cgv-code.js
+          node --check /tmp/cgv-code.js
+
+      - name: Run all regression tests
+        run: node --test tests/*.test.mjs
+
+      - name: Build static application
+        run: npm run build:github-pages
+        env:
+          NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
+
+      - name: Commit verified repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix backend warning and show upcoming evaluations"
+          git push origin HEAD:main
