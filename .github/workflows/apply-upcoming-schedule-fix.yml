@@ -6,10 +6,11 @@ on:
       - main
     paths:
       - scripts/apply-upcoming-schedule-fix.mjs
+      - scripts/finalize-upcoming-schedule-fix.mjs
       - .github/workflows/apply-upcoming-schedule-fix.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   repair:
@@ -28,7 +29,9 @@ jobs:
           cache: npm
 
       - name: Apply source repair
-        run: node scripts/apply-upcoming-schedule-fix.mjs
+        run: |
+          node scripts/apply-upcoming-schedule-fix.mjs
+          node scripts/finalize-upcoming-schedule-fix.mjs
 
       - name: Install dependencies
         run: npm ci
@@ -38,56 +41,22 @@ jobs:
           cp google-apps-script/Code.gs /tmp/cgv-code.js
           node --check /tmp/cgv-code.js
 
-      - name: Run all regression tests
-        id: tests
-        continue-on-error: true
-        run: |
-          mkdir -p audit
-          set +e
-          node --test tests/*.test.mjs 2>&1 | tee audit/upcoming-test-output.log
-          code=${PIPESTATUS[0]}
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
-
       - name: Build static application
-        id: build
-        continue-on-error: true
-        run: |
-          mkdir -p audit
-          set +e
-          npm run build:github-pages 2>&1 | tee audit/upcoming-build-output.log
-          code=${PIPESTATUS[0]}
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-          exit 0
+        run: npm run build:github-pages
         env:
           NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
 
-      - name: Stage repaired files and diagnostics
-        if: always()
-        run: |
-          mkdir -p verified/app verified/google-apps-script verified/tests verified/.github/workflows verified/audit
-          cp app/runtime-functionality-enhancer.tsx verified/app/
-          cp app/exam-client.tsx verified/app/
-          cp app/layout.tsx verified/app/
-          cp app/upcoming-evaluations.css verified/app/
-          cp google-apps-script/Code.gs verified/google-apps-script/
-          cp tests/function-contract.test.mjs verified/tests/
-          cp tests/upcoming-evaluations.test.mjs verified/tests/
-          cp .github/workflows/deploy-pages.yml verified/.github/workflows/
-          if [ -f .github/workflows/verify-application.yml ]; then cp .github/workflows/verify-application.yml verified/.github/workflows/; fi
-          cp audit/upcoming-test-output.log verified/audit/ || true
-          cp audit/upcoming-build-output.log verified/audit/ || true
+      - name: Run all regression tests
+        run: node --test tests/*.test.mjs
 
-      - name: Upload repaired files and diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: upcoming-schedule-repair-diagnostics
-          path: verified
-          if-no-files-found: error
-
-      - name: Enforce verification result
-        if: always()
+      - name: Commit verified repair to branch
         run: |
-          test "${{ steps.tests.outputs.exit_code }}" = "0"
-          test "${{ steps.build.outputs.exit_code }}" = "0"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app google-apps-script tests
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix backend warning and show upcoming evaluations"
+          git push origin HEAD:${{ github.head_ref }}
