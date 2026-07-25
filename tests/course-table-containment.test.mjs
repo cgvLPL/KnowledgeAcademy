@@ -8,6 +8,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const layout = read("app/layout.tsx");
 const css = read("app/course-table-containment.css");
 const loginCss = read("app/login-reference-layout.css");
+const loginCopyCss = read("app/login-reference-copy.css");
 
 test("course table icons and text remain contained at every breakpoint", () => {
   assert.match(layout, /import "\.\/course-table-containment\.css";/);
@@ -36,6 +37,7 @@ test("course table icons and text remain contained at every breakpoint", () => {
 
 test("login keeps the cinematic split layout and centred CGV exams lockup", () => {
   assert.match(layout, /import "\.\/login-reference-layout\.css";/);
+  assert.match(layout, /import "\.\/login-reference-copy\.css";/);
 
   for (const selector of [
     ".login-page .login-layout",
@@ -54,4 +56,7 @@ test("login keeps the cinematic split layout and centred CGV exams lockup", () =
   assert.match(loginCss, /transform:\s*translate\(-50%, -50%\)/);
   assert.match(loginCss, /linear-gradient\(100deg, #ffac21 0%, #ff641d 43%, #df2e32 100%\)/);
   assert.match(loginCss, /width:\s*100%\s*!important/);
+  assert.match(loginCopyCss, /content:\s*"Welcome back"/);
+  assert.match(loginCopyCss, /content:\s*"Sign in to your CGV Exams account"/);
+  assert.match(loginCopyCss, /content:\s*"Sign in"/);
 });
