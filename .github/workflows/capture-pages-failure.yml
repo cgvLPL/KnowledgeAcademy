@@ -1,0 +1,64 @@
+name: Capture Pages deployment failure
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy CGV Exams to GitHub Pages
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  capture:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect failed deployment details
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          gh api "repos/${repo}/actions/runs/${RUN_ID}/jobs?filter=latest&per_page=100" > jobs.json
+
+          {
+            echo "# Live GitHub Pages deployment failure"
+            echo
+            echo "- Run: ${RUN_URL}"
+            echo "- Run ID: ${RUN_ID}"
+            echo "- Commit: \`${HEAD_SHA}\`"
+            echo
+            echo "## Jobs and steps"
+            jq -r '.jobs[] | "### " + .name + " — " + (.conclusion // .status) + "\n" + ([.steps[]? | "- " + .name + ": " + (.conclusion // .status)] | join("\n")) + "\n"' jobs.json
+          } > report.md
+
+          while IFS=$'\t' read -r job_id job_name; do
+            echo >> report.md
+            echo "## Failed job log: ${job_name}" >> report.md
+            echo '```text' >> report.md
+            set +e
+            gh api -H "Accept: application/vnd.github+json" "repos/${repo}/actions/jobs/${job_id}/logs" > "job-${job_id}.log"
+            status=$?
+            set -e
+            if [ "$status" -eq 0 ]; then
+              tail -n 220 "job-${job_id}.log" | sed -E 's/(Authorization:|token=|GH_TOKEN=).*/\1 [redacted]/Ig' >> report.md
+            else
+              echo "Unable to download this job log." >> report.md
+            fi
+            echo '```' >> report.md
+          done < <(jq -r '.jobs[] | select(.conclusion == "failure") | [.id, .name] | @tsv' jobs.json)
+
+          head -c 60000 report.md > issue-body.md
+          existing=$(gh issue list --repo "$repo" --state open --search 'Live Pages deployment failure in:title' --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$repo" --body-file issue-body.md
+          else
+            gh issue create --repo "$repo" --title "Live Pages deployment failure" --body-file issue-body.md
+          fi
