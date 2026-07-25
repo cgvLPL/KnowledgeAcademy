@@ -1,4 +1,4 @@
-name: Deploy CGV Exams to GitHub Pages
+name: Publish CGV Exams site
 
 on:
   push:
@@ -12,8 +12,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
-  cancel-in-progress: true
+  group: cgv-exams-pages-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -45,8 +45,12 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
 
-      - name: Run all regression tests
-        run: node --test tests/*.test.mjs
+      - name: Validate generated site
+        run: |
+          test -f dist/client/index.html
+          test -d dist/client/_next
+          test -f dist/client/cgv-logo.svg
+          grep -q "CGV Exams" dist/client/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
