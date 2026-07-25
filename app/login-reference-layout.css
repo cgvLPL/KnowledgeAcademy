@@ -1,0 +1,384 @@
+/* Split-screen login inspired by the supplied orange/red cinematic reference. */
+
+.login-page {
+  background: #030405 !important;
+  display: grid !important;
+  min-height: 100dvh !important;
+  padding: 14px !important;
+  place-items: center;
+}
+
+.login-page::before,
+.login-page::after {
+  display: none !important;
+}
+
+.login-page .login-layout {
+  background: #07090a !important;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+  box-shadow: 0 36px 110px rgba(0, 0, 0, 0.6);
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 1fr);
+  isolation: isolate;
+  min-height: calc(100dvh - 28px) !important;
+  overflow: hidden;
+  padding: 0 !important;
+  position: relative;
+  width: min(1680px, 100%);
+}
+
+/* Orange/red artwork panel. */
+.login-page .login-layout::before {
+  background:
+    linear-gradient(90deg, rgba(3, 4, 5, 0.45), transparent 16%, transparent 82%, rgba(3, 4, 5, 0.45)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 180, 96, 0.08) 0,
+      rgba(255, 180, 96, 0.08) 2px,
+      rgba(0, 0, 0, 0.11) 3px,
+      transparent 14px
+    ),
+    radial-gradient(ellipse at 45% 58%, rgba(255, 183, 40, 0.98) 0, rgba(255, 121, 21, 0.78) 24%, transparent 55%),
+    radial-gradient(ellipse at 18% 25%, rgba(239, 67, 34, 0.92), transparent 42%),
+    radial-gradient(ellipse at 82% 92%, rgba(214, 43, 25, 0.78), transparent 46%),
+    linear-gradient(145deg, #140b08 0%, #4a1710 31%, #d23d1d 61%, #130b09 100%);
+  box-shadow:
+    inset -40px 0 80px rgba(0, 0, 0, 0.34),
+    inset 0 0 120px rgba(0, 0, 0, 0.28);
+  content: "";
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+/* Fine film grain across the framed login surface. */
+.login-page .login-layout::after {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='4' stitchTiles='stitchTiles'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+  content: "";
+  inset: 0;
+  mix-blend-mode: soft-light;
+  opacity: 0.22;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.login-page .login-card {
+  align-content: center;
+  background:
+    radial-gradient(circle at 75% 48%, rgba(255, 83, 40, 0.045), transparent 22rem),
+    linear-gradient(145deg, #080a0b 0%, #050708 100%) !important;
+  border: 0 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: center;
+  max-width: none !important;
+  min-height: 100% !important;
+  padding: clamp(54px, 7vw, 112px) clamp(42px, 7vw, 118px) !important;
+  position: static !important;
+  width: 100% !important;
+  z-index: 2;
+}
+
+.login-page .login-card::before {
+  display: none !important;
+}
+
+.login-page .login-card::after {
+  color: #666c68;
+  content: "Secure evaluation portal";
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+  margin: 28px auto 0;
+  max-width: 560px;
+  padding-top: 20px;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.login-page .login-card > :not(.login-brand-row) {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 560px;
+  width: 100%;
+}
+
+/* Reuse the real SVG logo, but position it in the centre of the artwork panel. */
+.login-page .login-brand-row {
+  align-items: center !important;
+  display: flex !important;
+  left: 25%;
+  margin: 0 !important;
+  max-width: none !important;
+  position: absolute !important;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(35vw, 510px) !important;
+  z-index: 3;
+}
+
+.login-page .login-brand-row > span {
+  display: none !important;
+}
+
+.login-page .login-brand-row .brand-lockup {
+  display: block !important;
+  max-width: none !important;
+  width: 100%;
+}
+
+.login-page .login-brand-row .brand-logo {
+  display: block;
+  filter: drop-shadow(0 12px 44px rgba(0, 0, 0, 0.3)) !important;
+  height: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.login-page .login-card-heading {
+  margin: 0 0 30px !important;
+  text-align: center;
+}
+
+.login-page .login-card-heading .card-kicker {
+  display: none;
+}
+
+.login-page .login-card-heading h1 {
+  color: #f7f8f5 !important;
+  font-size: clamp(32px, 3.1vw, 45px) !important;
+  font-weight: 680 !important;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  margin: 0 0 13px !important;
+}
+
+.login-page .login-card-heading p {
+  color: #979d99 !important;
+  font-size: 15px !important;
+  line-height: 1.5;
+  margin: 0 !important;
+}
+
+.login-page .role-switch {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 14px;
+  gap: 4px;
+  margin-bottom: 28px;
+  padding: 4px;
+}
+
+.login-page .role-switch button {
+  border-radius: 10px;
+  color: #878d89 !important;
+  min-height: 44px;
+}
+
+.login-page .role-switch button.active {
+  background: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  color: #f4f5f2 !important;
+}
+
+.login-page .field-label {
+  color: #d8dcd8 !important;
+  font-size: 13px;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.login-page .input-shell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.032)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 13px !important;
+  min-height: 58px;
+  padding: 0 17px !important;
+}
+
+.login-page .input-shell:focus-within {
+  border-color: rgba(255, 124, 47, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(255, 92, 42, 0.11) !important;
+}
+
+.login-page .input-shell svg {
+  color: #858b87 !important;
+}
+
+.login-page .input-shell input {
+  color: #f4f5f2 !important;
+  font-size: 15px;
+}
+
+.login-page .input-shell input::placeholder {
+  color: #6f7571 !important;
+  opacity: 1;
+}
+
+.login-page .input-action {
+  color: #858b87 !important;
+}
+
+.login-page .login-options {
+  align-items: center;
+  margin: 2px auto 28px !important;
+}
+
+.login-page .check-label,
+.login-page .text-button {
+  color: #969c98 !important;
+  font-size: 13px;
+}
+
+.login-page .text-button {
+  color: #ff7a32 !important;
+}
+
+.login-page .check-label > span {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.23) !important;
+}
+
+.login-page .check-label input:checked + span {
+  background: #ff6d25 !important;
+  border-color: #ff6d25 !important;
+  color: white !important;
+}
+
+.login-page .login-error {
+  background: rgba(215, 54, 34, 0.12) !important;
+  border-color: rgba(255, 104, 77, 0.25) !important;
+  color: #ffaaa0 !important;
+  margin-bottom: 18px !important;
+}
+
+.login-page .login-button {
+  background: linear-gradient(100deg, #ffac21 0%, #ff641d 43%, #df2e32 100%) !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 38px rgba(220, 54, 27, 0.22) !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 760;
+  justify-content: center;
+  min-height: 60px !important;
+}
+
+.login-page .login-button:hover:not(:disabled) {
+  box-shadow: 0 22px 48px rgba(237, 69, 27, 0.34) !important;
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.login-page .login-button:disabled {
+  filter: saturate(0.55);
+  opacity: 0.65;
+}
+
+@media (max-width: 1100px) {
+  .login-page .login-layout {
+    grid-template-columns: minmax(0, 0.86fr) minmax(460px, 1.14fr);
+  }
+
+  .login-page .login-brand-row {
+    left: 23%;
+    width: min(34vw, 430px) !important;
+  }
+
+  .login-page .login-card {
+    padding-inline: clamp(38px, 6vw, 76px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .login-page {
+    padding: 0 !important;
+  }
+
+  .login-page .login-layout {
+    border: 0;
+    border-radius: 0;
+    grid-template-columns: 1fr;
+    min-height: 100dvh !important;
+  }
+
+  .login-page .login-layout::before {
+    grid-column: 1;
+    grid-row: 1;
+    inset: 0;
+    opacity: 0.72;
+    position: absolute;
+  }
+
+  .login-page .login-card {
+    background: rgba(5, 7, 8, 0.86) !important;
+    border: 0 !important;
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: flex-start;
+    min-height: 100dvh !important;
+    padding:
+      max(34px, env(safe-area-inset-top))
+      max(22px, env(safe-area-inset-right))
+      max(36px, env(safe-area-inset-bottom))
+      max(22px, env(safe-area-inset-left)) !important;
+  }
+
+  .login-page .login-brand-row {
+    left: auto;
+    margin: 8px auto 46px !important;
+    position: relative !important;
+    top: auto;
+    transform: none;
+    width: min(330px, 78vw) !important;
+  }
+
+  .login-page .login-card-heading h1 {
+    font-size: clamp(31px, 9vw, 42px) !important;
+  }
+
+  .login-page .login-card::after {
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .login-page .login-brand-row {
+    margin-bottom: 34px !important;
+    width: min(270px, 76vw) !important;
+  }
+
+  .login-page .login-card-heading {
+    margin-bottom: 24px !important;
+  }
+
+  .login-page .role-switch {
+    margin-bottom: 22px;
+  }
+
+  .login-page .input-shell {
+    min-height: 54px;
+  }
+
+  .login-page .login-options {
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page .login-button,
+  .login-page .role-switch button {
+    transition: none !important;
+  }
+}
