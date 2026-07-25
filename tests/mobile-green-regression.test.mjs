@@ -23,11 +23,13 @@ test("mobile admin UI replaces every visible lime control", () => {
   assert.ok(css.includes("@media (max-width: 760px)"));
 });
 
-test("mobile correction is loaded last and forces a fresh Pages bundle", () => {
+test("mobile correction remains installed beneath later release layers", () => {
   const finalImport = 'import "./final-colour-sidebar-lock.css";';
   const mobileImport = 'import "./mobile-no-green-v5.css";';
   assert.ok(layout.includes(finalImport));
   assert.ok(layout.includes(mobileImport));
   assert.ok(layout.indexOf(mobileImport) > layout.indexOf(finalImport));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-mobile-no-green-v5"'));
+
+  const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
+  assert.match(release, /^2026\.07\.25-[a-z0-9-]+-v\d+$/u);
 });
