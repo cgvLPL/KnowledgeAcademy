@@ -1,4 +1,4 @@
-name: Capture Pages deployment failure
+name: Capture Pages deployment result
 
 on:
   workflow_run:
@@ -14,23 +14,24 @@ permissions:
 
 jobs:
   capture:
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Collect failed deployment details
+      - name: Collect live deployment details
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ github.event.workflow_run.id }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
         run: |
           set -euo pipefail
           repo="${GITHUB_REPOSITORY}"
           gh api "repos/${repo}/actions/runs/${RUN_ID}/jobs?filter=latest&per_page=100" > jobs.json
 
           {
-            echo "# Live GitHub Pages deployment failure"
+            echo "# Live GitHub Pages deployment result"
             echo
+            echo "- Conclusion: **${CONCLUSION}**"
             echo "- Run: ${RUN_URL}"
             echo "- Run ID: ${RUN_ID}"
             echo "- Commit: \`${HEAD_SHA}\`"
@@ -56,9 +57,9 @@ jobs:
           done < <(jq -r '.jobs[] | select(.conclusion == "failure") | [.id, .name] | @tsv' jobs.json)
 
           head -c 60000 report.md > issue-body.md
-          existing=$(gh issue list --repo "$repo" --state open --search 'Live Pages deployment failure in:title' --json number --jq '.[0].number // empty')
+          existing=$(gh issue list --repo "$repo" --state open --search 'Live Pages deployment result in:title' --json number --jq '.[0].number // empty')
           if [ -n "$existing" ]; then
             gh issue comment "$existing" --repo "$repo" --body-file issue-body.md
           else
-            gh issue create --repo "$repo" --title "Live Pages deployment failure" --body-file issue-body.md
+            gh issue create --repo "$repo" --title "Live Pages deployment result" --body-file issue-body.md
           fi
