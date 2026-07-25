@@ -1,0 +1,44 @@
+name: Diagnose CGV Exams Pages deployment
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Apps Script syntax
+        run: |
+          cp google-apps-script/Code.gs /tmp/cgv-code.js
+          node --check /tmp/cgv-code.js
+
+      - name: Build static site
+        run: npm run build:github-pages
+        env:
+          NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
+
+      - name: Run complete regression suite
+        run: node --test tests/*.test.mjs
+
+      - name: Verify Pages artifact
+        run: |
+          test -d dist/client
+          test -f dist/client/index.html
+          find dist/client -maxdepth 2 -type f | sort | head -100
