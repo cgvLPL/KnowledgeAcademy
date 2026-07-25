@@ -1,0 +1,282 @@
+/* Participant dashboard visual repair aligned with the cinematic login language. */
+.participant-home {
+  display: grid;
+  gap: 24px;
+  max-width: 1480px;
+  padding-bottom: 56px;
+}
+
+.participant-home .welcome-row {
+  align-items: center;
+  background:
+    radial-gradient(circle at 85% 30%, rgba(255, 91, 30, 0.11), transparent 22rem),
+    linear-gradient(145deg, rgba(17, 18, 18, 0.96), rgba(8, 10, 10, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  margin: 0;
+  padding: 28px 30px;
+}
+
+.participant-home .welcome-row h2 {
+  font-size: clamp(30px, 3.2vw, 48px);
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  margin: 10px 0 8px;
+}
+
+.participant-home .welcome-row > div > p {
+  color: #949b96;
+  font-size: 14px;
+  margin: 0;
+  max-width: 680px;
+}
+
+.participant-home .welcome-row .secondary-button {
+  border-color: rgba(255, 116, 47, 0.28) !important;
+  flex: 0 0 auto;
+  min-height: 46px;
+  white-space: nowrap;
+}
+
+.participant-home .hero-evaluation {
+  background:
+    linear-gradient(105deg, rgba(6, 8, 8, 0.45), rgba(6, 8, 8, 0.9)),
+    repeating-linear-gradient(90deg, rgba(255, 156, 72, 0.07) 0 2px, transparent 2px 15px),
+    radial-gradient(ellipse at 18% 65%, rgba(255, 166, 38, 0.92), transparent 34%),
+    radial-gradient(ellipse at 58% 72%, rgba(232, 54, 28, 0.72), transparent 42%),
+    linear-gradient(145deg, #1b0c08, #120a08 48%, #070808);
+  border: 1px solid rgba(255, 130, 51, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.38);
+  min-height: 320px;
+  overflow: hidden;
+  padding: clamp(30px, 5vw, 58px);
+}
+
+.participant-home .hero-copy {
+  max-width: 760px;
+}
+
+.participant-home .hero-copy h3 {
+  font-size: clamp(34px, 4.5vw, 64px);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  margin-block: 16px 14px;
+  max-width: 850px;
+}
+
+.participant-home .hero-description {
+  color: #c1c5c1 !important;
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+.participant-home .hero-button {
+  background: linear-gradient(100deg, #ffad21 0%, #ff661e 44%, #df3032 100%) !important;
+  border: 0 !important;
+  box-shadow: 0 16px 36px rgba(219, 58, 29, 0.25);
+  color: white !important;
+  min-height: 50px;
+}
+
+.participant-home .hero-orbit {
+  opacity: 0.42;
+}
+
+.participant-home .metric-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.participant-home .metric-card {
+  align-items: center;
+  background: linear-gradient(145deg, rgba(20, 22, 21, 0.96), rgba(10, 12, 11, 0.98)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.085) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  min-height: 150px;
+  padding: 22px !important;
+}
+
+.participant-home .metric-card .metric-icon {
+  background: rgba(255, 116, 47, 0.1) !important;
+  border: 1px solid rgba(255, 122, 53, 0.18);
+  color: #ff8a43 !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  min-width: 48px !important;
+  width: 48px !important;
+}
+
+.participant-home .metric-card strong {
+  font-size: clamp(32px, 3.2vw, 48px) !important;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.participant-home .metric-card small {
+  color: #858b87;
+  font-size: 15px;
+  margin-left: 3px;
+}
+
+.participant-home .section-block {
+  background: linear-gradient(145deg, rgba(15, 17, 16, 0.94), rgba(8, 10, 9, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.24);
+  margin: 0;
+  padding: 24px;
+}
+
+.participant-home .section-heading {
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.participant-home .section-heading h3 {
+  font-size: 21px;
+  margin-bottom: 5px;
+}
+
+.participant-home .evaluation-list,
+.participant-home .history-preview-grid {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.participant-home .evaluation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.participant-home .evaluation-row {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 16px;
+  min-height: 104px;
+}
+
+.participant-home .evaluation-row:hover:not(.is-upcoming) {
+  background: rgba(255, 104, 36, 0.055) !important;
+  border-color: rgba(255, 116, 47, 0.2) !important;
+}
+
+.participant-home .history-preview-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.participant-home .history-preview-card {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border: 1px solid rgba(255, 255, 255, 0.075) !important;
+  border-radius: 17px;
+  box-shadow: none !important;
+  min-height: 126px;
+}
+
+/* Keep score rings geometrically stable and prevent the zero value from collapsing. */
+.participant-home .score-ring,
+.history-summary .score-ring {
+  align-items: center !important;
+  aspect-ratio: 1 !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  flex: 0 0 auto !important;
+  height: var(--ring-size, 88px) !important;
+  isolation: isolate;
+  min-height: var(--ring-size, 88px) !important;
+  min-width: var(--ring-size, 88px) !important;
+  overflow: hidden !important;
+  place-items: center !important;
+  width: var(--ring-size, 88px) !important;
+}
+
+.participant-home .score-ring-sm { --ring-size: 64px; }
+.participant-home .score-ring-md { --ring-size: 88px; }
+.participant-home .score-ring-lg,
+.history-summary .score-ring-lg { --ring-size: 164px; }
+
+.participant-home .score-ring > div,
+.history-summary .score-ring > div {
+  align-items: baseline !important;
+  background: #0d100e !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  height: calc(var(--ring-size, 88px) - 18px) !important;
+  justify-content: center !important;
+  width: calc(var(--ring-size, 88px) - 18px) !important;
+}
+
+.participant-home .score-ring strong,
+.history-summary .score-ring strong {
+  font-size: calc(var(--ring-size, 88px) * 0.32) !important;
+  line-height: 1 !important;
+}
+
+.participant-home .score-ring span,
+.history-summary .score-ring span {
+  font-size: calc(var(--ring-size, 88px) * 0.13) !important;
+}
+
+@media (max-width: 1120px) {
+  .participant-home .metric-grid,
+  .participant-home .history-preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .participant-home .metric-card:last-child,
+  .participant-home .history-preview-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .participant-home {
+    gap: 16px;
+    padding-inline: 14px !important;
+  }
+
+  .participant-home .welcome-row {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 22px;
+  }
+
+  .participant-home .welcome-row .secondary-button {
+    width: 100%;
+  }
+
+  .participant-home .hero-evaluation {
+    min-height: 0;
+    padding: 25px 22px;
+  }
+
+  .participant-home .hero-orbit {
+    display: none;
+  }
+
+  .participant-home .metric-grid,
+  .participant-home .history-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .participant-home .metric-card:last-child,
+  .participant-home .history-preview-card:last-child {
+    grid-column: auto;
+  }
+
+  .participant-home .section-block {
+    padding: 18px;
+  }
+}
