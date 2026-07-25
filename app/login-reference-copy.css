@@ -1,0 +1,37 @@
+/* Visual copy alignment for the supplied sign-in reference. */
+.login-page .login-card-heading h1 {
+  font-size: 0 !important;
+}
+
+.login-page .login-card-heading h1::after {
+  content: "Welcome back";
+  display: block;
+  font-size: clamp(32px, 3.1vw, 45px);
+}
+
+.login-page .login-card-heading p {
+  font-size: 0 !important;
+}
+
+.login-page .login-card-heading p::after {
+  content: "Sign in to your CGV Exams account";
+  display: block;
+  font-size: 15px;
+}
+
+.login-page .login-button {
+  font-size: 0 !important;
+}
+
+.login-page .login-button::before {
+  content: "Sign in";
+  font-size: 15px;
+}
+
+.login-page .login-button:disabled::before {
+  content: "Signing in…";
+}
+
+.login-page .login-button > svg {
+  display: none;
+}
