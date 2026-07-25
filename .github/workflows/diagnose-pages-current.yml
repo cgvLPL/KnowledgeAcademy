@@ -1,0 +1,54 @@
+name: Diagnose current Pages pipeline
+
+on:
+  push:
+    branches:
+      - fix/pages-stale-release-test
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: List workflow definitions
+        run: |
+          printf '%s\n' '--- workflow files ---'
+          find .github/workflows -maxdepth 1 -type f -print | sort
+          printf '%s\n' '--- workflow names and triggers ---'
+          for file in .github/workflows/*; do
+            echo "### ${file}"
+            sed -n '1,28p' "$file"
+          done
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Apps Script syntax
+        run: |
+          cp google-apps-script/Code.gs /tmp/cgv-code.js
+          node --check /tmp/cgv-code.js
+
+      - name: Build static site
+        run: npm run build:github-pages
+        env:
+          NEXT_PUBLIC_BASE_PATH: /CGV.Exams
+
+      - name: Run complete regression suite
+        run: node --test tests/*.test.mjs
+
+      - name: Validate Pages artifact
+        run: |
+          test -f dist/client/index.html
+          test -f dist/client/.nojekyll
