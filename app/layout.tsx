@@ -25,6 +25,7 @@ import "./course-table-containment.css";
 import "./upcoming-evaluations.css";
 import "./admin-avatar-fix.css";
 import "./visual-polish.css";
+import "./login-reference-layout.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
