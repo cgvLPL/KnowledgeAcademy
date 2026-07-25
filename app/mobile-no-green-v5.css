@@ -1,0 +1,82 @@
+/* Final mobile colour correction. Loaded after every historical stylesheet. */
+
+:root {
+  --cgv-mobile-amber: #ffb11f;
+  --cgv-mobile-orange: #ff6a22;
+  --cgv-mobile-red: #e6322f;
+}
+
+/* Administrator and participant avatars must never fall back to the old lime gradient. */
+.avatar,
+.admin-avatar,
+.account-avatar,
+.profile-avatar,
+.user-chip .avatar,
+.topbar .avatar,
+.topbar .user-chip .avatar {
+  background-color: var(--cgv-mobile-orange) !important;
+  background-image: linear-gradient(135deg, var(--cgv-mobile-amber), var(--cgv-mobile-orange) 56%, var(--cgv-mobile-red)) !important;
+  border-color: rgba(255, 137, 64, 0.42) !important;
+  box-shadow: 0 8px 22px rgba(229, 62, 34, 0.28) !important;
+  color: #fff !important;
+}
+
+/* Numbered setup actions shown on the administrator overview. */
+.setup-actions button > span,
+.admin-overview .setup-actions button > span {
+  background-color: var(--cgv-mobile-orange) !important;
+  background-image: linear-gradient(135deg, var(--cgv-mobile-amber), var(--cgv-mobile-orange) 56%, var(--cgv-mobile-red)) !important;
+  border: 1px solid rgba(255, 145, 70, 0.38) !important;
+  box-shadow: 0 9px 24px rgba(226, 55, 31, 0.22) !important;
+  color: #fff !important;
+}
+
+/* Bottom navigation active state on phones. */
+.mobile-nav button.active,
+.mobile-nav [aria-current="page"],
+.mobile-nav .active {
+  background-color: var(--cgv-mobile-orange) !important;
+  background-image: linear-gradient(110deg, var(--cgv-mobile-amber), var(--cgv-mobile-orange) 54%, var(--cgv-mobile-red)) !important;
+  border-color: rgba(255, 135, 57, 0.46) !important;
+  box-shadow: 0 12px 30px rgba(225, 55, 31, 0.26) !important;
+  color: #fff !important;
+}
+
+.mobile-nav button.active svg,
+.mobile-nav button.active span,
+.mobile-nav [aria-current="page"] svg,
+.mobile-nav [aria-current="page"] span {
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* Prevent legacy lime variables from leaking into the compact phone shell. */
+.mobile-nav,
+.topbar,
+.admin-overview,
+.participant-home {
+  --lime: var(--cgv-mobile-orange) !important;
+  --lime-dark: #311208 !important;
+  --green: #ff8b42 !important;
+  --success: #ff8b42 !important;
+}
+
+@media (max-width: 760px) {
+  .mobile-nav button.active,
+  .mobile-nav [aria-current="page"],
+  .mobile-nav .active {
+    color: #fff !important;
+  }
+
+  .topbar .avatar,
+  .topbar .user-chip .avatar {
+    background-color: var(--cgv-mobile-orange) !important;
+    background-image: linear-gradient(135deg, var(--cgv-mobile-amber), var(--cgv-mobile-orange) 56%, var(--cgv-mobile-red)) !important;
+  }
+
+  .setup-actions button > span,
+  .admin-overview .setup-actions button > span {
+    background-color: var(--cgv-mobile-orange) !important;
+    background-image: linear-gradient(135deg, var(--cgv-mobile-amber), var(--cgv-mobile-orange) 56%, var(--cgv-mobile-red)) !important;
+  }
+}
