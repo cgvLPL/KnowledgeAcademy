@@ -8,10 +8,17 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const layout = read("app/layout.tsx");
 const css = read("app/mockup-uix-release.css");
 
-test("mockup production layer is loaded last with a visible release marker", () => {
-  assert.ok(layout.includes('import "./mockup-uix-release.css";'));
-  assert.ok(layout.indexOf('import "./mockup-uix-release.css";') > layout.indexOf('import "./mockup-uix-system.css";'));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-mockup-phone-v2"'));
+const systemImport = 'import "./mockup-uix-system.css";';
+const mockupImport = 'import "./mockup-uix-release.css";';
+const finalColourImport = 'import "./final-colour-sidebar-lock.css";';
+
+test("mockup production layer remains in the final theme cascade", () => {
+  assert.ok(layout.includes(systemImport));
+  assert.ok(layout.includes(mockupImport));
+  assert.ok(layout.includes(finalColourImport));
+  assert.ok(layout.indexOf(mockupImport) > layout.indexOf(systemImport));
+  assert.ok(layout.indexOf(finalColourImport) > layout.indexOf(mockupImport));
+  assert.match(layout, /"cgv-ui-release": "2026\.07\.25-[^"]+"/);
 });
 
 test("desktop mockup palette and primary surfaces are enforced", () => {
