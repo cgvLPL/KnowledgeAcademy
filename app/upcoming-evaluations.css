@@ -1,0 +1,44 @@
+/* Scheduled participant evaluations remain visible but unavailable until opening. */
+.evaluation-row.is-upcoming,
+.course-card.is-upcoming {
+  background:
+    linear-gradient(150deg, rgba(28, 31, 28, 0.9), rgba(15, 17, 15, 0.94)) !important;
+  border-color: rgba(210, 216, 207, 0.12) !important;
+  box-shadow: none !important;
+  filter: grayscale(0.72) saturate(0.5);
+  opacity: 0.72;
+}
+
+.evaluation-row.is-upcoming:hover,
+.course-card.is-upcoming:hover {
+  border-color: rgba(210, 216, 207, 0.2) !important;
+  transform: none !important;
+}
+
+.evaluation-row.is-upcoming .evaluation-icon,
+.course-card.is-upcoming .evaluation-icon {
+  background: rgba(210, 216, 207, 0.14) !important;
+  color: #b7bdb4 !important;
+}
+
+.evaluation-row.is-upcoming .row-button,
+.course-card.is-upcoming button:disabled {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  color: #a5aca2 !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+
+.evaluation-row.is-upcoming .due-block strong,
+.course-card.is-upcoming .course-card-footer strong {
+  color: #d1d6ce !important;
+}
+
+@media (max-width: 760px) {
+  .evaluation-row.is-upcoming,
+  .course-card.is-upcoming {
+    filter: grayscale(0.65) saturate(0.55);
+    opacity: 0.76;
+  }
+}
