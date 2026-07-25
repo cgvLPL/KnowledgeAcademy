@@ -30,6 +30,7 @@ import "./login-reference-copy.css";
 import "./login-account-switch.css";
 import "./participant-dashboard-refresh.css";
 import "./mockup-uix-system.css";
+import "./mockup-uix-release.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export const metadata: Metadata = {
     "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
   other: {
     "codex-preview": "development",
+    "cgv-ui-release": "2026.07.25-mockup-phone-v2",
   },
   icons: {
     icon: "/cgv-logo.svg",
@@ -58,7 +60,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#050706",
+  themeColor: "#080909",
   colorScheme: "dark",
 };
 
