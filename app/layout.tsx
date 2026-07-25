@@ -27,6 +27,9 @@ import "./admin-avatar-fix.css";
 import "./visual-polish.css";
 import "./login-reference-layout.css";
 import "./login-reference-copy.css";
+import "./login-account-switch.css";
+import "./participant-dashboard-refresh.css";
+import "./mockup-uix-system.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
