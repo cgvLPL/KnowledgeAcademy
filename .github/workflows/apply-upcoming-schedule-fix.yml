@@ -1,7 +1,7 @@
 name: Apply upcoming schedule repair
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
@@ -15,9 +15,10 @@ jobs:
   repair:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout pull request branch
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -45,7 +46,7 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
 
-      - name: Commit verified repair
+      - name: Commit verified repair to branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -55,4 +56,4 @@ jobs:
             exit 0
           fi
           git commit -m "Fix backend warning and show upcoming evaluations"
-          git push origin HEAD:main
+          git push origin HEAD:${{ github.head_ref }}
