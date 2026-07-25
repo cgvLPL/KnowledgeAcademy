@@ -674,7 +674,7 @@ function ParticipantHome({
                 disabled={evaluation.status === "Upcoming"}
                 onClick={() => evaluation.status !== "Upcoming" && onStart(evaluation)}
               >
-                {evaluation.status === "Upcoming" ? "Not open yet" : <>Start <ArrowRight size={17} /></>}
+                {evaluation.status === "Upcoming" ? <><LockKeyhole size={15} /> Not open yet</> : <>Start <ArrowRight size={17} /></>}
               </button>
             </article>
           ))}
@@ -771,15 +771,15 @@ function EvaluationsView({
             </div>
             <div className="course-card-footer">
               <div>
-                <span>Due date</span>
-                <strong>{item.due}</strong>
+                <span>{item.status === "Upcoming" ? "Opens" : "Due date"}</span>
+                <strong>{item.status === "Upcoming" ? item.opens : item.due}</strong>
               </div>
               <button
                 className={item.status === "Upcoming" ? "secondary-button" : "primary-button small"}
                 disabled={item.status === "Upcoming"}
                 onClick={() => item.status !== "Upcoming" && onStart(item)}
               >
-                {item.status === "Completed" ? "Retake" : item.status === "Upcoming" ? "Not open yet" : "Start"}
+                {item.status === "Completed" ? "Retake" : item.status === "Upcoming" ? <><LockKeyhole size={15} /> Not open yet</> : "Start"}
                 {item.status !== "Upcoming" && <ArrowRight size={16} />}
               </button>
             </div>
@@ -1226,14 +1226,14 @@ function CoursesView({
       </div>
       <section className="table-card">
         <div className="responsive-table">
-          <table>
+          <table className="course-management-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
               {evaluations.map((course, index) => (
               <tr key={course.id}>
                 <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
-                <td><div className="date-cell"><strong>{course.due}</strong><span>{course.duration} minute limit</span></div></td>
+                <td><div className="date-cell"><strong>{course.opens && course.opens !== "Scheduled" ? course.opens : course.due}</strong><span>{course.opens && course.opens !== "Scheduled" ? "Opening date" : "Closing date"} · {course.duration} min</span></div></td>
                 <td><strong>{course.participants || "—"}</strong></td>
                 <td><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
                 <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button aria-label="Edit"><Pencil size={17} /></button><button aria-label="More"><MoreHorizontal size={17} /></button></div></td>
