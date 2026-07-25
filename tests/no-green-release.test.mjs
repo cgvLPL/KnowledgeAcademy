@@ -6,39 +6,70 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const layout = read("app/layout.tsx");
-const css = read("app/no-green-release.css");
+const baseCss = read("app/no-green-release.css");
+const finalCss = read("app/final-colour-sidebar-lock.css");
 
-test("the no-green release layer is loaded last", () => {
-  const releaseImport = 'import "./mockup-uix-release.css";';
+test("the final colour and sidebar layer is loaded after every theme", () => {
   const noGreenImport = 'import "./no-green-release.css";';
+  const finalImport = 'import "./final-colour-sidebar-lock.css";';
   assert.ok(layout.includes(noGreenImport));
-  assert.ok(layout.indexOf(noGreenImport) > layout.indexOf(releaseImport));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-no-green-loading-v3"'));
+  assert.ok(layout.includes(finalImport));
+  assert.ok(layout.indexOf(finalImport) > layout.indexOf(noGreenImport));
+  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-no-green-sidebar-v4"'));
 });
 
-test("legacy green design tokens are remapped to the warm palette", () => {
+test("legacy green tokens and direct green class variants are warm-mapped", () => {
   for (const token of ["--lime:", "--lime-dark:", "--green:", "--success:", "accent-color: #ff6a22"]) {
-    assert.ok(css.includes(token), `Missing no-green token override: ${token}`);
+    assert.ok(baseCss.includes(token), `Missing no-green token override: ${token}`);
   }
-  assert.ok(css.includes(".metric-icon.green"));
-  assert.ok(css.includes(".status-live"));
-  assert.ok(css.includes(".question-progress-bars button.answered"));
-  assert.ok(css.includes("input[type=\"checkbox\"]:checked"));
+
+  for (const selector of [
+    '[class*="icon-green"]',
+    '[class*="accent-green"]',
+    '.course-card.accent-green',
+    '.status-live',
+    '.status-passed',
+    '.answer-correct',
+    '.chart-bar',
+    '.orbit-dot',
+    '.question-progress-bars button.answered',
+  ]) {
+    assert.ok(finalCss.includes(selector), `Missing direct green selector override: ${selector}`);
+  }
 });
 
-test("loading screen uses responsive red orange vertical light bands", () => {
-  assert.ok(css.includes(".boot-screen"));
-  assert.ok(css.includes("repeating-linear-gradient("));
-  assert.ok(css.includes("rgba(255, 171, 31"));
-  assert.ok(css.includes("rgba(228, 47, 31"));
-  assert.ok(css.includes("background-attachment: fixed"));
-  assert.ok(css.includes("@media (max-width: 760px)"));
-  assert.ok(css.includes(".boot-bar span"));
+test("selected, completed and focus states use amber orange and red", () => {
+  assert.ok(finalCss.includes("--cgv-warm-amber: #ffb11f"));
+  assert.ok(finalCss.includes("--cgv-warm-orange: #ff6a22"));
+  assert.ok(finalCss.includes("--cgv-warm-red: #e6322f"));
+  assert.ok(finalCss.includes("input[type=\"checkbox\"]:checked"));
+  assert.ok(finalCss.includes(".question-progress-bars button.current"));
+  assert.ok(finalCss.includes(".score-ring"));
+  assert.ok(baseCss.includes("button:focus-visible"));
 });
 
-test("green success and focus visuals are explicitly replaced", () => {
-  assert.ok(css.includes("button:focus-visible"));
-  assert.ok(css.includes("background: #ff7c32"));
-  assert.ok(css.includes("background: #ff8a3d"));
-  assert.ok(css.includes("box-shadow: 0 0 0 4px rgba(255, 107, 34"));
+test("desktop sidebar is viewport-fixed and main content is offset", () => {
+  assert.ok(finalCss.includes("--cgv-sidebar-width: 242px"));
+  assert.ok(finalCss.includes("position: fixed !important"));
+  assert.ok(finalCss.includes("height: 100dvh !important"));
+  assert.ok(finalCss.includes("overflow-y: auto !important"));
+  assert.ok(finalCss.includes("margin-left: var(--cgv-sidebar-width) !important"));
+  assert.ok(finalCss.includes("width: calc(100% - var(--cgv-sidebar-width)) !important"));
+});
+
+test("phone layout removes the desktop sidebar offset", () => {
+  assert.ok(finalCss.includes("@media (max-width: 760px)"));
+  assert.ok(finalCss.includes("--cgv-sidebar-width: 0px"));
+  assert.ok(finalCss.includes("display: none !important"));
+  assert.ok(finalCss.includes("margin-left: 0 !important"));
+  assert.ok(finalCss.includes("width: 100% !important"));
+});
+
+test("loading screen retains responsive red orange vertical light bands", () => {
+  assert.ok(baseCss.includes(".boot-screen"));
+  assert.ok(baseCss.includes("repeating-linear-gradient("));
+  assert.ok(baseCss.includes("rgba(255, 171, 31"));
+  assert.ok(baseCss.includes("rgba(228, 47, 31"));
+  assert.ok(baseCss.includes("@media (max-width: 760px)"));
+  assert.ok(baseCss.includes(".boot-bar span"));
 });
