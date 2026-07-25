@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-const EXPECTED_BACKEND_VERSION = "2026.07.24-functional-audit";
+const EXPECTED_BACKEND_VERSION = "2026.07.25-upcoming-schedule";
 const ENDPOINT = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 
 function normalized(value: string | null | undefined) {
@@ -20,7 +20,6 @@ function findLabel(scope: ParentNode, text: string) {
 }
 
 export default function RuntimeFunctionalityEnhancer() {
-  const [warning, setWarning] = useState("");
 
   useEffect(() => {
     let quizTimer = 0;
@@ -182,12 +181,14 @@ export default function RuntimeFunctionalityEnhancer() {
         .then((response) => response.json())
         .then((data: { ok?: boolean; version?: string }) => {
           if (!data.ok || data.version !== EXPECTED_BACKEND_VERSION) {
-            setWarning(
-              `Google Apps Script backend update required. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`,
+            console.warn(
+              `CGV Exams backend version mismatch. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`,
             );
           }
         })
-        .catch(() => setWarning("The Google Apps Script backend health check could not be completed."));
+        .catch((error) => {
+          console.warn("CGV Exams backend health check skipped.", error);
+        });
     }
 
     return () => {
@@ -197,9 +198,5 @@ export default function RuntimeFunctionalityEnhancer() {
     };
   }, []);
 
-  return warning ? (
-    <div className="cgv-backend-version-warning" role="alert">
-      {warning}
-    </div>
-  ) : null;
+  return null;
 }

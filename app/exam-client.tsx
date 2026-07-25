@@ -58,6 +58,7 @@ type Evaluation = {
   questionCount: number;
   duration: number;
   due: string;
+  opens?: string;
   status: "Live" | "Upcoming" | "Completed" | "Draft";
   participants: number;
   average: number;
@@ -188,6 +189,7 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     questionCount: Number(course.questionCount || 0),
     duration: Number(course.duration || 20),
     due: formatApiDate(course.endAt),
+    opens: formatApiDate(course.startAt, "Scheduled"),
     status: statuses[String(course.status || "").toLowerCase()] || "Draft",
     participants: Number(course.participants || 0),
     average: Number(course.average || 0),
@@ -546,6 +548,8 @@ function ParticipantHome({
   user: AuthUser | null;
 }) {
   const liveEvaluations = evaluations.filter((item) => item.status === "Live");
+  const upcomingEvaluations = evaluations.filter((item) => item.status === "Upcoming");
+  const visibleEvaluations = [...liveEvaluations, ...upcomingEvaluations];
   const featured = liveEvaluations[0] || null;
   const average = history.length
     ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
@@ -566,7 +570,11 @@ function ParticipantHome({
             <Sparkles size={15} /> {today.toUpperCase()}
           </span>
           <h2>Welcome back, {firstName}.</h2>
-          <p>{liveEvaluations.length ? `${liveEvaluations.length} evaluation${liveEvaluations.length === 1 ? "" : "s"} ready for you.` : "No evaluations are assigned right now."}</p>
+          <p>{liveEvaluations.length
+            ? `${liveEvaluations.length} evaluation${liveEvaluations.length === 1 ? "" : "s"} ready for you.${upcomingEvaluations.length ? ` ${upcomingEvaluations.length} scheduled.` : ""}`
+            : upcomingEvaluations.length
+              ? `${upcomingEvaluations.length} scheduled evaluation${upcomingEvaluations.length === 1 ? "" : "s"} coming up.`
+              : "No evaluations are assigned right now."}</p>
         </div>
         <button className="secondary-button" onClick={() => setView("history")}>
           View score history <ArrowRight size={17} />
@@ -597,8 +605,10 @@ function ParticipantHome({
         <section className="section-block">
           <EmptyState
             icon={BookOpen}
-            title="No evaluations assigned"
-            description="New evaluations will appear here when an administrator publishes them."
+            title={upcomingEvaluations.length ? "No evaluation is open yet" : "No evaluations assigned"}
+            description={upcomingEvaluations.length
+              ? "Your scheduled evaluations are listed below and will unlock automatically."
+              : "New evaluations will appear here when an administrator publishes them."}
           />
         </section>
       )}
@@ -633,16 +643,18 @@ function ParticipantHome({
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <h3>Ready for you</h3>
-            <p>Complete these evaluations before their due dates.</p>
+            <h3>{upcomingEvaluations.length ? "Ready and scheduled" : "Ready for you"}</h3>
+            <p>{upcomingEvaluations.length
+              ? "Live evaluations can be started now. Scheduled evaluations unlock automatically."
+              : "Complete these evaluations before their due dates."}</p>
           </div>
           <button className="text-link" onClick={() => setView("evaluations")}>
             See all <ArrowRight size={16} />
           </button>
         </div>
         <div className="evaluation-list">
-          {liveEvaluations.slice(0, 2).map((evaluation, index) => (
-            <article className="evaluation-row" key={evaluation.id}>
+          {visibleEvaluations.slice(0, 4).map((evaluation, index) => (
+            <article className={`evaluation-row${evaluation.status === "Upcoming" ? " is-upcoming" : ""}`} key={evaluation.id}>
               <EvaluationIcon color={evaluation.color} icon={index === 1 ? "shield" : "book"} />
               <div className="evaluation-main">
                 <span>{evaluation.category}</span>
@@ -654,15 +666,19 @@ function ParticipantHome({
                 <span><Clock3 size={15} /> {evaluation.duration} min</span>
               </div>
               <div className="due-block">
-                <span>Due date</span>
-                <strong>{evaluation.due}</strong>
+                <span>{evaluation.status === "Upcoming" ? "Opens" : "Due date"}</span>
+                <strong>{evaluation.status === "Upcoming" ? evaluation.opens : evaluation.due}</strong>
               </div>
-              <button className="row-button" onClick={() => onStart(evaluation)}>
-                Start <ArrowRight size={17} />
+              <button
+                className="row-button"
+                disabled={evaluation.status === "Upcoming"}
+                onClick={() => evaluation.status !== "Upcoming" && onStart(evaluation)}
+              >
+                {evaluation.status === "Upcoming" ? "Not open yet" : <>Start <ArrowRight size={17} /></>}
               </button>
             </article>
           ))}
-          {!liveEvaluations.length && (
+          {!visibleEvaluations.length && (
             <EmptyState
               icon={BookOpen}
               title="Nothing due"
@@ -741,7 +757,7 @@ function EvaluationsView({
       </div>
       <div className="course-grid">
         {shown.map((item) => (
-          <article className={`course-card accent-${item.color}`} key={item.id}>
+          <article className={`course-card accent-${item.color}${item.status === "Upcoming" ? " is-upcoming" : ""}`} key={item.id}>
             <div className="course-card-top">
               <EvaluationIcon color={item.color} icon={item.category === "Safety" ? "shield" : item.category === "Service" ? "spark" : "book"} />
               <span className={`status-pill status-${item.status.toLowerCase()}`}>{item.status}</span>

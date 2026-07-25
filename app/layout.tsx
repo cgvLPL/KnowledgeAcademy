@@ -22,6 +22,7 @@ import "./topbar-polish.css";
 import "./settings-enhancer.css";
 import "./builder-header-polish.css";
 import "./course-table-containment.css";
+import "./upcoming-evaluations.css";
 import "./admin-avatar-fix.css";
 
 const geistSans = Geist({

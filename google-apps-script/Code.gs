@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.07.24-functional-audit",
+  version: "2026.07.25-upcoming-schedule",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   sheets: Object.freeze({
@@ -216,11 +216,18 @@ function getParticipantHome_(body) {
   const now = new Date();
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses))
     .filter(function (course) {
-      const opens = !course.start_at || new Date(course.start_at) <= now;
+      const status = String(course.status || "").toLowerCase();
       const closes = !course.end_at || new Date(course.end_at) >= now;
-      return course.status === "live" && opens && closes;
+      return closes && (status === "live" || status === "upcoming");
     })
-    .map(publicCourse_);
+    .map(function (course) {
+      const item = publicCourse_(course);
+      const startsLater = Boolean(course.start_at) && new Date(course.start_at) > now;
+      if (startsLater || String(course.status || "").toLowerCase() === "upcoming") {
+        item.status = "upcoming";
+      }
+      return item;
+    });
   const history = attemptsForUser_(context.user.user_id)
     .filter(function (attempt) { return attempt.status === "submitted"; })
     .sort(function (a, b) { return new Date(b.submitted_at) - new Date(a.submitted_at); })
