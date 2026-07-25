@@ -1,0 +1,268 @@
+/* Full application UI system derived from the approved cinematic mockup. */
+:root {
+  --cgv-accent: #ff6a22;
+  --cgv-accent-hot: #e6322f;
+  --cgv-accent-warm: #ffad21;
+  --cgv-panel: rgba(16, 18, 18, 0.96);
+  --cgv-panel-soft: rgba(22, 24, 23, 0.92);
+  --cgv-border: rgba(255, 255, 255, 0.09);
+  --cgv-text: #f3f5f2;
+  --cgv-muted: #929995;
+}
+
+.app-shell,
+.builder-page,
+.quiz-page,
+.result-page {
+  background:
+    radial-gradient(circle at 15% 75%, rgba(255, 151, 31, 0.14), transparent 28rem),
+    radial-gradient(circle at 88% 30%, rgba(222, 48, 43, 0.12), transparent 32rem),
+    linear-gradient(145deg, #050606, #090a0a 52%, #040505) !important;
+}
+
+.sidebar {
+  background: linear-gradient(180deg, rgba(7, 8, 8, 0.99), rgba(4, 5, 5, 0.99)) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sidebar-nav button,
+.sidebar-bottom button {
+  border-radius: 12px !important;
+}
+
+.sidebar-nav button.active {
+  background: linear-gradient(100deg, rgba(255, 171, 31, 0.25), rgba(255, 94, 24, 0.28), rgba(222, 47, 48, 0.2)) !important;
+  border: 1px solid rgba(255, 112, 38, 0.28) !important;
+  box-shadow: 0 12px 28px rgba(221, 54, 29, 0.16) !important;
+  color: #fff !important;
+}
+
+.sidebar-nav button.active svg,
+.sidebar-nav button.active small {
+  color: #ff8a42 !important;
+}
+
+.topbar {
+  background: rgba(7, 9, 9, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075) !important;
+  backdrop-filter: blur(20px);
+}
+
+.top-search,
+.topbar .icon-button,
+.user-chip {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.085) !important;
+}
+
+.primary-button,
+.hero-button,
+.question-footer .primary-button,
+.result-actions .primary-button {
+  background: linear-gradient(100deg, var(--cgv-accent-warm), var(--cgv-accent), var(--cgv-accent-hot)) !important;
+  border: 0 !important;
+  box-shadow: 0 14px 34px rgba(224, 56, 30, 0.2) !important;
+  color: #fff !important;
+}
+
+.primary-button:hover:not(:disabled),
+.hero-button:hover:not(:disabled) {
+  box-shadow: 0 18px 42px rgba(236, 69, 29, 0.32) !important;
+  filter: brightness(1.06);
+}
+
+.secondary-button,
+.text-link {
+  color: #ff8b45 !important;
+}
+
+.admin-overview .welcome-row,
+.page-intro,
+.analytics-card,
+.completion-card,
+.table-card,
+.settings-card,
+.profile-card,
+.detail-card,
+.scoreboard-hero,
+.course-card,
+.history-preview-card,
+.builder-card,
+.question-editor,
+.question-outline {
+  background: linear-gradient(145deg, rgba(19, 21, 20, 0.96), rgba(9, 11, 10, 0.98)) !important;
+  border-color: var(--cgv-border) !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.26) !important;
+}
+
+.admin-overview .welcome-row {
+  border: 1px solid var(--cgv-border);
+  border-radius: 22px;
+  padding: 28px 30px;
+}
+
+.admin-metrics {
+  gap: 14px !important;
+}
+
+.admin-metrics article {
+  background: linear-gradient(145deg, rgba(20, 22, 21, 0.97), rgba(10, 12, 11, 0.98)) !important;
+  border: 1px solid var(--cgv-border) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+.admin-metrics .metric-icon,
+.metric-icon {
+  background: rgba(255, 107, 34, 0.1) !important;
+  border: 1px solid rgba(255, 123, 52, 0.17);
+  color: #ff8a43 !important;
+}
+
+.setup-actions button,
+.settings-row {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+.setup-actions button:hover,
+.settings-row:hover {
+  background: rgba(255, 104, 35, 0.055) !important;
+  border-color: rgba(255, 118, 45, 0.2) !important;
+}
+
+.status-live,
+.pass {
+  background: rgba(78, 205, 116, 0.12) !important;
+  color: #7de59a !important;
+}
+
+.status-upcoming {
+  background: rgba(255, 128, 52, 0.1) !important;
+  border-color: rgba(255, 128, 52, 0.18) !important;
+  color: #ffa060 !important;
+}
+
+.status-draft,
+.status-completed {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #a6ada8 !important;
+}
+
+/* Quiz screen: mirror the dark mockup with orange current-state accents. */
+.quiz-header,
+.result-header {
+  background: rgba(6, 8, 8, 0.92) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(18px);
+}
+
+.quiz-progress-panel {
+  background: linear-gradient(160deg, rgba(17, 19, 18, 0.98), rgba(8, 10, 9, 0.98)) !important;
+  border: 1px solid var(--cgv-border) !important;
+  border-radius: 20px !important;
+}
+
+.question-card,
+.result-card {
+  background: linear-gradient(145deg, rgba(18, 20, 19, 0.98), rgba(8, 10, 9, 0.99)) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.46) !important;
+}
+
+.question-progress-bars button.current,
+.vertical-progress span {
+  background: linear-gradient(180deg, var(--cgv-accent-warm), var(--cgv-accent-hot)) !important;
+}
+
+.question-progress-bars button.answered {
+  background: #50cb73 !important;
+}
+
+.answer-list button {
+  background: rgba(255, 255, 255, 0.032) !important;
+  border: 1px solid rgba(255, 255, 255, 0.085) !important;
+}
+
+.answer-list button:hover {
+  background: rgba(255, 109, 34, 0.055) !important;
+  border-color: rgba(255, 120, 44, 0.22) !important;
+}
+
+.answer-list button.selected {
+  background: linear-gradient(100deg, rgba(255, 171, 31, 0.11), rgba(255, 96, 26, 0.1)) !important;
+  border-color: rgba(255, 128, 48, 0.62) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 124, 46, 0.14) !important;
+}
+
+.answer-list button.selected .answer-letter,
+.answer-list button.selected .answer-radio {
+  background: var(--cgv-accent) !important;
+  color: #fff !important;
+}
+
+.result-spark,
+.card-kicker,
+.eyebrow {
+  color: #ff8741 !important;
+}
+
+.result-progress span {
+  background: linear-gradient(90deg, var(--cgv-accent-warm), var(--cgv-accent-hot)) !important;
+}
+
+/* Score ring consistency across dashboard, history and results. */
+.score-ring {
+  background: conic-gradient(#ff742d var(--score), rgba(255, 255, 255, 0.09) 0) !important;
+}
+
+.score-ring > div {
+  background: #0c0f0d !important;
+}
+
+/* Tables and course management. */
+table thead {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+table tbody tr:hover {
+  background: rgba(255, 102, 31, 0.035) !important;
+}
+
+.inline-actions button:hover {
+  background: rgba(255, 104, 33, 0.09) !important;
+  border-color: rgba(255, 120, 44, 0.24) !important;
+  color: #ff8740 !important;
+}
+
+/* Builder uses the same palette without changing behavior. */
+.builder-header,
+.builder-progress,
+.builder-content {
+  background-color: rgba(8, 10, 9, 0.96) !important;
+}
+
+.builder-progress .active,
+.question-outline button.active {
+  border-color: rgba(255, 120, 45, 0.4) !important;
+  color: #ff8b46 !important;
+}
+
+@media (max-width: 760px) {
+  .admin-overview .welcome-row {
+    padding: 22px;
+  }
+
+  .admin-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .quiz-layout {
+    gap: 14px !important;
+  }
+
+  .question-card,
+  .result-card {
+    border-radius: 20px !important;
+  }
+}
