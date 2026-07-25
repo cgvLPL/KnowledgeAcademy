@@ -8,6 +8,7 @@ import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
 import AdminAvatarEnhancer from "./admin-avatar-enhancer";
 import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
+import SessionScrollEnhancer from "./session-scroll-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -34,6 +35,7 @@ import "./mockup-uix-release.css";
 import "./no-green-release.css";
 import "./final-colour-sidebar-lock.css";
 import "./mobile-no-green-v5.css";
+import "./account-scroll-final.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
     "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
   other: {
     "codex-preview": "development",
-    "cgv-ui-release": "2026.07.25-mobile-no-green-v5",
+    "cgv-ui-release": "2026.07.25-signout-mobile-scroll-v6",
   },
   icons: {
     icon: "/cgv-logo.svg",
@@ -84,6 +86,7 @@ export default function RootLayout({
         <AdminFunctionalityEnhancer />
         <AdminAvatarEnhancer />
         <RuntimeFunctionalityEnhancer />
+        <SessionScrollEnhancer />
       </body>
     </html>
   );

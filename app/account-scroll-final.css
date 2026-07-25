@@ -1,0 +1,139 @@
+/* Final account-modal colour and mobile scroll stability layer. */
+
+.cgv-admin-account-modal {
+  --lime: #ff6a22 !important;
+  --lime-dark: #2b1208 !important;
+  --green: #ff8b42 !important;
+  --success: #ff8b42 !important;
+  background:
+    radial-gradient(circle at 74% 10%, rgba(255, 132, 42, 0.1), transparent 34%),
+    radial-gradient(circle at 35% 100%, rgba(230, 50, 47, 0.08), transparent 40%),
+    linear-gradient(155deg, rgba(19, 21, 20, 0.99), rgba(7, 8, 8, 0.995)) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55) !important;
+}
+
+.cgv-admin-account-modal > .card-kicker {
+  color: #ffad67 !important;
+}
+
+.cgv-admin-account-modal .cgv-admin-account-avatar,
+.cgv-admin-account-avatar {
+  background-color: #ff6a22 !important;
+  background-image:
+    radial-gradient(circle at 24% 8%, rgba(255, 255, 255, 0.34), transparent 38%),
+    linear-gradient(145deg, #ffb11f, #ff6a22 58%, #e6322f) !important;
+  border-color: rgba(255, 145, 70, 0.38) !important;
+  box-shadow: 0 14px 34px rgba(226, 57, 31, 0.26) !important;
+  color: #fff !important;
+}
+
+.cgv-admin-account-modal .cgv-account-summary > div {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.cgv-admin-account-modal .primary-button {
+  background-color: #ff6a22 !important;
+  background-image: linear-gradient(100deg, #ffb11f, #ff6a22 54%, #e6322f) !important;
+  border-color: rgba(255, 135, 57, 0.42) !important;
+  box-shadow: 0 12px 30px rgba(226, 57, 31, 0.25) !important;
+  color: #fff !important;
+}
+
+/* Mobile uses one document scroller only. Nested viewport heights and inherited
+   overflow rules previously produced a continually growing blank scroll area. */
+@media (max-width: 760px) {
+  html {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    height: auto !important;
+    min-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: none;
+    position: relative !important;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body:not(.cgv-mobile-menu-open) {
+    inset: auto !important;
+    position: relative !important;
+    width: 100% !important;
+  }
+
+  body.cgv-mobile-menu-open {
+    height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  .app-shell,
+  .main-shell {
+    height: auto !important;
+    max-height: none !important;
+    min-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    overflow: visible !important;
+  }
+
+  .app-shell {
+    display: block !important;
+    overflow-x: clip !important;
+  }
+
+  .main-shell {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .content,
+  .participant-home,
+  .admin-overview,
+  .section-block,
+  .table-card,
+  .responsive-table {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  .content,
+  .participant-home,
+  .admin-overview,
+  .section-block,
+  .table-card {
+    overflow-y: visible !important;
+  }
+
+  .mobile-nav {
+    bottom: 0 !important;
+    left: 0 !important;
+    position: fixed !important;
+    right: 0 !important;
+  }
+
+  .cgv-function-backdrop,
+  .modal-backdrop,
+  .button-safety-dialog-backdrop {
+    height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    max-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    overflow: hidden !important;
+  }
+
+  .cgv-function-modal,
+  .confirm-modal,
+  .button-safety-dialog {
+    max-height: calc(var(--cgv-mobile-viewport-height, 100svh) - 24px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+}
