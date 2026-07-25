@@ -7,6 +7,10 @@ testSource = testSource.replace(
   'assert.match(layout, /import "./upcoming-evaluations.css";/);',
   'assert.ok(layout.includes(\'import "./upcoming-evaluations.css";\'));',
 );
+testSource = testSource.replace(
+  'assert.match(client, /evaluation\\.status === "Upcoming" \\? " is-upcoming"/);',
+  'assert.ok(client.includes(\'evaluation.status === "Upcoming" ? " is-upcoming"\'));',
+);
 fs.writeFileSync(testPath, testSource);
 
 execFileSync("git", ["checkout", "--", ".github/workflows", "scripts/apply-upcoming-schedule-fix.mjs"], {
