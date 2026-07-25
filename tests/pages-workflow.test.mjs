@@ -17,9 +17,11 @@ test("GitHub Pages deployment uses supported official action versions", () => {
   assert.ok(!workflow.includes("actions/configure-pages@v6"));
 });
 
-test("only one repository Pages deployment workflow remains", () => {
+test("only one canonical repository Pages deployment workflow remains", () => {
   assert.ok(fs.existsSync(workflowPath));
   assert.equal(fs.existsSync(obsoleteWorkflowPath), false);
+  assert.ok(workflow.includes("name: Publish CGV Exams site"));
+  assert.ok(workflow.includes("group: cgv-exams-pages-${{ github.ref }}"));
 });
 
 test("Pages workflow keeps required permissions and job dependency", () => {
@@ -30,9 +32,13 @@ test("Pages workflow keeps required permissions and job dependency", () => {
   assert.ok(workflow.includes("name: github-pages"));
 });
 
-test("Pages build validates application before artifact upload", () => {
+test("Pages build validates the generated application before artifact upload", () => {
   const buildIndex = workflow.indexOf("npm run build:github-pages");
-  const testIndex = workflow.indexOf("node --test tests/*.test.mjs");
+  const validationIndex = workflow.indexOf("Validate generated site");
   const uploadIndex = workflow.indexOf("actions/upload-pages-artifact@v4");
-  assert.ok(buildIndex >= 0 && testIndex > buildIndex && uploadIndex > testIndex);
+
+  assert.ok(buildIndex >= 0 && validationIndex > buildIndex && uploadIndex > validationIndex);
+  assert.ok(workflow.includes("test -f dist/client/index.html"));
+  assert.ok(workflow.includes("test -d dist/client/_next"));
+  assert.ok(!workflow.includes("node --test tests/*.test.mjs"));
 });
