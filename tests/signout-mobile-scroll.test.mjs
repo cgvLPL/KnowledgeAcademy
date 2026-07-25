@@ -37,10 +37,12 @@ test("account modal cannot inherit the old green palette", () => {
   assert.ok(css.includes("color: #ffad67 !important"));
 });
 
-test("final safeguards load after every historical theme", () => {
+test("session and scroll safeguards remain installed after later UI releases", () => {
   assert.ok(layout.includes('import SessionScrollEnhancer from "./session-scroll-enhancer";'));
   assert.ok(layout.includes('import "./account-scroll-final.css";'));
   assert.ok(layout.indexOf('import "./account-scroll-final.css";') > layout.indexOf('import "./mobile-no-green-v5.css";'));
   assert.ok(layout.includes("<SessionScrollEnhancer />"));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-signout-mobile-scroll-v6"'));
+
+  const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
+  assert.match(release, /^2026\.07\.25-[a-z0-9-]+-v\d+$/u);
 });
