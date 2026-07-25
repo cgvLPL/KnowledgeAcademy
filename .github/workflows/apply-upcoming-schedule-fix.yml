@@ -10,7 +10,7 @@ on:
       - .github/workflows/apply-upcoming-schedule-fix.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   repair:
@@ -46,17 +46,25 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
 
-      - name: Run all regression tests
-        run: node --test tests/*.test.mjs
-
-      - name: Commit verified repair to branch
+      - name: Run finalized regression tests
+        id: tests
+        continue-on-error: true
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app google-apps-script tests
-          if git diff --cached --quiet; then
-            echo "No source changes to commit."
-            exit 0
-          fi
-          git commit -m "Fix backend warning and show upcoming evaluations"
-          git push origin HEAD:${{ github.head_ref }}
+          mkdir -p audit
+          set +e
+          node --test tests/*.test.mjs 2>&1 | tee audit/finalized-test-output.log
+          code=${PIPESTATUS[0]}
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload finalized test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finalized-upcoming-test-output
+          path: audit/finalized-test-output.log
+          if-no-files-found: error
+
+      - name: Enforce regression result
+        if: always()
+        run: test "${{ steps.tests.outputs.exit_code }}" = "0"
