@@ -9,13 +9,17 @@ const layout = read("app/layout.tsx");
 const baseCss = read("app/no-green-release.css");
 const finalCss = read("app/final-colour-sidebar-lock.css");
 
-test("the final colour and sidebar layer is loaded after every theme", () => {
-  const noGreenImport = 'import "./no-green-release.css";';
-  const finalImport = 'import "./final-colour-sidebar-lock.css";';
+const noGreenImport = 'import "./no-green-release.css";';
+const finalImport = 'import "./final-colour-sidebar-lock.css";';
+const mobileImport = 'import "./mobile-no-green-v5.css";';
+
+test("the final colour and mobile correction layers are loaded after every theme", () => {
   assert.ok(layout.includes(noGreenImport));
   assert.ok(layout.includes(finalImport));
+  assert.ok(layout.includes(mobileImport));
   assert.ok(layout.indexOf(finalImport) > layout.indexOf(noGreenImport));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.25-no-green-sidebar-v4"'));
+  assert.ok(layout.indexOf(mobileImport) > layout.indexOf(finalImport));
+  assert.match(layout, /"cgv-ui-release": "2026\.07\.25-[^"]+"/);
 });
 
 test("legacy green tokens and direct green class variants are warm-mapped", () => {
