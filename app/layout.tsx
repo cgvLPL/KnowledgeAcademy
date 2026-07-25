@@ -31,6 +31,7 @@ import "./login-account-switch.css";
 import "./participant-dashboard-refresh.css";
 import "./mockup-uix-system.css";
 import "./mockup-uix-release.css";
+import "./no-green-release.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
     "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
   other: {
     "codex-preview": "development",
-    "cgv-ui-release": "2026.07.25-mockup-phone-v2",
+    "cgv-ui-release": "2026.07.25-no-green-loading-v3",
   },
   icons: {
     icon: "/cgv-logo.svg",

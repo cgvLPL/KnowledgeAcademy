@@ -1,1 +1,241 @@
-placeholder
+/* Final colour-safety layer: no green visual accents remain anywhere in CGV Exams. */
+:root {
+  --lime: #ff6a22 !important;
+  --lime-dark: #2b1208 !important;
+  --green: #ff8b42 !important;
+  --success: #ff8b42 !important;
+  --success-soft: rgba(255, 107, 34, 0.14) !important;
+  --focus-colour: #ff8b42 !important;
+  accent-color: #ff6a22;
+}
+
+::selection {
+  background: #ff6a22 !important;
+  color: #fff !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline-color: #ff8b42 !important;
+  box-shadow: 0 0 0 4px rgba(255, 107, 34, 0.17) !important;
+}
+
+/* Replace every legacy green glow or ambient wash with the approved warm palette. */
+.login-page::before,
+.app-shell::before,
+.builder-page::before,
+.quiz-page::before,
+.result-page::before,
+.boot-screen::before {
+  background:
+    radial-gradient(circle at 36% 44%, rgba(255, 173, 33, 0.34), transparent 36%),
+    radial-gradient(circle at 64% 58%, rgba(230, 50, 47, 0.26), transparent 44%) !important;
+}
+
+.boot-glow,
+.boot-glow-one,
+.boot-glow-two {
+  background: radial-gradient(circle, rgba(255, 113, 34, 0.38), rgba(230, 50, 47, 0.08) 48%, transparent 72%) !important;
+}
+
+/* Exact visual treatment of the supplied red/orange vertical-light reference, rendered responsively. */
+.boot-screen {
+  background:
+    linear-gradient(180deg, rgba(4, 5, 6, 0.02), rgba(3, 4, 5, 0.18)),
+    radial-gradient(ellipse at 43% 46%, rgba(255, 181, 36, 0.94) 0 8%, rgba(255, 105, 24, 0.84) 22%, rgba(229, 46, 35, 0.54) 42%, transparent 65%),
+    radial-gradient(ellipse at 72% 52%, rgba(255, 98, 25, 0.74), rgba(210, 35, 37, 0.22) 42%, transparent 68%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(8, 10, 14, 0.98) 0 3px,
+      rgba(55, 18, 19, 0.98) 3px 7px,
+      rgba(224, 36, 29, 0.96) 7px 12px,
+      rgba(255, 104, 20, 0.98) 12px 18px,
+      rgba(255, 171, 31, 0.94) 18px 23px,
+      rgba(228, 47, 31, 0.98) 23px 28px,
+      rgba(63, 20, 23, 0.98) 28px 33px,
+      rgba(7, 10, 15, 0.99) 33px 38px
+    ),
+    linear-gradient(90deg, #120707, #ff6b16 42%, #dc2725 66%, #070b12) !important;
+  background-attachment: fixed !important;
+  background-position: center !important;
+  background-size: cover !important;
+}
+
+.boot-screen::after {
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.08), transparent 32%, rgba(255, 255, 255, 0.035) 48%, transparent 68%, rgba(0, 0, 0, 0.13)),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E") !important;
+  mix-blend-mode: soft-light !important;
+  opacity: 0.28 !important;
+}
+
+.boot-content {
+  filter: drop-shadow(0 18px 44px rgba(0, 0, 0, 0.48));
+}
+
+.boot-bar {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.boot-bar span {
+  background: linear-gradient(90deg, #ffb11f, #ff6a22 48%, #e6322f) !important;
+  box-shadow: 0 0 24px rgba(255, 99, 28, 0.52) !important;
+}
+
+.boot-content p {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Semantic success states now use amber/orange instead of green. */
+.status-live,
+.status-active,
+.active-status,
+.badge-active,
+.live-pill,
+.pass,
+.history-preview-card .pass,
+.participant-status.active,
+.account-status.active,
+.scoreboard-status.active,
+[data-status="live"],
+[data-status="active"],
+[data-status="passed"] {
+  background: rgba(255, 107, 34, 0.13) !important;
+  border-color: rgba(255, 126, 52, 0.24) !important;
+  color: #ffab67 !important;
+}
+
+.live-pill > span,
+.status-live::before,
+.status-active::before,
+.pass::before {
+  background: #ff7c32 !important;
+  box-shadow: 0 0 12px rgba(255, 105, 34, 0.54) !important;
+}
+
+/* Icons, avatars and class-based colour utilities. */
+.metric-icon.green,
+.evaluation-icon.icon-green,
+.icon-green,
+.avatar,
+.admin-avatar,
+.account-avatar,
+.profile-avatar,
+.user-chip .avatar,
+[class~="green"] {
+  background: linear-gradient(145deg, #ffb11f, #ff6a22 58%, #e6322f) !important;
+  border-color: rgba(255, 132, 54, 0.3) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 28px rgba(224, 55, 31, 0.2) !important;
+}
+
+.metric-icon.green svg,
+.evaluation-icon.icon-green svg,
+.icon-green svg,
+.avatar svg,
+.admin-avatar svg,
+.account-avatar svg {
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* All selected, checked and completed controls use the warm palette. */
+.role-switch button.active,
+.filter-tabs button.active,
+.sidebar-nav button.active,
+.question-outline button.active,
+.builder-progress .active,
+.check-label input:checked + span,
+input[type="checkbox"]:checked,
+input[type="radio"]:checked,
+.toggle input:checked + span,
+.switch input:checked + span,
+.settings-toggle input:checked + span {
+  background-color: #ff6a22 !important;
+  background-image: linear-gradient(100deg, #ffb11f, #ff6a22, #e6322f) !important;
+  border-color: rgba(255, 128, 48, 0.58) !important;
+  color: #fff !important;
+  box-shadow: 0 10px 26px rgba(224, 57, 30, 0.22) !important;
+}
+
+.question-progress-bars button.answered,
+.quiz-key .done,
+.quiz-key i.done,
+.progress-check,
+.completed-marker,
+.answer-complete {
+  background: #ff8a3d !important;
+  border-color: #ff9b55 !important;
+  color: #fff !important;
+}
+
+.score-ring {
+  background: conic-gradient(#ff6a22 var(--score), rgba(255, 255, 255, 0.09) 0) !important;
+}
+
+/* Remove residual green text, borders and shadows from older theme selectors. */
+.card-kicker,
+.eyebrow,
+.text-link,
+.text-button,
+.secondary-button,
+.builder-progress .active,
+.question-outline button.active,
+.input-shell svg,
+.login-card .input-action {
+  color: #ff8b46 !important;
+}
+
+.input-shell:focus-within,
+.field-label > input:focus,
+.field-label > textarea:focus,
+.field-label > select:focus {
+  border-color: #ff7a32 !important;
+  box-shadow: 0 0 0 4px rgba(255, 107, 34, 0.14) !important;
+}
+
+/* Browser autofill can otherwise reintroduce a green/yellow cast. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #f5f6f3 !important;
+  box-shadow: 0 0 0 1000px #171918 inset !important;
+  caret-color: #f5f6f3 !important;
+}
+
+@media (max-width: 760px) {
+  .boot-screen {
+    background-position: 48% center !important;
+    background-size: auto 100%, cover !important;
+  }
+
+  .boot-content {
+    width: min(300px, calc(100vw - 44px)) !important;
+  }
+
+  .boot-content img {
+    max-width: 170px !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .status-live,
+  .status-active,
+  .pass,
+  .live-pill {
+    border-color: #ff9d58 !important;
+    color: #ffd0ad !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .boot-screen {
+    background: Canvas !important;
+  }
+}
