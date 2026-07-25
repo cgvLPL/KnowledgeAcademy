@@ -4,7 +4,9 @@ import path from "node:path";
 import test from "node:test";
 
 const root = path.resolve(import.meta.dirname, "..");
-const workflow = fs.readFileSync(path.join(root, ".github/workflows/deploy-pages.yml"), "utf8");
+const workflowPath = path.join(root, ".github/workflows/deploy-pages.yml");
+const obsoleteWorkflowPath = path.join(root, ".github/workflows/deploy.yml");
+const workflow = fs.readFileSync(workflowPath, "utf8");
 
 test("GitHub Pages deployment uses supported official action versions", () => {
   assert.ok(workflow.includes("actions/checkout@v6"));
@@ -13,6 +15,11 @@ test("GitHub Pages deployment uses supported official action versions", () => {
   assert.ok(workflow.includes("actions/upload-pages-artifact@v4"));
   assert.ok(workflow.includes("actions/deploy-pages@v4"));
   assert.ok(!workflow.includes("actions/configure-pages@v6"));
+});
+
+test("only one repository Pages deployment workflow remains", () => {
+  assert.ok(fs.existsSync(workflowPath));
+  assert.equal(fs.existsSync(obsoleteWorkflowPath), false);
 });
 
 test("Pages workflow keeps required permissions and job dependency", () => {
