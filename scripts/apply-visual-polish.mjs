@@ -3,6 +3,11 @@ import fs from "node:fs";
 const file = "app/exam-client.tsx";
 let source = fs.readFileSync(file, "utf8");
 
+if (source.includes('className="course-management-table"') && fs.existsSync("tests/visual-polish.test.mjs")) {
+  console.log("Visual polish is already applied.");
+  process.exit(0);
+}
+
 function replaceOnce(before, after, label) {
   if (!source.includes(before)) {
     throw new Error(`Could not apply ${label}`);
