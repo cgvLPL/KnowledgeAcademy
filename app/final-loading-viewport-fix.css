@@ -1,0 +1,193 @@
+/* Final loading-screen alignment and Safari viewport correction. Loaded last. */
+
+/* Match the approved mockup: one centered lockup, thin academy line, centered bar. */
+.boot-screen {
+  min-height: 100svh !important;
+  min-height: 100dvh !important;
+  padding: 0 !important;
+}
+
+.boot-content {
+  align-items: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  inset: auto !important;
+  left: auto !important;
+  margin: 0 auto !important;
+  max-width: 960px !important;
+  padding: 0 24px !important;
+  right: auto !important;
+  transform: none !important;
+  width: 100% !important;
+}
+
+.boot-content img {
+  align-self: center !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  transform: none !important;
+  width: min(690px, 76vw) !important;
+}
+
+.boot-bar {
+  align-self: center !important;
+  height: 9px !important;
+  inset: auto !important;
+  margin: 88px auto 0 !important;
+  max-width: 706px !important;
+  position: relative !important;
+  transform: none !important;
+  width: min(706px, 74vw) !important;
+}
+
+.boot-bar::before {
+  bottom: calc(100% + 35px) !important;
+  content: "KNOWLEDGE ACADEMY" !important;
+  font-size: clamp(8px, 0.7vw, 10px) !important;
+  font-weight: 250 !important;
+  left: 50% !important;
+  letter-spacing: 0.34em !important;
+  line-height: 1 !important;
+  max-width: none !important;
+  right: auto !important;
+  text-align: center !important;
+  transform: translateX(-50%) !important;
+  white-space: nowrap !important;
+  width: auto !important;
+}
+
+.boot-bar span {
+  animation-duration: 2.85s !important;
+  border-radius: inherit !important;
+  display: block !important;
+  transform-origin: left center !important;
+  width: 100% !important;
+}
+
+.boot-content p {
+  align-self: center !important;
+  margin: 31px auto 0 !important;
+  max-width: none !important;
+  text-align: center !important;
+  transform: none !important;
+  width: auto !important;
+}
+
+/* Desktop Safari: the framed login surface must fill the visible viewport. */
+@media (min-width: 861px) {
+  .login-page {
+    height: 100svh !important;
+    height: 100dvh !important;
+    min-height: 100svh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .login-page .login-layout {
+    height: calc(100svh - 28px) !important;
+    height: calc(100dvh - 28px) !important;
+    min-height: calc(100svh - 28px) !important;
+    min-height: calc(100dvh - 28px) !important;
+    max-height: calc(100dvh - 28px) !important;
+  }
+
+  .login-page .login-layout::before,
+  .login-page .login-card {
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+}
+
+/* Phone Safari: keep the login surface and open drawer tied to the measured
+   visual viewport, not to document content height. */
+@media (max-width: 860px) {
+  .login-page,
+  .login-page .login-layout,
+  .login-page .login-card {
+    min-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+  }
+
+  .login-page {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .boot-content {
+    max-width: 560px !important;
+    padding-inline: 20px !important;
+  }
+
+  .boot-content img {
+    width: min(520px, 91vw) !important;
+  }
+
+  .boot-bar {
+    height: 7px !important;
+    margin-top: 66px !important;
+    width: min(82vw, 460px) !important;
+  }
+
+  .boot-bar::before {
+    bottom: calc(100% + 25px) !important;
+    font-size: clamp(6.5px, 2vw, 8px) !important;
+    font-weight: 250 !important;
+    letter-spacing: 0.27em !important;
+  }
+
+  .boot-content p {
+    font-size: clamp(7px, 2.15vw, 9px) !important;
+    letter-spacing: 0.27em !important;
+    margin-top: 24px !important;
+    white-space: nowrap !important;
+  }
+
+  body.cgv-mobile-menu-open,
+  html.cgv-mobile-menu-open body {
+    height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    max-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    min-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    overflow: hidden !important;
+  }
+
+  body.cgv-mobile-menu-open .sidebar,
+  html.cgv-mobile-menu-open .sidebar,
+  .sidebar.is-open,
+  .sidebar.open,
+  .sidebar[data-mobile-open="true"] {
+    background:
+      radial-gradient(circle at 12% 6%, rgba(255, 105, 34, 0.08), transparent 30%),
+      #050706 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    inset: 0 !important;
+    left: 0 !important;
+    max-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    min-height: var(--cgv-mobile-viewport-height, 100svh) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+    position: fixed !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    z-index: 5000 !important;
+  }
+
+  body.cgv-mobile-menu-open .sidebar-bottom,
+  html.cgv-mobile-menu-open .sidebar-bottom,
+  .sidebar.is-open .sidebar-bottom,
+  .sidebar.open .sidebar-bottom,
+  .sidebar[data-mobile-open="true"] .sidebar-bottom {
+    margin-top: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-bar span {
+    animation-duration: 0.01ms !important;
+  }
+}
