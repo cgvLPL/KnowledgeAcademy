@@ -1,0 +1,41 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+
+const root = path.resolve(import.meta.dirname, "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+const css = read("app/final-loading-viewport-fix.css");
+const layout = read("app/layout.tsx");
+
+test("final loading and viewport stylesheet is loaded last", () => {
+  const finalImport = 'import "./final-loading-viewport-fix.css";';
+  assert.ok(layout.includes(finalImport));
+  assert.ok(layout.indexOf(finalImport) > layout.indexOf('import "./knowledge-academy-loading.css";'));
+  assert.ok(layout.includes('"cgv-ui-release": "2026.07.26-final-loading-viewport-v8"'));
+});
+
+test("loading lockup, academy label, bar and status are centered", () => {
+  assert.ok(css.includes(".boot-content"));
+  assert.ok(css.includes("max-width: 960px !important"));
+  assert.ok(css.includes("width: min(706px, 74vw) !important"));
+  assert.ok(css.includes('content: "KNOWLEDGE ACADEMY" !important'));
+  assert.ok(css.includes("left: 50% !important"));
+  assert.ok(css.includes("transform: translateX(-50%) !important"));
+  assert.ok(css.includes("margin: 31px auto 0 !important"));
+});
+
+test("desktop login artwork and form fill the visible viewport", () => {
+  assert.ok(css.includes("@media (min-width: 861px)"));
+  assert.ok(css.includes("height: calc(100dvh - 28px) !important"));
+  assert.ok(css.includes(".login-page .login-layout::before"));
+  assert.ok(css.includes("height: 100% !important"));
+});
+
+test("open phone drawer covers the measured Safari viewport", () => {
+  assert.ok(css.includes("body.cgv-mobile-menu-open .sidebar"));
+  assert.ok(css.includes("height: var(--cgv-mobile-viewport-height, 100svh) !important"));
+  assert.ok(css.includes("position: fixed !important"));
+  assert.ok(css.includes("width: 100vw !important"));
+  assert.ok(css.includes("margin-top: auto !important"));
+});
