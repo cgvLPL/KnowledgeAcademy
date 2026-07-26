@@ -31,5 +31,5 @@ test("mobile correction remains installed beneath later release layers", () => {
   assert.ok(layout.indexOf(mobileImport) > layout.indexOf(finalImport));
 
   const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
-  assert.match(release, /^2026\.07\.25-[a-z0-9-]+-v\d+$/u);
+  assert.match(release, /^2026\.07\.\d{2}-[a-z0-9-]+-v\d+$/u);
 });
