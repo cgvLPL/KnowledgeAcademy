@@ -44,5 +44,5 @@ test("session and scroll safeguards remain installed after later UI releases", (
   assert.ok(layout.includes("<SessionScrollEnhancer />"));
 
   const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
-  assert.match(release, /^2026\.07\.25-[a-z0-9-]+-v\d+$/u);
+  assert.match(release, /^2026\.07\.\d{2}-[a-z0-9-]+-v\d+$/u);
 });
