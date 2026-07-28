@@ -1,0 +1,51 @@
+/* Keep every administrator section header aligned with the Overview card. */
+.admin-section-header {
+  align-items: flex-end !important;
+  border: 1px solid var(--mockup-border) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.26) !important;
+  gap: 24px;
+  padding: 28px 30px !important;
+}
+
+.admin-header-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-header-actions .cgv-add-admin-button {
+  margin-left: 0;
+}
+
+@media (max-width: 760px) {
+  .admin-section-header {
+    align-items: stretch !important;
+    border-radius: 18px !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    padding: 20px !important;
+  }
+
+  .admin-header-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .admin-header-actions .primary-button,
+  .admin-header-actions .secondary-button {
+    justify-content: center;
+    margin: 0;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .admin-section-header {
+    padding: 16px !important;
+  }
+}
