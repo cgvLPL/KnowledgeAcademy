@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
@@ -39,23 +38,35 @@ import "./account-scroll-final.css";
 import "./knowledge-academy-loading.css";
 import "./final-loading-viewport-fix.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const publicSiteUrl = "https://rayhanmawuntu-stack.github.io/CGV.Exams/";
+const socialImageUrl = `${publicSiteUrl}og.png`;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(publicSiteUrl),
   title: "CGV Exams — Evaluation Portal",
   description:
     "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
+  alternates: {
+    canonical: publicSiteUrl,
+  },
+  openGraph: {
+    type: "website",
+    url: publicSiteUrl,
+    siteName: "CGV Exams",
+    title: "CGV Exams — Evaluation Portal",
+    description:
+      "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
+    images: [{ url: socialImageUrl, width: 1200, height: 630, alt: "CGV Exams Evaluation Portal" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CGV Exams — Evaluation Portal",
+    description:
+      "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
+    images: [socialImageUrl],
+  },
   other: {
-    "codex-preview": "development",
-    "cgv-ui-release": "2026.07.26-final-loading-viewport-v8",
+    "cgv-ui-release": "2026.07.28-performance-v1",
   },
   icons: {
     icon: "/cgv-logo.svg",
@@ -78,7 +89,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className="antialiased">
         {children}
         <SettingsEnhancer />
         <ButtonSafetyNet />

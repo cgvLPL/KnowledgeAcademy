@@ -21,6 +21,12 @@ if [[ -f "$api_route" ]]; then
 fi
 
 cd "$project_dir"
+node --input-type=module - "$project_dir/dist" <<'NODE'
+import { rm } from "node:fs/promises";
+
+await rm(process.argv[2], { recursive: true, force: true });
+NODE
+
 GITHUB_PAGES=true \
 NEXT_PUBLIC_BASE_PATH="/CGV.Exams" \
 bash scripts/sites-env.sh -- vinext build
@@ -30,21 +36,32 @@ if [[ ! -f "$project_dir/dist/client/index.html" ]]; then
   exit 1
 fi
 
-for exported_file in \
-  "$project_dir/dist/client/index.html" \
-  "$project_dir/dist/client/index.rsc"; do
-  sed -i \
-    -e 's#/assets/#/CGV.Exams/assets/#g' \
-    -e 's#/favicon\.svg#/CGV.Exams/favicon.svg#g' \
-    -e 's#href="/cgv-logo\.svg"#href="/CGV.Exams/cgv-logo.svg"#g' \
-    "$exported_file"
-done
+exported_files=(
+  "$project_dir/dist/client/index.html"
+  "$project_dir/dist/client/index.rsc"
+  "$project_dir/dist/client/404.html"
+)
 
-if grep -qF '"/assets/' "$project_dir/dist/client/index.html" ||
-  grep -qF 'import("/assets/' "$project_dir/dist/client/index.html" ||
-  grep -qF 'url(/assets/' "$project_dir/dist/client/index.html"; then
-  echo "GitHub Pages build still contains root-relative asset paths." >&2
-  exit 1
-fi
+node --input-type=module - "${exported_files[@]}" <<'NODE'
+import { readFile, writeFile } from "node:fs/promises";
+
+for (const file of process.argv.slice(2)) {
+  const source = await readFile(file, "utf8");
+  const rewritten = source
+    .replaceAll("/assets/", "/CGV.Exams/assets/")
+    .replaceAll("/favicon.svg", "/CGV.Exams/favicon.svg")
+    .replaceAll('href="/cgv-logo.svg"', 'href="/CGV.Exams/cgv-logo.svg"');
+  await writeFile(file, rewritten);
+}
+NODE
+
+for exported_file in "${exported_files[@]}"; do
+  if grep -qF '"/assets/' "$exported_file" ||
+    grep -qF 'import("/assets/' "$exported_file" ||
+    grep -qF 'url(/assets/' "$exported_file"; then
+    echo "GitHub Pages build still contains root-relative asset paths in $exported_file." >&2
+    exit 1
+  fi
+done
 
 touch "$project_dir/dist/client/.nojekyll"

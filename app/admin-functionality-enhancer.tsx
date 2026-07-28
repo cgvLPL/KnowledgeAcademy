@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 const endpointFromBuild = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const TOKEN_KEY = "cgv-exams-session-token";
@@ -161,6 +161,11 @@ export default function AdminFunctionalityEnhancer() {
   const [editCourse, setEditCourse] = useState<ApiCourse | null>(null);
   const [editQuestions, setEditQuestions] = useState<ApiQuestion[]>([]);
   const [resetPassword, setResetPassword] = useState("");
+  const busyRef = useRef(busy);
+
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
 
   function closeModal() {
     if (busy) return;
@@ -176,29 +181,33 @@ export default function AdminFunctionalityEnhancer() {
     window.setTimeout(() => setNotice(""), 3000);
   }
 
-  async function dashboard() {
-    return api<DashboardData>("adminGetDashboard");
-  }
-
-  async function locateCourse(element: Element) {
-    const title = courseTitleFromRow(element);
-    const data = await dashboard();
-    const course = (data.courses || []).find((item) => String(item.title || "") === title);
-    if (!course?.id) throw new Error("The selected course could not be found.");
-    return course;
-  }
-
-  async function locateUser(element: Element) {
-    const username = usernameFromRow(element);
-    const data = await dashboard();
-    const user = (data.participants || []).find(
-      (item) => normalize(item.username) === username,
-    );
-    if (!user?.id) throw new Error("The selected account could not be found.");
-    return user;
-  }
-
   useEffect(() => {
+    const dashboard = () => api<DashboardData>("adminGetDashboard");
+    const locateCourse = async (element: Element) => {
+      const title = courseTitleFromRow(element);
+      const data = await dashboard();
+      const course = (data.courses || []).find((item) => String(item.title || "") === title);
+      if (!course?.id) throw new Error("The selected course could not be found.");
+      return course;
+    };
+    const locateUser = async (element: Element) => {
+      const username = usernameFromRow(element);
+      const data = await dashboard();
+      const user = (data.participants || []).find(
+        (item) => normalize(item.username) === username,
+      );
+      if (!user?.id) throw new Error("The selected account could not be found.");
+      return user;
+    };
+    const closeModalFromEvent = () => {
+      if (busyRef.current) return;
+      setModal(null);
+      setEditCourse(null);
+      setEditQuestions([]);
+      setError("");
+      setResetPassword("");
+    };
+
     const injectControls = () => {
       if (window.sessionStorage.getItem(ROLE_KEY) !== "admin") return;
       const addParticipant = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
@@ -324,7 +333,7 @@ export default function AdminFunctionalityEnhancer() {
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
+      if (event.key === "Escape") closeModalFromEvent();
       if (
         (event.key === "Enter" || event.key === " ") &&
         document.activeElement?.classList.contains("user-chip")
@@ -341,7 +350,7 @@ export default function AdminFunctionalityEnhancer() {
       document.removeEventListener("click", onClick, true);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [busy]);
+  }, []);
 
   async function createAdmin(event: FormEvent) {
     event.preventDefault();
