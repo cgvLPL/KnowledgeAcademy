@@ -6,6 +6,7 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const layout = read("app/layout.tsx");
+const client = read("app/exam-client.tsx");
 const css = read("app/course-table-containment.css");
 const loginCss = read("app/login-reference-layout.css");
 const loginCopyCss = read("app/login-reference-copy.css");
@@ -59,4 +60,14 @@ test("login keeps the cinematic split layout and centred CGV exams lockup", () =
   assert.match(loginCopyCss, /content:\s*"Welcome back"/);
   assert.match(loginCopyCss, /content:\s*"Sign in to your CGV Exams account"/);
   assert.match(loginCopyCss, /content:\s*"Sign in"/);
+});
+
+test("login artwork carries an equal-width Knowledge Academy subtitle", () => {
+  assert.match(client, /className="login-artwork-lockup"/);
+  assert.match(client, /className="login-academy-label"\s+aria-label="Knowledge Academy"/);
+  assert.match(client, /Array\.from\("KNOWLEDGE ACADEMY"\)/);
+  assert.match(loginCss, /\.login-page \.login-academy-label/);
+  assert.match(loginCss, /justify-content:\s*space-between/);
+  assert.match(loginCss, /font-size:\s*clamp\(8px,\s*0\.7vw,\s*11px\)/);
+  assert.match(loginCss, /width:\s*96\.14%/);
 });
