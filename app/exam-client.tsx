@@ -269,7 +269,16 @@ function Login({
       <section className="login-layout">
         <form className="login-card" onSubmit={submit}>
           <div className="login-brand-row">
-            <Logo />
+            <div className="login-artwork-lockup">
+              <Logo />
+              <span className="login-academy-label" aria-label="Knowledge Academy">
+                {Array.from("KNOWLEDGE ACADEMY").map((character, index) => (
+                  <span aria-hidden="true" key={`${character}-${index}`}>
+                    {character === " " ? "\u00a0" : character}
+                  </span>
+                ))}
+              </span>
+            </div>
             <span>Secure portal</span>
           </div>
           <div className="login-card-heading">
