@@ -37,6 +37,7 @@ import "./mobile-no-green-v5.css";
 import "./account-scroll-final.css";
 import "./knowledge-academy-loading.css";
 import "./final-loading-viewport-fix.css";
+import "./admin-header-consistency.css";
 
 const publicSiteUrl = "https://rayhanmawuntu-stack.github.io/CGV.Exams/";
 const socialImageUrl = `${publicSiteUrl}og.png`;

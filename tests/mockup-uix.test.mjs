@@ -10,6 +10,7 @@ const client = read("app/exam-client.tsx");
 const participantCss = read("app/participant-dashboard-refresh.css");
 const loginCss = read("app/login-account-switch.css");
 const systemCss = read("app/mockup-uix-system.css");
+const adminHeaderCss = read("app/admin-header-consistency.css");
 const loginSource = client.slice(client.indexOf("function Login("), client.indexOf("function BootScreen("));
 
 test("participant dashboard uses the approved cinematic card system", () => {
@@ -60,4 +61,23 @@ test("mockup UI palette applies across navigation dashboards quiz and results", 
   assert.ok(systemCss.includes("#ff6a22"));
   assert.ok(systemCss.includes("#e6322f"));
   assert.ok(systemCss.includes("#ffad21"));
+});
+
+test("all administrator section headers use the Overview card treatment", () => {
+  assert.ok(layout.includes('import "./admin-header-consistency.css";'));
+  assert.equal(
+    client.match(/<section className="(?:welcome-row|page-intro) admin-section-header">/g)?.length,
+    4,
+  );
+  assert.equal(client.match(/<div className="admin-header-actions">/g)?.length, 4);
+  for (const rule of [
+    ".admin-section-header",
+    "border-radius: 22px !important",
+    "padding: 28px 30px !important",
+    ".admin-header-actions",
+    ".admin-header-actions .cgv-add-admin-button",
+    "@media (max-width: 760px)",
+  ]) {
+    assert.ok(adminHeaderCss.includes(rule), `Missing administrator header rule ${rule}`);
+  }
 });

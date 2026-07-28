@@ -1144,13 +1144,15 @@ function AdminOverview({
     : 0;
   return (
     <div className="content admin-overview">
-      <section className="welcome-row">
+      <section className="welcome-row admin-section-header">
         <div>
           <span className="eyebrow dark-eyebrow"><Sparkles size={15} /> ADMIN WORKSPACE</span>
           <h2>Here&apos;s today&apos;s learning pulse.</h2>
           <p>Monitor participation, publish evaluations, and keep every score organized.</p>
         </div>
-        <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
+        <div className="admin-header-actions">
+          <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
+        </div>
       </section>
       <section className="admin-metrics">
         <article><span className="metric-icon green"><Users size={20} /></span><div><p>Active participants</p><strong>{participantsData.filter((item) => item.status === "Active").length}</strong><small>{participantsData.length} total accounts</small></div></article>
@@ -1222,9 +1224,11 @@ function CoursesView({
 }) {
   return (
     <div className="content">
-      <section className="page-intro">
+      <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Layers3 size={15} /> CONTENT MANAGEMENT</span><h2>Quiz courses</h2><p>Create, schedule, and manage every evaluation in one place.</p></div>
-        <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
+        <div className="admin-header-actions">
+          <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
+        </div>
       </section>
       <div className="toolbar">
         <div className="admin-search"><Search size={17} /><input placeholder="Search courses…" /></div>
@@ -1302,9 +1306,11 @@ function ParticipantsView({
 
   return (
     <div className="content">
-      <section className="page-intro">
+      <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Users size={15} /> PEOPLE</span><h2>Participants</h2><p>Manage accounts, locations, and evaluation access.</p></div>
-        <button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={18} /> Add participant</button>
+        <div className="admin-header-actions">
+          <button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={18} /> Add participant</button>
+        </div>
       </section>
       <section className="admin-metrics compact">
         <article><span className="metric-icon green"><Users size={20} /></span><div><p>Total accounts</p><strong>{participantsData.length}</strong><small>Participant accounts only</small></div></article>
@@ -1399,9 +1405,11 @@ function ScoreboardView({
 
   return (
     <div className="content">
-      <section className="page-intro">
+      <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Trophy size={15} /> LIVE RESULTS</span><h2>Evaluation scoreboard</h2><p>Compare results for every participant in the selected evaluation.</p></div>
-        <button className="secondary-button"><Download size={17} /> Export scoreboard</button>
+        <div className="admin-header-actions">
+          <button className="secondary-button"><Download size={17} /> Export scoreboard</button>
+        </div>
       </section>
       <section className="scoreboard-hero">
         <div>
