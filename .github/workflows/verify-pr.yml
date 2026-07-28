@@ -30,6 +30,11 @@ jobs:
           cp google-apps-script/Code.gs /tmp/cgv-code.js
           node --check /tmp/cgv-code.js
 
+      - name: Validate TypeScript and lint rules
+        run: |
+          npm run typecheck
+          npm run lint
+
       - name: Build static application
         run: npm run build:github-pages
         env:

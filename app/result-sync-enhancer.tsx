@@ -130,7 +130,6 @@ export default function ResultSyncEnhancer() {
       const payload = parsePayload(init);
       const action = payload?.action || "";
       const endpoint = requestUrl(input);
-      let response: Response;
 
       if (action === "submitAttempt") {
         let lastError: unknown;
@@ -183,7 +182,7 @@ export default function ResultSyncEnhancer() {
         throw lastError instanceof Error ? lastError : new Error("The result could not be synchronized.");
       }
 
-      response = await originalFetch(input, init);
+      const response = await originalFetch(input, init);
       if (action === "login") {
         try {
           const data = await response.clone().json() as {
@@ -211,6 +210,7 @@ export default function ResultSyncEnhancer() {
     let refreshing = false;
     const refreshAdmin = async (force = false) => {
       if (!force && !autoRefreshEnabled()) return;
+      if (!force && document.visibilityState !== "visible") return;
       if (refreshing || sessionStorage.getItem(ROLE_KEY) !== "admin") return;
       const token = sessionStorage.getItem(TOKEN_KEY);
       const endpoint = sessionStorage.getItem(ENDPOINT_KEY);
@@ -224,7 +224,10 @@ export default function ResultSyncEnhancer() {
 
       refreshing = true;
       try {
-        const response = await originalFetch(endpoint, {
+        const refreshFetch = force || window.fetch === enhancedFetch
+          ? originalFetch
+          : window.fetch.bind(window);
+        const response = await refreshFetch(endpoint, {
           method: "POST",
           headers: { "content-type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "adminGetDashboard", token }),
@@ -240,10 +243,14 @@ export default function ResultSyncEnhancer() {
 
     const timer = window.setInterval(() => void refreshAdmin(), 10000);
     const onFocus = () => void refreshAdmin();
-    const onResult = () => void refreshAdmin();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refreshAdmin();
+    };
+    const onResult = () => void refreshAdmin(true);
     const onSettingsChanged = () => void refreshAdmin();
     const onManualRefresh = () => void refreshAdmin(true);
     window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("cgv:result-synced", onResult);
     window.addEventListener("cgv:settings-changed", onSettingsChanged);
     window.addEventListener("cgv:settings-refresh-now", onManualRefresh);
@@ -253,6 +260,7 @@ export default function ResultSyncEnhancer() {
       if (window.fetch === enhancedFetch) window.fetch = nativeFetch;
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("cgv:result-synced", onResult);
       window.removeEventListener("cgv:settings-changed", onSettingsChanged);
       window.removeEventListener("cgv:settings-refresh-now", onManualRefresh);

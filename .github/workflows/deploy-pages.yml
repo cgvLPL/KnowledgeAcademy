@@ -48,7 +48,7 @@ jobs:
       - name: Validate generated site
         run: |
           test -f dist/client/index.html
-          test -d dist/client/_next
+          test -d dist/client/assets
           test -f dist/client/cgv-logo.svg
           grep -q "CGV Exams" dist/client/index.html
 

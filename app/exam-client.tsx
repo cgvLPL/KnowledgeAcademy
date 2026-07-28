@@ -115,6 +115,12 @@ type AuthUser = {
 const publicSheetsEndpoint =
   process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
+const BOOT_SCREEN_MINIMUM_MS = 800;
+const BUILDER_STEPS = [
+  ["Course details", 1],
+  ["Questions", 2],
+  ["Schedule & access", 3],
+] as const;
 
 function sheetsFetch(payload: Record<string, unknown>) {
   const directToAppsScript = Boolean(publicSheetsEndpoint);
@@ -1515,8 +1521,8 @@ function CourseBuilder({
         <div className="builder-actions"><button className="secondary-button" onClick={onClose}>Close</button><button className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
       </header>
       <div className="builder-progress">
-        {[["Course details", 1], ["Questions", 2], ["Schedule & access", 3]].map(([label, number]) => (
-          <button className={step === number ? "active" : step > number ? "done" : ""} key={number} onClick={() => setStep(number as number)}>
+        {BUILDER_STEPS.map(([label, number]) => (
+          <button className={step === number ? "active" : step > number ? "done" : ""} key={number} onClick={() => setStep(number)}>
             <span>{step > number ? <Check size={14} /> : number}</span>{label}
           </button>
         ))}
@@ -1629,7 +1635,7 @@ export default function ExamClient() {
   }), []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setBooting(false), 3200);
+    const timer = window.setTimeout(() => setBooting(false), BOOT_SCREEN_MINIMUM_MS);
     return () => window.clearTimeout(timer);
   }, []);
 

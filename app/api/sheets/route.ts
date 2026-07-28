@@ -8,8 +8,14 @@ const ALLOWED_ACTIONS = new Set([
   "startAttempt",
   "submitAttempt",
   "adminGetDashboard",
+  "adminGetCourse",
   "adminSaveCourse",
+  "adminDuplicateCourse",
+  "adminDeleteCourse",
+  "adminSetCourseStatus",
   "adminSaveParticipant",
+  "adminSaveUser",
+  "adminSetUserStatus",
   "adminResetPassword",
 ]);
 

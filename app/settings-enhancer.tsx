@@ -60,7 +60,6 @@ export default function SettingsEnhancer() {
 
   useEffect(() => {
     const stored = readPreferences();
-    setPreferences(stored);
     applyPreferences(stored);
   }, []);
 

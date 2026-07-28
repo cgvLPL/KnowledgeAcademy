@@ -39,6 +39,6 @@ test("Pages build validates the generated application before artifact upload", (
 
   assert.ok(buildIndex >= 0 && validationIndex > buildIndex && uploadIndex > validationIndex);
   assert.ok(workflow.includes("test -f dist/client/index.html"));
-  assert.ok(workflow.includes("test -d dist/client/_next"));
+  assert.ok(workflow.includes("test -d dist/client/assets"));
   assert.ok(!workflow.includes("node --test tests/*.test.mjs"));
 });

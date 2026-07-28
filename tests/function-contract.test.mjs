@@ -15,6 +15,7 @@ const builder = read("app/course-builder-enhancer.tsx");
 const safetyNet = read("app/button-safety-net.tsx");
 const settings = read("app/settings-enhancer.tsx");
 const performance = read("app/interaction-performance-enhancer.tsx");
+const sheetsProxy = read("app/api/sheets/route.ts");
 const settingsCss = read("app/settings-enhancer.css");
 const topbarCss = read("app/topbar-polish.css");
 const builderHeaderCss = read("app/builder-header-polish.css");
@@ -62,6 +63,7 @@ function contrastRatio(first, second) {
 test("Apps Script registers every participant and administrator action", () => {
   for (const action of requiredActions) {
     assert.match(backend, new RegExp(`\\b${action}:\\s*[A-Za-z0-9_]+_`), `Missing API action ${action}`);
+    assert.match(sheetsProxy, new RegExp(`"${action}"`), `Sheets proxy rejects API action ${action}`);
   }
 });
 

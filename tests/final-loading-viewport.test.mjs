@@ -12,7 +12,7 @@ test("final loading and viewport stylesheet is loaded last", () => {
   const finalImport = 'import "./final-loading-viewport-fix.css";';
   assert.ok(layout.includes(finalImport));
   assert.ok(layout.indexOf(finalImport) > layout.indexOf('import "./knowledge-academy-loading.css";'));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.07.26-final-loading-viewport-v8"'));
+  assert.ok(layout.includes('"cgv-ui-release": "2026.07.28-performance-v1"'));
 });
 
 test("loading lockup, academy label, bar and status are centered", () => {
