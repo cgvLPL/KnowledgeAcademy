@@ -556,14 +556,144 @@ function EmptyState({
   );
 }
 
+function certificateIdFor(item: HistoryItem) {
+  const attemptReference = item.id.replace(/[^a-z0-9]/giu, "").toUpperCase();
+  return `CGV-KA-${attemptReference.slice(-12) || "COMPLETED"}`;
+}
+
+function CertificateModal({
+  item,
+  user,
+  onClose,
+}: {
+  item: HistoryItem;
+  user: AuthUser | null;
+  onClose: () => void;
+}) {
+  const participantName = user?.fullName || user?.username || "Participant";
+  const branch = user?.branch || "CGV Knowledge Academy";
+  const certificateId = certificateIdFor(item);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
+
+  function printCertificate() {
+    const previousTitle = document.title;
+    const safeName = participantName.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "");
+    const safeCourse = item.title.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "");
+    const restoreTitle = () => {
+      document.title = previousTitle;
+    };
+    document.title = `CGV-Certificate-${safeName}-${safeCourse}`;
+    window.addEventListener("afterprint", restoreTitle, { once: true });
+    window.print();
+    window.setTimeout(restoreTitle, 1500);
+  }
+
+  return (
+    <div
+      className="certificate-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose();
+      }}
+    >
+      <section className="certificate-dialog" role="dialog" aria-modal="true" aria-labelledby="certificate-dialog-title">
+        <header className="certificate-toolbar">
+          <div>
+            <span>COMPLETION CERTIFICATE</span>
+            <strong id="certificate-dialog-title">{item.title}</strong>
+          </div>
+          <div>
+            <button className="secondary-button" type="button" onClick={onClose}>
+              <X size={17} /> Close
+            </button>
+            <button className="primary-button" type="button" onClick={printCertificate}>
+              <Download size={17} /> Print / save PDF
+            </button>
+          </div>
+        </header>
+
+        <div className="certificate-scroll">
+          <article className="completion-certificate" aria-label={`Certificate of completion for ${participantName}`}>
+            <div className="certificate-orbit" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+
+            <header className="certificate-document-header">
+              <div className="certificate-logo-panel">
+                <Logo />
+              </div>
+              <div className="certificate-reference">
+                <span>Certificate ID</span>
+                <strong>{certificateId}</strong>
+              </div>
+            </header>
+
+            <section className="certificate-copy">
+              <span className="certificate-kicker">CERTIFICATE</span>
+              <h2>Certificate of Completion</h2>
+              <p className="certificate-intro">This certificate is proudly presented to</p>
+              <h3>{participantName}</h3>
+              <p className="certificate-statement">
+                for completing the CGV Knowledge Academy evaluation
+              </p>
+              <h4>{item.title}</h4>
+              <p className="certificate-category">{item.category} learning programme</p>
+            </section>
+
+            <section className="certificate-details" aria-label="Completion details">
+              <div><span>Score achieved</span><strong>{item.score}%</strong></div>
+              <div><span>Completion date</span><strong>{item.date}</strong></div>
+              <div><span>Outcome</span><strong>{item.status === "Passed" ? "Passed" : "Completed"}</strong></div>
+            </section>
+
+            <footer className="certificate-footer">
+              <div className="certificate-signature">
+                <span />
+                <strong>CGV Knowledge Academy</strong>
+                <small>Learning &amp; Development</small>
+              </div>
+              <div className="certificate-branch">
+                <span>Participant location</span>
+                <strong>{branch}</strong>
+                <small>{item.duration} · Completion verified</small>
+              </div>
+              <div className="certificate-seal" aria-label="Verified completion">
+                <GraduationCap size={24} />
+                <span>CGV</span>
+                <small>VERIFIED</small>
+              </div>
+            </footer>
+          </article>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function ParticipantHome({
   onStart,
+  onCertificate,
   setView,
   history,
   evaluations,
   user,
 }: {
   onStart: (evaluation: Evaluation) => void;
+  onCertificate: (item: HistoryItem) => void;
   setView: (view: ParticipantView) => void;
   history: HistoryItem[];
   evaluations: Evaluation[];
@@ -731,8 +861,8 @@ function ParticipantHome({
                   <Check size={14} /> {item.status}
                 </p>
               </div>
-              <button className="icon-button" aria-label={`Open ${item.title}`}>
-                <ChevronRight size={18} />
+              <button className="icon-button" aria-label={`Open certificate for ${item.title}`} onClick={() => onCertificate(item)}>
+                <FileText size={18} />
               </button>
             </article>
           ))}
@@ -819,7 +949,13 @@ function EvaluationsView({
   );
 }
 
-function HistoryView({ history }: { history: HistoryItem[] }) {
+function HistoryView({
+  history,
+  onCertificate,
+}: {
+  history: HistoryItem[];
+  onCertificate: (item: HistoryItem) => void;
+}) {
   const average = history.length
     ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
     : 0;
@@ -855,7 +991,7 @@ function HistoryView({ history }: { history: HistoryItem[] }) {
         </div>
         <div className="responsive-table">
           <table>
-            <thead><tr><th>Evaluation</th><th>Completed</th><th>Duration</th><th>Score</th><th>Outcome</th><th /></tr></thead>
+            <thead><tr><th>Evaluation</th><th>Completed</th><th>Duration</th><th>Score</th><th>Outcome</th><th>Certificate</th></tr></thead>
             <tbody>
               {history.map((item) => (
                 <tr key={item.id}>
@@ -864,7 +1000,11 @@ function HistoryView({ history }: { history: HistoryItem[] }) {
                   <td>{item.duration}</td>
                   <td><strong className="table-score">{item.score}%</strong></td>
                   <td><span className={`outcome-pill ${item.status === "Passed" ? "pass" : "review"}`}>{item.status}</span></td>
-                  <td><button className="icon-button"><ChevronRight size={17} /></button></td>
+                  <td>
+                    <button className="certificate-row-button" type="button" onClick={() => onCertificate(item)}>
+                      <FileText size={15} /> View
+                    </button>
+                  </td>
                 </tr>
               ))}
               {!history.length && (
@@ -1096,13 +1236,17 @@ function Quiz({
 function Result({
   evaluation,
   score,
+  completion,
   onHome,
   onHistory,
+  onCertificate,
 }: {
   evaluation: Evaluation;
   score: number;
+  completion: HistoryItem;
   onHome: () => void;
   onHistory: () => void;
+  onCertificate: (item: HistoryItem) => void;
 }) {
   const passed = score >= evaluation.passingScore;
   return (
@@ -1131,6 +1275,9 @@ function Result({
         </div>
         <div className="result-actions">
           <button className="secondary-button" onClick={onHistory}>View score history</button>
+          <button className="secondary-button certificate-result-button" onClick={() => onCertificate(completion)}>
+            <FileText size={17} /> View certificate
+          </button>
           <button className="primary-button" onClick={onHome}>Back to overview <ArrowRight size={18} /></button>
         </div>
       </section>
@@ -1637,7 +1784,12 @@ export default function ExamClient() {
   const [activeQuiz, setActiveQuiz] = useState<Evaluation | null>(null);
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
-  const [result, setResult] = useState<{ evaluation: Evaluation; score: number } | null>(null);
+  const [result, setResult] = useState<{
+    evaluation: Evaluation;
+    score: number;
+    completion: HistoryItem;
+  } | null>(null);
+  const [certificateItem, setCertificateItem] = useState<HistoryItem | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardRow[]>([]);
@@ -1760,6 +1912,7 @@ export default function ExamClient() {
     setActiveQuiz(null);
     setActiveAttemptId(null);
     setResult(null);
+    setCertificateItem(null);
   }
 
   async function startQuiz(evaluation: Evaluation) {
@@ -1794,6 +1947,8 @@ export default function ExamClient() {
   async function completeQuiz(score: number, answers: Record<number, number>) {
     if (!activeQuiz) return;
     let finalScore = score;
+    let completedAttemptId = activeAttemptId || `history-${Date.now()}`;
+    let completedDurationSeconds = 0;
     if (backendMode === "sheets" && sessionToken && activeAttemptId) {
       try {
         const answerPayload = quizQuestions.reduce<Record<string, string>>((resultMap, question, index) => {
@@ -1802,13 +1957,15 @@ export default function ExamClient() {
         }, {});
         const submission = await sheetsRequest<{
           ok: boolean;
-          result: { score: number; durationSeconds: number };
+          result: { attemptId?: string; score: number; durationSeconds: number };
         }>("submitAttempt", {
           token: sessionToken,
           attemptId: activeAttemptId,
           answers: answerPayload,
         });
         finalScore = submission.result.score;
+        completedAttemptId = String(submission.result.attemptId || activeAttemptId);
+        completedDurationSeconds = Number(submission.result.durationSeconds || 0);
       } catch (error) {
         window.alert(error instanceof Error ? error.message : "Unable to submit this evaluation.");
         return;
@@ -1818,17 +1975,18 @@ export default function ExamClient() {
       return;
     }
     const completedEvaluation = activeQuiz;
-    const newResult = { evaluation: completedEvaluation, score: finalScore };
-    setResult(newResult);
-    setHistory((items) => [{
-      id: `history-${Date.now()}`,
+    const completion: HistoryItem = {
+      id: completedAttemptId,
       title: completedEvaluation.title,
       category: completedEvaluation.category,
       date: formatApiDate(new Date()),
       score: finalScore,
       status: finalScore >= completedEvaluation.passingScore ? "Passed" : "Needs review",
-      duration: "Recorded online",
-    }, ...items]);
+      duration: formatDuration(completedDurationSeconds),
+    };
+    const newResult = { evaluation: completedEvaluation, score: finalScore, completion };
+    setResult(newResult);
+    setHistory((items) => [completion, ...items]);
     setActiveQuiz(null);
     setActiveAttemptId(null);
   }
@@ -1926,7 +2084,23 @@ export default function ExamClient() {
   if (!role) return <Login onLogin={login} />;
   if (builderOpen && role === "admin") return <CourseBuilder onClose={() => setBuilderOpen(false)} onSave={saveCourse} />;
   if (activeQuiz) return <Quiz evaluation={activeQuiz} questionsData={quizQuestions} onExit={() => setActiveQuiz(null)} onComplete={completeQuiz} />;
-  if (result) return <Result evaluation={result.evaluation} score={result.score} onHome={() => { setResult(null); setView("home"); }} onHistory={() => { setResult(null); setView("history"); }} />;
+  if (result) {
+    return (
+      <>
+        <Result
+          evaluation={result.evaluation}
+          score={result.score}
+          completion={result.completion}
+          onHome={() => { setResult(null); setView("home"); }}
+          onHistory={() => { setResult(null); setView("history"); }}
+          onCertificate={setCertificateItem}
+        />
+        {certificateItem && (
+          <CertificateModal item={certificateItem} user={currentUser} onClose={() => setCertificateItem(null)} />
+        )}
+      </>
+    );
+  }
 
   const [title, subtitle] = titleMap[view];
   return (
@@ -1934,9 +2108,9 @@ export default function ExamClient() {
       <Sidebar role={role} view={view} setView={setView} onLogout={logout} evaluationCount={evaluations.filter((item) => item.status === "Live").length} />
       <div className="main-shell">
         <Topbar role={role} title={title} subtitle={subtitle} user={currentUser} />
-        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
+        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} onCertificate={setCertificateItem} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
         {role === "participant" && view === "evaluations" && <EvaluationsView evaluations={evaluations} onStart={startQuiz} />}
-        {role === "participant" && view === "history" && <HistoryView history={history} />}
+        {role === "participant" && view === "history" && <HistoryView history={history} onCertificate={setCertificateItem} />}
         {role === "participant" && view === "profile" && <ProfileView user={currentUser} history={history} />}
         {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} evaluations={evaluations} participantsData={participantsData} />}
         {role === "admin" && view === "courses" && <CoursesView evaluations={evaluations} onCreate={() => setBuilderOpen(true)} />}
@@ -1944,6 +2118,9 @@ export default function ExamClient() {
         {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} evaluations={evaluations} onEvaluationChange={loadScoreboard} />}
       </div>
       <MobileNav role={role} view={view} setView={setView} />
+      {certificateItem && (
+        <CertificateModal item={certificateItem} user={currentUser} onClose={() => setCertificateItem(null)} />
+      )}
     </div>
   );
 }
