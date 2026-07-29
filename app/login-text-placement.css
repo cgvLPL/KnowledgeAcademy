@@ -1,0 +1,32 @@
+/* Keep the login introduction on the same visual axis as the form below it. */
+.login-page .login-card-heading {
+  align-items: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 560px !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+
+.login-page .login-card-heading > h1,
+.login-page .login-card-heading > p {
+  box-sizing: border-box !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 100% !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+
+.login-page .login-card-heading h1::after,
+.login-page .login-card-heading p::after {
+  box-sizing: border-box !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  text-align: center !important;
+  width: 100% !important;
+}
