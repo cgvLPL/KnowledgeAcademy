@@ -7,6 +7,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const css = read("app/knowledge-academy-loading.css");
 const finalCss = read("app/final-loading-viewport-fix.css");
+const visibilityCss = read("app/brand-visibility-polish.css");
 const layout = read("app/layout.tsx");
 const logo = read("public/cgv-logo.svg");
 const logoCss = read("app/logo-lockup.css");
@@ -18,26 +19,50 @@ test("Knowledge Academy artwork remains installed beneath the final alignment la
 
   assert.ok(layout.includes(artworkImport));
   assert.ok(layout.includes(finalImport));
+  assert.ok(layout.includes('import "./brand-visibility-polish.css";'));
   assert.ok(layout.indexOf(artworkImport) > layout.indexOf('import "./account-scroll-final.css";'));
   assert.ok(layout.indexOf(finalImport) > layout.indexOf(artworkImport));
+  assert.ok(
+    layout.indexOf('import "./brand-visibility-polish.css";') >
+      layout.indexOf('import "./admin-header-consistency.css";'),
+  );
 
   const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
   assert.match(release, /^2026\.07\.\d{2}-[a-z0-9-]+-v\d+$/u);
 });
 
-test("loading screen uses the real CGV SVG and thin Knowledge Academy lockup", () => {
+test("loading screen uses the real CGV SVG and a visible Knowledge Academy lockup", () => {
   assert.ok(logo.includes("<svg"));
+  assert.ok(logo.includes("transparent background"));
   assert.ok(client.includes('const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY"'));
   assert.ok(client.includes("<Logo priority />"));
   assert.equal(client.match(/cgv-logo\.svg/g)?.length, 1);
   assert.ok(logoCss.includes(".brand-academy-label"));
   assert.ok(logoCss.includes("justify-content: space-between"));
   assert.ok(logoCss.includes("width: 96.14%"));
-  assert.ok(css.includes("font-weight: 300"));
-  assert.ok(finalCss.includes("font-weight: 250"));
-  assert.ok(finalCss.includes(".boot-content .brand-academy-label"));
+  assert.ok(visibilityCss.includes("background: transparent !important"));
+  assert.ok(visibilityCss.includes("width: min(820px, 84vw) !important"));
+  assert.ok(visibilityCss.includes("font-weight: 650 !important"));
+  assert.ok(visibilityCss.includes(".boot-content .brand-academy-label"));
+  assert.ok(visibilityCss.includes("text-shadow: 0 3px 14px"));
   assert.ok(finalCss.includes("content: none !important"));
   assert.ok(css.includes(".boot-content img"));
+});
+
+test("shared logo remains prominent without overflowing smaller surfaces", () => {
+  for (const selector of [
+    ".sidebar .brand-logo",
+    ".quiz-header .brand-logo",
+    ".login-page .login-brand-row",
+    ".mobile-brand .brand-logo",
+    "@media (max-width: 420px)",
+  ]) {
+    assert.ok(visibilityCss.includes(selector), `Missing visibility sizing for ${selector}`);
+  }
+
+  assert.ok(visibilityCss.includes("width: min(42vw, 620px) !important"));
+  assert.ok(visibilityCss.includes("width: 208px !important"));
+  assert.ok(visibilityCss.includes("color: #fff !important"));
 });
 
 test("loading backdrop and progress styling match the approved orange mockup", () => {
