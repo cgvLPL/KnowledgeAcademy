@@ -19,9 +19,10 @@ test("loading lockup, academy label, bar and status are centered", () => {
   assert.ok(css.includes(".boot-content"));
   assert.ok(css.includes("max-width: 960px !important"));
   assert.ok(css.includes("width: min(706px, 74vw) !important"));
-  assert.ok(css.includes('content: "KNOWLEDGE ACADEMY" !important'));
-  assert.ok(css.includes("left: 50% !important"));
-  assert.ok(css.includes("transform: translateX(-50%) !important"));
+  assert.ok(css.includes(".boot-content .brand-lockup"));
+  assert.ok(css.includes(".boot-content .brand-academy-label"));
+  assert.ok(css.includes("width: 96.14% !important"));
+  assert.ok(css.includes("content: none !important"));
   assert.ok(css.includes("margin: 31px auto 0 !important"));
 });
 

@@ -77,21 +77,11 @@
   width: min(620px, 82vw) !important;
 }
 
-.boot-bar::before {
-  bottom: calc(100% + 22px);
+.boot-content .brand-academy-label {
   color: rgba(255, 255, 255, 0.92);
-  content: "KNOWLEDGE ACADEMY";
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   font-size: clamp(8px, 0.72vw, 11px);
   font-weight: 300;
-  letter-spacing: 0.34em;
-  line-height: 1;
-  max-width: 46%;
-  position: absolute;
-  right: 1%;
-  text-align: center;
-  white-space: nowrap;
-  width: 46%;
+  margin-top: 12px;
 }
 
 .boot-bar span {

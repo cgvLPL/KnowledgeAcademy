@@ -145,29 +145,9 @@
   width: 100% !important;
 }
 
-.login-page .login-artwork-lockup {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.login-page .login-academy-label {
-  align-items: center;
-  color: rgba(255, 255, 255, 0.9);
-  display: flex;
+.login-page .login-brand-row .brand-academy-label {
   font-size: clamp(8px, 0.7vw, 11px);
-  font-weight: 500;
-  justify-content: space-between;
-  line-height: 1;
   margin-top: clamp(8px, 0.8vw, 12px);
-  text-transform: uppercase;
-  width: 96.14%;
-}
-
-.login-page .login-academy-label > span {
-  display: block;
-  flex: 0 0 auto;
 }
 
 .login-page .login-card-heading {

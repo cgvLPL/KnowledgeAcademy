@@ -204,20 +204,43 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
   };
 }
 
-function Logo({ compact = false }: { compact?: boolean }) {
+const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY";
+
+function AcademyWordmark() {
+  return (
+    <span className="brand-academy-label" aria-hidden="true">
+      {Array.from(ACADEMY_WORDMARK).map((character, index) => (
+        <span key={`${character}-${index}`}>
+          {character === " " ? "\u00a0" : character}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function Logo({
+  compact = false,
+  priority = false,
+}: {
+  compact?: boolean;
+  priority?: boolean;
+}) {
   return (
     <div
       className={`brand-lockup ${compact ? "brand-compact" : ""}`}
-      aria-label={compact ? "CGV" : "CGV Exams"}
+      aria-label="CGV Exams Knowledge Academy"
+      role="img"
     >
       <Image
         className="brand-logo"
         src={`${publicBasePath}/cgv-logo.svg`}
-        alt="CGV"
+        alt=""
         width={compact ? 56 : 72}
         height={compact ? 25 : 32}
+        priority={priority}
         unoptimized
       />
+      <AcademyWordmark />
       {!compact && <span className="brand-product-name">Exams</span>}
     </div>
   );
@@ -269,16 +292,7 @@ function Login({
       <section className="login-layout">
         <form className="login-card" onSubmit={submit}>
           <div className="login-brand-row">
-            <div className="login-artwork-lockup">
-              <Logo />
-              <span className="login-academy-label" aria-label="Knowledge Academy">
-                {Array.from("KNOWLEDGE ACADEMY").map((character, index) => (
-                  <span aria-hidden="true" key={`${character}-${index}`}>
-                    {character === " " ? "\u00a0" : character}
-                  </span>
-                ))}
-              </span>
-            </div>
+            <Logo />
             <span>Secure portal</span>
           </div>
           <div className="login-card-heading">
@@ -374,14 +388,7 @@ function BootScreen() {
       <div className="boot-glow boot-glow-one" />
       <div className="boot-glow boot-glow-two" />
       <div className="boot-content">
-        <Image
-          src={`${publicBasePath}/cgv-logo.svg`}
-          alt="CGV"
-          width={230}
-          height={102}
-          priority
-          unoptimized
-        />
+        <Logo priority />
         <div className="boot-bar" role="progressbar" aria-label="Loading application">
           <span />
         </div>
