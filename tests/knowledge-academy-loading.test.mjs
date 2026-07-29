@@ -9,6 +9,8 @@ const css = read("app/knowledge-academy-loading.css");
 const finalCss = read("app/final-loading-viewport-fix.css");
 const layout = read("app/layout.tsx");
 const logo = read("public/cgv-logo.svg");
+const logoCss = read("app/logo-lockup.css");
+const client = read("app/exam-client.tsx");
 
 test("Knowledge Academy artwork remains installed beneath the final alignment layer", () => {
   const artworkImport = 'import "./knowledge-academy-loading.css";';
@@ -25,11 +27,16 @@ test("Knowledge Academy artwork remains installed beneath the final alignment la
 
 test("loading screen uses the real CGV SVG and thin Knowledge Academy lockup", () => {
   assert.ok(logo.includes("<svg"));
-  assert.ok(css.includes('content: "KNOWLEDGE ACADEMY"'));
+  assert.ok(client.includes('const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY"'));
+  assert.ok(client.includes("<Logo priority />"));
+  assert.equal(client.match(/cgv-logo\.svg/g)?.length, 1);
+  assert.ok(logoCss.includes(".brand-academy-label"));
+  assert.ok(logoCss.includes("justify-content: space-between"));
+  assert.ok(logoCss.includes("width: 96.14%"));
   assert.ok(css.includes("font-weight: 300"));
   assert.ok(finalCss.includes("font-weight: 250"));
-  assert.ok(finalCss.includes("left: 50% !important"));
-  assert.ok(finalCss.includes("transform: translateX(-50%) !important"));
+  assert.ok(finalCss.includes(".boot-content .brand-academy-label"));
+  assert.ok(finalCss.includes("content: none !important"));
   assert.ok(css.includes(".boot-content img"));
 });
 

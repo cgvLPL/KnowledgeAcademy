@@ -63,11 +63,8 @@ test("login keeps the cinematic split layout and centred CGV exams lockup", () =
 });
 
 test("login artwork carries an equal-width Knowledge Academy subtitle", () => {
-  assert.match(client, /className="login-artwork-lockup"/);
-  assert.match(client, /className="login-academy-label"\s+aria-label="Knowledge Academy"/);
-  assert.match(client, /Array\.from\("KNOWLEDGE ACADEMY"\)/);
-  assert.match(loginCss, /\.login-page \.login-academy-label/);
-  assert.match(loginCss, /justify-content:\s*space-between/);
+  assert.match(client, /<div className="login-brand-row">[\s\S]*?<Logo \/>/);
+  assert.match(client, /const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY"/);
+  assert.match(loginCss, /\.login-page \.login-brand-row \.brand-academy-label/);
   assert.match(loginCss, /font-size:\s*clamp\(8px,\s*0\.7vw,\s*11px\)/);
-  assert.match(loginCss, /width:\s*96\.14%/);
 });

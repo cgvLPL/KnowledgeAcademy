@@ -1,5 +1,7 @@
 /* Unified transparent CGV (exams) lockup */
 .brand-lockup {
+  align-items: center !important;
+  flex-direction: column !important;
   gap: 0 !important;
 }
 
@@ -18,12 +20,39 @@
   display: none !important;
 }
 
+.brand-academy-label {
+  align-items: center;
+  color: rgba(255, 255, 255, 0.88);
+  display: flex;
+  font-size: clamp(5px, 0.44vw, 7px);
+  font-weight: 500;
+  justify-content: space-between;
+  line-height: 1;
+  margin-top: 4px;
+  text-transform: uppercase;
+  width: 96.14%;
+}
+
+.brand-academy-label > span {
+  display: block;
+  flex: 0 0 auto;
+}
+
 .brand-compact .brand-logo {
   width: clamp(118px, 10vw, 152px) !important;
 }
 
+.brand-compact .brand-academy-label {
+  font-size: clamp(4px, 0.34vw, 5.5px);
+  margin-top: 3px;
+}
+
 .sidebar .brand-logo {
   width: 184px !important;
+}
+
+.sidebar .brand-academy-label {
+  font-size: 5.5px;
 }
 
 .quiz-header .brand-logo,
@@ -103,6 +132,11 @@
 
   .mobile-brand .brand-logo {
     width: min(128px, 34vw) !important;
+  }
+
+  .mobile-brand .brand-academy-label {
+    font-size: 4px;
+    margin-top: 2px;
   }
 
   .quiz-header .brand-logo,
