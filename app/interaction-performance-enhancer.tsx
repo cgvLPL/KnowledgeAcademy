@@ -53,6 +53,13 @@ type DashboardResponse = {
   courses?: Array<Record<string, unknown>>;
 };
 
+type PerformanceNavigator = Navigator & {
+  deviceMemory?: number;
+  connection?: {
+    saveData?: boolean;
+  };
+};
+
 function parsePayload(init?: RequestInit): RequestPayload | null {
   if (typeof init?.body !== "string") return null;
   try {
@@ -97,6 +104,20 @@ function normalizedLabel(element: Element) {
 
 export default function InteractionPerformanceEnhancer() {
   useEffect(() => {
+    const performanceNavigator = navigator as PerformanceNavigator;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const slowUpdates = window.matchMedia("(update: slow)").matches;
+    const lowMemory = Boolean(
+      performanceNavigator.deviceMemory && performanceNavigator.deviceMemory <= 4,
+    );
+    const limitedCpu = Boolean(
+      performanceNavigator.hardwareConcurrency && performanceNavigator.hardwareConcurrency <= 4,
+    );
+    const dataSaver = Boolean(performanceNavigator.connection?.saveData);
+    const lowPowerMode = reducedMotion || slowUpdates || lowMemory || limitedCpu || dataSaver;
+
+    document.documentElement.classList.toggle("cgv-low-power", lowPowerMode);
+
     const previousFetch = window.fetch;
     const underlyingFetch = previousFetch.bind(window);
     const cache = new Map<string, CacheEntry>();
@@ -214,7 +235,7 @@ export default function InteractionPerformanceEnhancer() {
 
     // Warm the Apps Script execution and TLS connection while the loading screen is visible.
     const warmEndpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
-    if (warmEndpoint) {
+    if (warmEndpoint && !dataSaver && !lowPowerMode) {
       warmupTimer = window.setTimeout(() => {
         void underlyingFetch(warmEndpoint, {
           method: "GET",
@@ -254,6 +275,7 @@ export default function InteractionPerformanceEnhancer() {
       document.removeEventListener("pointerover", prefetchCourseFromControl);
       document.removeEventListener("focusin", prefetchCourseFromControl);
       if (window.fetch === enhancedFetch) window.fetch = previousFetch;
+      document.documentElement.classList.remove("cgv-low-power");
       clearReadCache();
     };
   }, []);

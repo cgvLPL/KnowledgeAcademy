@@ -1,0 +1,83 @@
+/* Adaptive performance layer for lower-spec computers and phones. */
+.participant-section > .section-block,
+.participant-section > .metric-grid,
+.participant-section > .course-grid,
+.participant-section > .history-summary,
+.participant-section > .table-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
+}
+
+html.cgv-low-power {
+  scroll-behavior: auto;
+}
+
+html.cgv-low-power *,
+html.cgv-low-power *::before,
+html.cgv-low-power *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
+html.cgv-low-power .topbar,
+html.cgv-low-power .mobile-nav,
+html.cgv-low-power .modal-backdrop,
+html.cgv-low-power .certificate-backdrop,
+html.cgv-low-power .login-shell,
+html.cgv-low-power .login-card {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.cgv-low-power .app-shell,
+html.cgv-low-power .main-shell,
+html.cgv-low-power .participant-page-header,
+html.cgv-low-power .participant-home .hero-evaluation,
+html.cgv-low-power .participant-home .section-block,
+html.cgv-low-power .course-card,
+html.cgv-low-power .history-summary,
+html.cgv-low-power .table-card {
+  box-shadow: none !important;
+}
+
+html.cgv-low-power .participant-page-header,
+html.cgv-low-power .participant-home .hero-evaluation {
+  background-image: linear-gradient(145deg, #141515, #090a0a) !important;
+}
+
+html.cgv-low-power .boot-glow,
+html.cgv-low-power .hero-orbit,
+html.cgv-low-power .profile-aurora,
+html.cgv-low-power .certificate-orbit {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .topbar,
+  .mobile-nav {
+    -webkit-backdrop-filter: blur(14px) saturate(1.25) !important;
+    backdrop-filter: blur(14px) saturate(1.25) !important;
+  }
+
+  .participant-page-header,
+  .participant-home .hero-evaluation,
+  .participant-home .section-block,
+  .course-card,
+  .history-summary,
+  .table-card {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

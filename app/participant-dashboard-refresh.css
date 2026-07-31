@@ -1,9 +1,17 @@
 /* Participant dashboard visual repair aligned with the cinematic login language. */
-.participant-home {
+.participant-section {
   display: grid;
   gap: 24px;
   max-width: 1480px;
   padding-bottom: 56px;
+}
+
+.participant-section > .participant-page-header,
+.participant-section > .toolbar,
+.participant-section > .course-grid,
+.participant-section > .history-summary,
+.participant-section > .table-card {
+  margin: 0;
 }
 
 .participant-page-header {
@@ -253,9 +261,10 @@
 }
 
 @media (max-width: 760px) {
-  .participant-home {
+  .participant-section {
     gap: 16px;
     padding-inline: 14px !important;
+    padding-bottom: calc(38px + env(safe-area-inset-bottom)) !important;
   }
 
   .participant-page-header {
