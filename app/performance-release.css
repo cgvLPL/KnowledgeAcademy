@@ -48,10 +48,24 @@ html.cgv-low-power .participant-home .hero-evaluation {
 }
 
 html.cgv-low-power .boot-glow,
+html.cgv-low-power .boot-logo-aperture,
+html.cgv-low-power .boot-logo-scan,
 html.cgv-low-power .hero-orbit,
 html.cgv-low-power .profile-aurora,
 html.cgv-low-power .certificate-orbit {
   display: none !important;
+}
+
+html.cgv-low-power .boot-logo-reveal,
+html.cgv-low-power .boot-logo-reveal .brand-lockup,
+html.cgv-low-power .boot-screen .boot-bar,
+html.cgv-low-power .boot-screen .boot-bar span,
+html.cgv-low-power .boot-screen .boot-content p {
+  animation: none !important;
+  clip-path: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
 
 @media (max-width: 760px) {

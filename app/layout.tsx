@@ -42,6 +42,7 @@ import "./brand-visibility-polish.css";
 import "./certificate.css";
 import "./login-text-placement.css";
 import "./brand-system.css";
+import "./logo-intro-animation.css";
 import "./performance-release.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";

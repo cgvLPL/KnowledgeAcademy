@@ -115,7 +115,8 @@ type AuthUser = {
 const publicSheetsEndpoint =
   process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
-const BOOT_SCREEN_MINIMUM_MS = 800;
+const BOOT_SCREEN_MINIMUM_MS = 2500;
+const BOOT_SCREEN_REDUCED_MS = 700;
 const BUILDER_STEPS = [
   ["Course details", 1],
   ["Questions", 2],
@@ -388,7 +389,13 @@ function BootScreen() {
       <div className="boot-glow boot-glow-one" />
       <div className="boot-glow boot-glow-two" />
       <div className="boot-content">
-        <Logo priority />
+        <div className="boot-logo-stage">
+          <span className="boot-logo-aperture" aria-hidden="true" />
+          <div className="boot-logo-reveal">
+            <Logo priority />
+          </div>
+          <span className="boot-logo-scan" aria-hidden="true" />
+        </div>
         <div className="boot-bar" role="progressbar" aria-label="Loading application">
           <span />
         </div>
@@ -1908,7 +1915,20 @@ export default function ExamClient() {
   }), []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setBooting(false), BOOT_SCREEN_MINIMUM_MS);
+    const startupNavigator = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const slowUpdates = window.matchMedia("(update: slow)").matches;
+    const limitedMemory = Boolean(startupNavigator.deviceMemory && startupNavigator.deviceMemory <= 4);
+    const limitedCpu = Boolean(startupNavigator.hardwareConcurrency && startupNavigator.hardwareConcurrency <= 4);
+    const dataSaver = Boolean(startupNavigator.connection?.saveData);
+    const useShortIntro = prefersReducedMotion || slowUpdates || limitedMemory || limitedCpu || dataSaver;
+    const timer = window.setTimeout(
+      () => setBooting(false),
+      useShortIntro ? BOOT_SCREEN_REDUCED_MS : BOOT_SCREEN_MINIMUM_MS,
+    );
     return () => window.clearTimeout(timer);
   }, []);
 

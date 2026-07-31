@@ -1,0 +1,140 @@
+/* Cinematic, one-shot logo reveal for the initial application startup. */
+.boot-logo-stage {
+  display: grid;
+  isolation: isolate;
+  place-items: center;
+  position: relative;
+  width: min(820px, 84vw);
+}
+
+.boot-logo-aperture {
+  animation: cgv-intro-aperture 1.45s cubic-bezier(.2, .78, .18, 1) .05s both;
+  background: radial-gradient(circle, rgba(255, 128, 42, 0.22), rgba(230, 50, 47, 0.08) 38%, transparent 68%);
+  filter: blur(16px);
+  inset: -58% -20%;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: -1;
+}
+
+.boot-logo-reveal {
+  animation: cgv-intro-wipe 1.05s cubic-bezier(.22, .78, .18, 1) .18s both;
+  clip-path: inset(0 100% 0 0);
+  overflow: visible;
+  width: 100%;
+}
+
+.boot-logo-reveal .brand-lockup {
+  animation: cgv-intro-logo-arrive 1.05s cubic-bezier(.18, .82, .2, 1) .12s both;
+  margin: 0 auto !important;
+  max-width: none !important;
+  transform-origin: center center;
+  width: 100% !important;
+}
+
+.boot-logo-reveal .brand-logo {
+  width: 100% !important;
+}
+
+.boot-logo-scan {
+  animation: cgv-intro-scan 1.05s cubic-bezier(.22, .78, .18, 1) .16s both;
+  background: linear-gradient(180deg, transparent, rgba(255, 238, 216, 0.95) 24%, #fff 50%, rgba(255, 122, 43, 0.9) 76%, transparent);
+  box-shadow: 0 0 18px rgba(255, 132, 55, 0.72), 0 0 42px rgba(229, 50, 47, 0.32);
+  height: 68%;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 16%;
+  width: 2px;
+  z-index: 2;
+}
+
+.boot-screen .boot-bar {
+  animation: cgv-intro-bar-arrive .42s ease-out 1.12s both;
+}
+
+.boot-screen .boot-bar span {
+  animation: cgv-intro-progress 1.12s cubic-bezier(.3, .72, .18, 1) 1.2s both !important;
+}
+
+.boot-screen .boot-content p {
+  animation: cgv-intro-caption .45s ease-out 1.32s both;
+}
+
+@keyframes cgv-intro-aperture {
+  0% { opacity: 0; transform: scale(.64); }
+  42% { opacity: 1; }
+  100% { opacity: .58; transform: scale(1.08); }
+}
+
+@keyframes cgv-intro-wipe {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes cgv-intro-logo-arrive {
+  0% { filter: blur(9px); opacity: 0; transform: scale(.955) translateY(10px); }
+  58% { opacity: 1; }
+  100% { filter: blur(0); opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes cgv-intro-scan {
+  0% { left: 1%; opacity: 0; transform: scaleY(.35); }
+  18% { opacity: 1; }
+  82% { opacity: .9; }
+  100% { left: 99%; opacity: 0; transform: scaleY(1); }
+}
+
+@keyframes cgv-intro-bar-arrive {
+  0% { opacity: 0; transform: translateY(10px) scaleX(.92); }
+  100% { opacity: 1; transform: translateY(0) scaleX(1); }
+}
+
+@keyframes cgv-intro-progress {
+  0% { transform: scaleX(0); }
+  36% { transform: scaleX(.28); }
+  72% { transform: scaleX(.7); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes cgv-intro-caption {
+  0% { letter-spacing: .42em; opacity: 0; transform: translateY(8px); }
+  100% { letter-spacing: .34em; opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 760px) {
+  .boot-logo-stage {
+    width: min(560px, 88vw);
+  }
+
+  .boot-logo-scan {
+    height: 76%;
+    top: 12%;
+  }
+
+  @keyframes cgv-intro-caption {
+    0% { letter-spacing: .34em; opacity: 0; transform: translateY(7px); }
+    100% { letter-spacing: .27em; opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  .boot-logo-aperture,
+  .boot-logo-scan {
+    display: none !important;
+  }
+
+  .boot-logo-reveal,
+  .boot-logo-reveal .brand-lockup,
+  .boot-screen .boot-bar,
+  .boot-screen .boot-bar span,
+  .boot-screen .boot-content p {
+    animation: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
