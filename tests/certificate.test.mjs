@@ -34,7 +34,10 @@ test("certificate uses participant and submitted-attempt data", () => {
 
   assert.match(client, /completedAttemptId = String\(submission\.result\.attemptId/);
   assert.match(client, /completedDurationSeconds = Number\(submission\.result\.durationSeconds/);
-  assert.match(client, /setHistory\(\(items\) => \[completion, \.\.\.items\]\)/);
+  assert.match(
+    client,
+    /setHistory\(\(items\) => \[completion, \.\.\.items\.filter\(\(item\) => item\.id !== completion\.id\)\]\)/,
+  );
 });
 
 test("certificate follows the CGV brand and prints as an A4 PDF-ready page", () => {
