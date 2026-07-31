@@ -209,24 +209,35 @@
 
 .participant-home .score-ring > div,
 .history-summary .score-ring > div {
-  align-items: baseline !important;
+  align-items: center !important;
   background: #0d100e !important;
   border-radius: 50% !important;
   display: flex !important;
+  gap: calc(var(--ring-size, 88px) * 0.012) !important;
   height: calc(var(--ring-size, 88px) - 18px) !important;
   justify-content: center !important;
+  line-height: 1 !important;
   width: calc(var(--ring-size, 88px) - 18px) !important;
 }
 
 .participant-home .score-ring strong,
 .history-summary .score-ring strong {
+  display: block !important;
   font-size: calc(var(--ring-size, 88px) * 0.32) !important;
+  letter-spacing: -0.05em !important;
   line-height: 1 !important;
+  margin: 0 !important;
+  position: static !important;
 }
 
 .participant-home .score-ring span,
 .history-summary .score-ring span {
+  display: block !important;
   font-size: calc(var(--ring-size, 88px) * 0.13) !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  position: static !important;
+  transform: translateY(calc(var(--ring-size, 88px) * 0.035)) !important;
 }
 
 @media (max-width: 1120px) {
