@@ -21,6 +21,16 @@
   color: #ffaaaa !important;
 }
 
+.quiz-submit-error {
+  background: rgba(255, 83, 83, 0.1);
+  border: 1px solid rgba(255, 124, 124, 0.3);
+  border-radius: 12px;
+  color: #ffc0c0 !important;
+  font-weight: 700;
+  margin: 16px 0 0 !important;
+  padding: 11px 13px;
+}
+
 .builder-page label[hidden] {
   display: none !important;
 }
