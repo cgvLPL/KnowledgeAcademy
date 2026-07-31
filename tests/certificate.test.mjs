@@ -54,3 +54,23 @@ test("certificate follows the CGV brand and prints as an A4 PDF-ready page", () 
   assert.ok(css.includes("print-color-adjust: exact"));
   assert.ok(css.includes(".certificate-orbit"));
 });
+
+test("certificate export and dialog lifecycle remain reliable", () => {
+  assert.match(client, /const closeButtonRef = useRef<HTMLButtonElement>\(null\)/);
+  assert.match(client, /closeButtonRef\.current\?\.focus\(\)/);
+  assert.match(client, /previousFocus\?\.isConnected/);
+  assert.match(client, /window\.removeEventListener\("afterprint", restoreTitle\)/);
+  assert.match(client, /restorePrintTitleRef\.current = null/);
+  assert.match(client, /window\.requestAnimationFrame\(\(\) => window\.print\(\)\)/);
+  assert.match(client, /aria-describedby="certificate-dialog-description"/);
+});
+
+test("long certificate content and mobile printing stay inside one A4 page", () => {
+  assert.match(client, /certificate-name-very-long/);
+  assert.match(client, /certificate-course-title-very-long/);
+  assert.match(css, /\.certificate-copy h3\.certificate-name-very-long/);
+  assert.match(css, /\.certificate-copy h4\.certificate-course-title-very-long/);
+  assert.match(css, /break-inside:\s*avoid !important/);
+  assert.match(css, /page-break-inside:\s*avoid !important/);
+  assert.match(css, /\.certificate-copy\s*\{\s*margin-top:\s*36mm !important;\s*max-width:\s*70% !important;/s);
+});
