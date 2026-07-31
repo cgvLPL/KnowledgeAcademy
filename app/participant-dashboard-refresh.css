@@ -6,7 +6,7 @@
   padding-bottom: 56px;
 }
 
-.participant-home .welcome-row {
+.participant-page-header {
   align-items: center;
   background:
     radial-gradient(circle at 85% 30%, rgba(255, 91, 30, 0.11), transparent 22rem),
@@ -21,21 +21,21 @@
   padding: 28px 30px;
 }
 
-.participant-home .welcome-row h2 {
+.participant-page-header h2 {
   font-size: clamp(30px, 3.2vw, 48px);
   letter-spacing: -0.045em;
   line-height: 1.02;
   margin: 10px 0 8px;
 }
 
-.participant-home .welcome-row > div > p {
+.participant-page-header > div > p {
   color: #949b96;
   font-size: 14px;
   margin: 0;
   max-width: 680px;
 }
 
-.participant-home .welcome-row .secondary-button {
+.participant-page-header .secondary-button {
   border-color: rgba(255, 116, 47, 0.28) !important;
   flex: 0 0 auto;
   min-height: 46px;
@@ -258,13 +258,13 @@
     padding-inline: 14px !important;
   }
 
-  .participant-home .welcome-row {
+  .participant-page-header {
     align-items: stretch;
     flex-direction: column;
     padding: 22px;
   }
 
-  .participant-home .welcome-row .secondary-button {
+  .participant-page-header .secondary-button {
     width: 100%;
   }
 

@@ -749,7 +749,7 @@ function ParticipantHome({
   }).format(new Date());
   return (
     <div className="content participant-home">
-      <section className="welcome-row">
+      <section className="welcome-row participant-page-header">
         <div>
           <span className="eyebrow dark-eyebrow">
             <Sparkles size={15} /> {today.toUpperCase()}
@@ -923,7 +923,7 @@ function EvaluationsView({
   const shown = filter === "All" ? evaluations : evaluations.filter((item) => item.status === filter);
   return (
     <div className="content">
-      <section className="page-intro">
+      <section className="page-intro participant-page-header">
         <div>
           <span className="eyebrow dark-eyebrow"><BookOpen size={15} /> COURSE LIBRARY</span>
           <h2>Your evaluations</h2>
@@ -996,7 +996,7 @@ function HistoryView({
   const best = history.length ? Math.max(...history.map((item) => item.score)) : 0;
   return (
     <div className="content">
-      <section className="page-intro history-intro">
+      <section className="page-intro history-intro participant-page-header">
         <div>
           <span className="eyebrow dark-eyebrow"><History size={15} /> PERSONAL RECORD</span>
           <h2>Score history</h2>
