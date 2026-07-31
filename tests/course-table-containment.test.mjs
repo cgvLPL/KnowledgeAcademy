@@ -36,7 +36,7 @@ test("course table icons and text remain contained at every breakpoint", () => {
   assert.match(css, /overflow-wrap:\s*anywhere/);
 });
 
-test("login keeps the cinematic split layout and centred CGV exams lockup", () => {
+test("login keeps the cinematic split layout and centred Knowledge Academy lockup", () => {
   assert.match(layout, /import "\.\/login-reference-layout\.css";/);
   assert.match(layout, /import "\.\/login-reference-copy\.css";/);
 
@@ -58,13 +58,13 @@ test("login keeps the cinematic split layout and centred CGV exams lockup", () =
   assert.match(loginCss, /linear-gradient\(100deg, #ffac21 0%, #ff641d 43%, #df2e32 100%\)/);
   assert.match(loginCss, /width:\s*100%\s*!important/);
   assert.match(loginCopyCss, /content:\s*"Welcome back"/);
-  assert.match(loginCopyCss, /content:\s*"Sign in to your CGV Exams account"/);
+  assert.match(loginCopyCss, /content:\s*"Sign in to your CGV Knowledge Academy account"/);
   assert.match(loginCopyCss, /content:\s*"Sign in"/);
 });
 
 test("login artwork carries an equal-width Knowledge Academy subtitle", () => {
   assert.match(client, /<div className="login-brand-row">[\s\S]*?<Logo \/>/);
-  assert.match(client, /const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY"/);
-  assert.match(loginCss, /\.login-page \.login-brand-row \.brand-academy-label/);
-  assert.match(loginCss, /font-size:\s*clamp\(8px,\s*0\.7vw,\s*11px\)/);
+  assert.match(client, /cgv-knowledge-academy\.svg/);
+  assert.match(loginCss, /\.login-page \.login-brand-row \.brand-logo/);
+  assert.match(loginCss, /width:\s*100%\s*!important/);
 });

@@ -13,7 +13,7 @@ test("static Pages output omits development preview metadata", () => {
   const html = fs.readFileSync(renderedIndex, "utf8");
 
   assert.match(html, /<html\b/i);
-  assert.match(html, /CGV Exams/i);
+  assert.match(html, /CGV Knowledge Academy/i);
   assert.doesNotMatch(html, developmentPreviewMeta);
   assert.doesNotMatch(html, /\/workspace\/sites\/|\.vinext\/fonts/);
 });

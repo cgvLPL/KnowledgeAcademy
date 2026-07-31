@@ -20,7 +20,7 @@ test("GitHub Pages deployment uses supported official action versions", () => {
 test("only one canonical repository Pages deployment workflow remains", () => {
   assert.ok(fs.existsSync(workflowPath));
   assert.equal(fs.existsSync(obsoleteWorkflowPath), false);
-  assert.ok(workflow.includes("name: Publish CGV Exams site"));
+  assert.ok(workflow.includes("name: Publish CGV Knowledge Academy site"));
   assert.ok(workflow.includes("group: cgv-exams-pages-${{ github.ref }}"));
 });
 

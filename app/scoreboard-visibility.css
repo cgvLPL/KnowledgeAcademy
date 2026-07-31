@@ -39,6 +39,29 @@
   opacity: 1 !important;
 }
 
+.admin-header-actions .executive-report-button {
+  min-width: 218px;
+}
+
+.admin-header-actions .executive-report-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.report-status {
+  color: #f6a763;
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  max-width: 260px;
+  text-align: right;
+}
+
+.report-status.success {
+  color: #f2f2ed;
+}
+
 @media (max-width: 760px) {
   .scoreboard-hero select {
     min-height: 52px;
@@ -46,5 +69,16 @@
 
   .scoreboard-kpis div {
     min-height: 104px;
+  }
+
+  .admin-header-actions .executive-report-button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .report-status {
+    max-width: none;
+    text-align: left;
+    width: 100%;
   }
 }

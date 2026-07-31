@@ -23,6 +23,8 @@ administrator-managed content.
 - Administrator course and question builder
 - Participant account creation
 - Per-evaluation live scoreboard
+- Per-evaluation executive PDF reports with score distribution, participant
+  results, and question-by-question answer analysis
 - Google Sheets / Apps Script backend with server-side scoring
 - Automatically generated spreadsheet dashboard, KPIs, leaderboard, and chart
 - Responsive desktop and mobile layouts

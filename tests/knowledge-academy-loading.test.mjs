@@ -34,12 +34,10 @@ test("Knowledge Academy artwork remains installed beneath the final alignment la
 test("loading screen uses the real CGV SVG and a visible Knowledge Academy lockup", () => {
   assert.ok(logo.includes("<svg"));
   assert.ok(logo.includes("transparent background"));
-  assert.ok(client.includes('const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY"'));
+  assert.ok(client.includes("cgv-knowledge-academy.svg"));
   assert.ok(client.includes("<Logo priority />"));
   assert.equal(client.match(/cgv-logo\.svg/g)?.length, 1);
-  assert.ok(logoCss.includes(".brand-academy-label"));
-  assert.ok(logoCss.includes("justify-content: space-between"));
-  assert.ok(logoCss.includes("width: 96.14%"));
+  assert.ok(logoCss.includes(".brand-logo"));
   assert.ok(visibilityCss.includes("background: transparent !important"));
   assert.ok(visibilityCss.includes("width: min(820px, 84vw) !important"));
   assert.ok(visibilityCss.includes("font-weight: 650 !important"));

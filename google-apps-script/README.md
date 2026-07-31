@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.07.24-functional-audit"}
+{"ok":true,"service":"CGV Exams","version":"2026.07.31-executive-reports"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -67,6 +67,8 @@ Participant functions:
 Administrator functions:
 
 - Load courses, participants, administrators, scores, and aggregate statistics.
+- Download an executive PDF for each quiz with score distribution, participant
+  results, and answer patterns for every question.
 - Create participant and administrator accounts.
 - Reset passwords and activate or deactivate accounts.
 - Create, inspect, edit, duplicate, publish, complete, archive, or delete a

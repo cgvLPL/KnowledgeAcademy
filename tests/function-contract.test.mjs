@@ -30,6 +30,7 @@ const requiredActions = [
   "startAttempt",
   "submitAttempt",
   "adminGetDashboard",
+  "adminGetExecutiveReport",
   "adminGetCourse",
   "adminSaveCourse",
   "adminDuplicateCourse",
@@ -75,6 +76,19 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
   assert.match(backend, /alreadySubmitted:\s*true/);
   assert.match(backend, /existing.*status === "started"/s);
   assert.match(resultSync, /for \(let attempt = 0; attempt < 3;/);
+});
+
+test("executive reports include per-quiz score and question analytics", () => {
+  const report = read("app/executive-report.ts");
+  assert.match(backend, /function adminGetExecutiveReport_\(body\)/);
+  assert.match(backend, /correctPercentage/);
+  assert.match(backend, /mostCommonAnswer/);
+  assert.match(backend, /scoreDistribution/);
+  assert.match(client, /Download executive report/);
+  assert.match(client, /adminGetExecutiveReport/);
+  assert.match(report, /Participant results/);
+  assert.match(report, /Response patterns and item performance/);
+  assert.match(report, /downloadExecutiveReportPdf/);
 });
 
 test("quiz timing, exit protection, and duplicate-submit protection are active", () => {
@@ -235,6 +249,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.07\.25-upcoming-schedule"/);
-  assert.match(runtime, /2026\.07\.25-upcoming-schedule/);
+  assert.match(backend, /version:\s*"2026\.07\.31-executive-reports"/);
+  assert.match(runtime, /2026\.07\.31-executive-reports/);
 });

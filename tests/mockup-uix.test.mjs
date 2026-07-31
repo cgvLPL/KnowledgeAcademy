@@ -16,7 +16,7 @@ const loginSource = client.slice(client.indexOf("function Login("), client.index
 test("participant dashboard uses the approved cinematic card system", () => {
   assert.ok(layout.includes('import "./participant-dashboard-refresh.css";'));
   for (const selector of [
-    ".participant-home .welcome-row",
+    ".participant-section > .participant-page-header",
     ".participant-home .hero-evaluation",
     ".participant-home .metric-grid",
     ".participant-home .evaluation-row",

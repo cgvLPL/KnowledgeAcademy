@@ -46,7 +46,9 @@ test("certificate follows the CGV brand and prints as an A4 PDF-ready page", () 
     layout.indexOf('import "./certificate.css";') >
       layout.indexOf('import "./brand-visibility-polish.css";'),
   );
-  assert.match(client, /<div className="certificate-logo-panel">\s*<Logo \/>/);
+  assert.match(client, /<div className="certificate-logo-panel">\s*<CertificateLogo \/>/);
+  assert.match(client, /className="certificate-cgv-mark"/);
+  assert.match(client, /className="certificate-logo-text"/);
   assert.match(client, /CGV Knowledge Academy/);
   assert.match(client, /Print \/ save PDF/);
   assert.match(client, /window\.print\(\)/);

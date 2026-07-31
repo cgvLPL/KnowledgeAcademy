@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.07.25-upcoming-schedule",
+  version: "2026.07.31-executive-reports",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   sheets: Object.freeze({
@@ -50,6 +50,7 @@ const API_ACTIONS = Object.freeze({
   startAttempt: startAttempt_,
   submitAttempt: submitAttempt_,
   adminGetDashboard: adminGetDashboard_,
+  adminGetExecutiveReport: adminGetExecutiveReport_,
   adminGetCourse: adminGetCourse_,
   adminSaveCourse: adminSaveCourse_,
   adminDuplicateCourse: adminDuplicateCourse_,
@@ -462,6 +463,158 @@ function adminGetDashboard_(body) {
         ? Math.round(scoreboard.reduce(function (sum, item) { return sum + item.score; }, 0) / scoreboard.length)
         : 0,
       topScore: scoreboard.length ? scoreboard[0].score : 0,
+    },
+  };
+}
+
+function adminGetExecutiveReport_(body) {
+  requireSession_(body.token, "admin");
+  const courseId = String(body.courseId || "").trim();
+  if (!courseId) throw new Error("Course ID is required.");
+  const course = findById_(APP.sheets.courses, "course_id", courseId);
+  if (!course) throw new Error("Course not found.");
+
+  const questions = questionsForCourse_(courseId);
+  const users = rowsAsObjects_(getSheet_(APP.sheets.users));
+  const userMap = indexBy_(users, "user_id");
+  const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(function (attempt) {
+      return String(attempt.course_id) === courseId && attempt.status === "submitted";
+    });
+  const attemptIds = attempts.reduce(function (result, attempt) {
+    result[String(attempt.attempt_id)] = true;
+    return result;
+  }, {});
+  const answers = rowsAsObjects_(getSheet_(APP.sheets.answers))
+    .filter(function (answer) { return Boolean(attemptIds[String(answer.attempt_id)]); });
+  const answersByQuestion = answers.reduce(function (result, answer) {
+    const questionId = String(answer.question_id);
+    if (!result[questionId]) result[questionId] = [];
+    result[questionId].push(answer);
+    return result;
+  }, {});
+
+  const participantResults = attempts.map(function (attempt) {
+    const user = userMap[attempt.user_id] || {};
+    const score = Number(attempt.score || 0);
+    return {
+      attemptId: String(attempt.attempt_id || ""),
+      participantId: String(attempt.user_id || ""),
+      name: String(user.full_name || "Unknown participant"),
+      branch: String(user.branch || ""),
+      score: score,
+      correctCount: Number(attempt.correct_count || 0),
+      totalQuestions: Number(attempt.total_questions || questions.length),
+      durationSeconds: Number(attempt.duration_seconds || 0),
+      submittedAt: toIso_(attempt.submitted_at),
+      passed: score >= Number(course.passing_score || 0),
+    };
+  }).sort(function (a, b) {
+    return b.score - a.score || a.durationSeconds - b.durationSeconds ||
+      new Date(b.submittedAt) - new Date(a.submittedAt);
+  }).map(function (item, index) {
+    item.rank = index + 1;
+    return item;
+  });
+
+  const scores = participantResults.map(function (item) { return item.score; })
+    .sort(function (a, b) { return a - b; });
+  const durations = participantResults.map(function (item) { return item.durationSeconds; });
+  const scoreTotal = scores.reduce(function (sum, score) { return sum + score; }, 0);
+  const durationTotal = durations.reduce(function (sum, duration) { return sum + duration; }, 0);
+  const midpoint = Math.floor(scores.length / 2);
+  const median = scores.length
+    ? (scores.length % 2
+      ? scores[midpoint]
+      : Math.round((scores[midpoint - 1] + scores[midpoint]) / 2))
+    : 0;
+  const uniqueParticipants = attempts.reduce(function (result, attempt) {
+    result[String(attempt.user_id)] = true;
+    return result;
+  }, {});
+  const passedCount = participantResults.filter(function (item) { return item.passed; }).length;
+
+  const scoreBands = [
+    { label: "Below 50%", min: 0, max: 49 },
+    { label: "50-59%", min: 50, max: 59 },
+    { label: "60-69%", min: 60, max: 69 },
+    { label: "70-79%", min: 70, max: 79 },
+    { label: "80-89%", min: 80, max: 89 },
+    { label: "90-100%", min: 90, max: 100 },
+  ].map(function (band) {
+    const count = scores.filter(function (score) { return score >= band.min && score <= band.max; }).length;
+    return {
+      label: band.label,
+      count: count,
+      percentage: scores.length ? Math.round(count / scores.length * 100) : 0,
+    };
+  });
+
+  const questionAnalysis = questions.map(function (question) {
+    const questionAnswers = answersByQuestion[String(question.question_id)] || [];
+    const optionKeys = ["A", "B", "C", "D"];
+    const optionText = [question.option_a, question.option_b, question.option_c, question.option_d];
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+    questionAnswers.forEach(function (answer) {
+      const selected = String(answer.selected_option || "").trim().toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(counts, selected)) counts[selected] += 1;
+    });
+    const correctOption = String(question.correct_option || "A").trim().toUpperCase();
+    const answeredCount = optionKeys.reduce(function (sum, key) { return sum + counts[key]; }, 0);
+    const correctCount = counts[correctOption] || 0;
+    const wrongCount = Math.max(0, answeredCount - correctCount);
+    const totalResponses = attempts.length;
+    const mostCommonOption = answeredCount
+      ? optionKeys.reduce(function (best, key) { return counts[key] > counts[best] ? key : best; }, "A")
+      : "";
+    return {
+      id: String(question.question_id),
+      order: Number(question.order_no || 0),
+      prompt: String(question.question_text || ""),
+      correctOption: correctOption,
+      correctAnswer: String(optionText[optionKeys.indexOf(correctOption)] || ""),
+      totalResponses: totalResponses,
+      answeredCount: answeredCount,
+      unansweredCount: Math.max(0, totalResponses - answeredCount),
+      correctCount: correctCount,
+      correctPercentage: totalResponses ? Math.round(correctCount / totalResponses * 100) : 0,
+      incorrectPercentage: totalResponses ? Math.round(wrongCount / totalResponses * 100) : 0,
+      mostCommonOption: mostCommonOption,
+      mostCommonAnswer: mostCommonOption ? String(optionText[optionKeys.indexOf(mostCommonOption)] || "") : "",
+      mostCommonCount: mostCommonOption ? counts[mostCommonOption] : 0,
+      mostCommonPercentage: totalResponses && mostCommonOption
+        ? Math.round(counts[mostCommonOption] / totalResponses * 100)
+        : 0,
+      options: optionKeys.map(function (key, index) {
+        return {
+          key: key,
+          text: String(optionText[index] || ""),
+          count: counts[key],
+          percentage: totalResponses ? Math.round(counts[key] / totalResponses * 100) : 0,
+          isCorrect: key === correctOption,
+        };
+      }),
+    };
+  });
+
+  return {
+    ok: true,
+    report: {
+      generatedAt: new Date().toISOString(),
+      course: publicCourse_(course),
+      summary: {
+        submissions: participantResults.length,
+        uniqueParticipants: Object.keys(uniqueParticipants).length,
+        averageScore: scores.length ? Math.round(scoreTotal / scores.length) : 0,
+        medianScore: median,
+        passRate: scores.length ? Math.round(passedCount / scores.length * 100) : 0,
+        highestScore: scores.length ? Math.max.apply(null, scores) : 0,
+        lowestScore: scores.length ? Math.min.apply(null, scores) : 0,
+        averageDurationSeconds: durations.length ? Math.round(durationTotal / durations.length) : 0,
+      },
+      scoreDistribution: scoreBands,
+      participants: participantResults,
+      questions: questionAnalysis,
     },
   };
 }

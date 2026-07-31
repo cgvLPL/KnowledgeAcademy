@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { ExecutiveReportData } from "./executive-report";
 
 type Role = "participant" | "admin";
 type ParticipantView = "home" | "evaluations" | "history" | "profile";
@@ -1630,14 +1631,18 @@ function ScoreboardView({
   leaderboardData,
   evaluations,
   onEvaluationChange,
+  onDownloadReport,
 }: {
   leaderboardData: LeaderboardRow[];
   evaluations: Evaluation[];
   onEvaluationChange: (evaluationId: string) => Promise<string | null>;
+  onDownloadReport: (evaluationId: string) => Promise<string | null>;
 }) {
   const [evaluation, setEvaluation] = useState(evaluations[0]?.id || "");
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [downloadingReport, setDownloadingReport] = useState(false);
+  const [reportMessage, setReportMessage] = useState("");
   const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || evaluations[0] || null;
   const average = leaderboardData.length
     ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
@@ -1653,9 +1658,19 @@ function ScoreboardView({
     setEvaluation(evaluationId);
     setLoading(true);
     setLoadError("");
+    setReportMessage("");
     const error = await onEvaluationChange(evaluationId);
     if (error) setLoadError(error);
     setLoading(false);
+  }
+
+  async function downloadReport() {
+    if (!selectedEvaluation || downloadingReport) return;
+    setDownloadingReport(true);
+    setReportMessage("Preparing question and participant analytics...");
+    const error = await onDownloadReport(selectedEvaluation.id);
+    setDownloadingReport(false);
+    setReportMessage(error || "Executive PDF downloaded.");
   }
 
   return (
@@ -1663,7 +1678,20 @@ function ScoreboardView({
       <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Trophy size={15} /> LIVE RESULTS</span><h2>Evaluation scoreboard</h2><p>Compare results for every participant in the selected evaluation.</p></div>
         <div className="admin-header-actions">
-          <button className="secondary-button"><Download size={17} /> Export scoreboard</button>
+          <button
+            className="secondary-button executive-report-button"
+            type="button"
+            data-button-safety-net
+            disabled={!selectedEvaluation || downloadingReport}
+            onClick={() => void downloadReport()}
+          >
+            <Download size={17} /> {downloadingReport ? "Building report..." : "Download executive report"}
+          </button>
+          {reportMessage && (
+            <span className={reportMessage === "Executive PDF downloaded." ? "report-status success" : "report-status"} role="status" aria-live="polite">
+              {reportMessage}
+            </span>
+          )}
         </div>
       </section>
       <section className="scoreboard-hero">
@@ -2200,6 +2228,28 @@ export default function ExamClient() {
     }
   }
 
+  async function downloadExecutiveReport(evaluationId: string): Promise<string | null> {
+    if (backendMode !== "sheets" || !sessionToken) {
+      return "The Google Sheets backend is required to create this report.";
+    }
+    try {
+      const [{ report }, reportModule] = await Promise.all([
+        sheetsRequest<{ ok: boolean; report: ExecutiveReportData }>("adminGetExecutiveReport", {
+          token: sessionToken,
+          courseId: evaluationId,
+        }),
+        import("./executive-report"),
+      ]);
+      const logo = await reportModule
+        .loadExecutiveReportLogo(`${publicBasePath}/brand/cgv-knowledge-academy.svg`)
+        .catch(() => null);
+      reportModule.downloadExecutiveReportPdf(report, logo);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Unable to create the executive report.";
+    }
+  }
+
   if (booting) return <BootScreen />;
   if (!role) return <Login onLogin={login} />;
   if (builderOpen && role === "admin") return <CourseBuilder onClose={() => setBuilderOpen(false)} onSave={saveCourse} />;
@@ -2235,7 +2285,7 @@ export default function ExamClient() {
         {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} evaluations={evaluations} participantsData={participantsData} />}
         {role === "admin" && view === "courses" && <CoursesView evaluations={evaluations} onCreate={() => setBuilderOpen(true)} />}
         {role === "admin" && view === "participants" && <ParticipantsView participantsData={participantsData} onAdd={addParticipant} />}
-        {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} evaluations={evaluations} onEvaluationChange={loadScoreboard} />}
+        {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} evaluations={evaluations} onEvaluationChange={loadScoreboard} onDownloadReport={downloadExecutiveReport} />}
       </div>
       <MobileNav role={role} view={view} setView={setView} />
       {certificateItem && (

@@ -8,6 +8,7 @@ const ENDPOINT_KEY = "cgv-exams-api-endpoint";
 
 const READ_TTL: Record<string, number> = {
   adminGetDashboard: 20_000,
+  adminGetExecutiveReport: 30_000,
   adminGetCourse: 90_000,
   getParticipantHome: 20_000,
 };
