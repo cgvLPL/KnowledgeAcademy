@@ -337,11 +337,6 @@ textarea:focus-visible,
   filter: drop-shadow(0 16px 52px rgba(0, 0, 0, 0.48)) !important;
 }
 
-.certificate-logo-panel .brand-logo {
-  filter: none !important;
-  width: min(290px, 100%) !important;
-}
-
 @media (max-width: 860px) {
   .login-page .login-brand-row {
     width: min(430px, 82vw) !important;

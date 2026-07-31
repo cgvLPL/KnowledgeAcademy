@@ -230,6 +230,22 @@ function Logo({
   );
 }
 
+function CertificateLogo() {
+  const logoSource = `url("${publicBasePath}/cgv-logo.svg")`;
+
+  return (
+    <div className="certificate-logo-lockup" aria-label="CGV Knowledge Academy" role="img">
+      <span
+        className="certificate-cgv-mark"
+        aria-hidden="true"
+        style={{ WebkitMaskImage: logoSource, maskImage: logoSource } as CSSProperties}
+      />
+      <span className="certificate-logo-divider" aria-hidden="true" />
+      <span className="certificate-logo-text" aria-hidden="true">Knowledge Academy</span>
+    </div>
+  );
+}
+
 function Initials({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
   const initials = name
     .split(" ")
@@ -651,7 +667,7 @@ function CertificateModal({
 
             <header className="certificate-document-header">
               <div className="certificate-logo-panel">
-                <Logo />
+                <CertificateLogo />
               </div>
               <div className="certificate-reference">
                 <span>Certificate ID</span>
