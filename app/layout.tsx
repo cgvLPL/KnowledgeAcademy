@@ -41,40 +41,42 @@ import "./admin-header-consistency.css";
 import "./brand-visibility-polish.css";
 import "./certificate.css";
 import "./login-text-placement.css";
+import "./brand-system.css";
 
-const publicSiteUrl = "https://rayhanmawuntu-stack.github.io/CGV.Exams/";
+const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicSiteUrl),
-  title: "CGV Exams — Evaluation Portal",
+  title: "CGV Knowledge Academy — Evaluation Portal",
   description:
-    "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
+    "CGV Knowledge Academy's evaluation platform for learning courses, participant progress, certificates, and live results.",
   alternates: {
     canonical: publicSiteUrl,
   },
   openGraph: {
     type: "website",
     url: publicSiteUrl,
-    siteName: "CGV Exams",
-    title: "CGV Exams — Evaluation Portal",
+    siteName: "CGV Knowledge Academy",
+    title: "CGV Knowledge Academy — Evaluation Portal",
     description:
-      "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
-    images: [{ url: socialImageUrl, width: 1200, height: 630, alt: "CGV Exams Evaluation Portal" }],
+      "Learning evaluations, participant progress, certificates, and live results from CGV Knowledge Academy.",
+    images: [{ url: socialImageUrl, width: 1200, height: 630, alt: "CGV Knowledge Academy Evaluation Portal" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CGV Exams — Evaluation Portal",
+    title: "CGV Knowledge Academy — Evaluation Portal",
     description:
-      "A focused evaluation platform for quiz courses, participant score history, and live learning dashboards.",
+      "Learning evaluations, participant progress, certificates, and live results from CGV Knowledge Academy.",
     images: [socialImageUrl],
   },
   other: {
-    "cgv-ui-release": "2026.07.28-performance-v1",
+    "cgv-ui-release": "2026.07.31-knowledge-academy-brand-v1",
   },
   icons: {
-    icon: "/cgv-logo.svg",
-    shortcut: "/cgv-logo.svg",
+    icon: "/brand/favicon.png",
+    shortcut: "/brand/favicon.png",
+    apple: "/brand/favicon.png",
   },
 };
 

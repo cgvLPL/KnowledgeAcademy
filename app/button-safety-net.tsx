@@ -224,7 +224,7 @@ export default function ButtonSafetyNet() {
         event.preventDefault();
         setDialog({
           title: "Password recovery",
-          message: "For security, passwords are managed by the CGV Exams administrator. Ask an administrator to reset the account password in the connected Google Sheets workspace.",
+          message: "For security, passwords are managed by the CGV Knowledge Academy administrator. Ask an administrator to reset the account password in the connected Google Sheets workspace.",
         });
         return;
       }
@@ -264,7 +264,7 @@ export default function ButtonSafetyNet() {
           notify("There is no table data available to export yet.");
           return;
         }
-        downloadTable(table, label || "CGV Exams export");
+        downloadTable(table, label || "CGV Knowledge Academy export");
         notify("CSV export created.");
         return;
       }

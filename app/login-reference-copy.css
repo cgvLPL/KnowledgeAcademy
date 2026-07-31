@@ -14,7 +14,7 @@
 }
 
 .login-page .login-card-heading p::after {
-  content: "Sign in to your CGV Exams account";
+  content: "Sign in to your CGV Knowledge Academy account";
   display: block;
   font-size: 15px;
 }

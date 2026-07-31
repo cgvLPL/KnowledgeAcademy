@@ -1,0 +1,385 @@
+/* CGV Knowledge Academy brand system — canonical release layer.
+   Loaded last so every product surface shares one palette and one lockup. */
+
+:root {
+  --brand-ink: #070809;
+  --brand-charcoal: #0d0f10;
+  --brand-surface: #131516;
+  --brand-surface-soft: #181b1c;
+  --brand-surface-raised: #1e2122;
+  --brand-white: #f8f8f6;
+  --brand-muted: #a4aaa6;
+  --brand-subtle: #767d79;
+  --brand-line: rgba(255, 255, 255, 0.1);
+  --brand-line-warm: rgba(255, 119, 39, 0.28);
+  --brand-amber: #ffb11f;
+  --brand-orange: #ff6a22;
+  --brand-coral: #ff8b46;
+  --brand-red: #e6322f;
+  --brand-gradient: linear-gradient(105deg, var(--brand-amber) 0%, var(--brand-orange) 52%, var(--brand-red) 100%);
+  --brand-glow: 0 16px 40px rgba(224, 57, 30, 0.24);
+  --brand-radius-sm: 12px;
+  --brand-radius-md: 18px;
+  --brand-radius-lg: 24px;
+
+  /* Compatibility aliases for the established component system. */
+  --ink: var(--brand-white) !important;
+  --muted: var(--brand-muted) !important;
+  --line: var(--brand-line) !important;
+  --paper: var(--brand-surface) !important;
+  --canvas: var(--brand-ink) !important;
+  --lime: var(--brand-orange) !important;
+  --lime-dark: #321208 !important;
+  --green: var(--brand-coral) !important;
+  --orange: var(--brand-orange) !important;
+  --blue: var(--brand-amber) !important;
+  --violet: var(--brand-red) !important;
+  --cgv-red: var(--brand-red) !important;
+  --surface: rgba(19, 21, 22, 0.96) !important;
+  --surface-soft: rgba(24, 27, 28, 0.92) !important;
+  --surface-raised: rgba(30, 33, 34, 0.94) !important;
+  --mockup-orange: var(--brand-orange) !important;
+  --mockup-amber: var(--brand-amber) !important;
+  --mockup-red: var(--brand-red) !important;
+  --mockup-bg: var(--brand-ink) !important;
+  --mockup-panel: var(--brand-surface) !important;
+  --mockup-panel-soft: var(--brand-surface-soft) !important;
+  --mockup-border: var(--brand-line) !important;
+  --mockup-text: var(--brand-white) !important;
+  --mockup-muted: var(--brand-muted) !important;
+  --cgv-warm-amber: var(--brand-amber) !important;
+  --cgv-warm-orange: var(--brand-orange) !important;
+  --cgv-warm-red: var(--brand-red) !important;
+  --cgv-mobile-amber: var(--brand-amber) !important;
+  --cgv-mobile-orange: var(--brand-orange) !important;
+  --cgv-mobile-red: var(--brand-red) !important;
+  accent-color: var(--brand-orange);
+}
+
+html,
+body {
+  background: var(--brand-ink) !important;
+  color: var(--brand-white) !important;
+  color-scheme: dark;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+::selection {
+  background: var(--brand-orange) !important;
+  color: #fff !important;
+}
+
+* {
+  scrollbar-color: var(--brand-orange) var(--brand-charcoal);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--brand-coral) !important;
+  outline-offset: 3px !important;
+}
+
+/* Approved horizontal logo lockup. */
+.brand-lockup,
+.brand-lockup.brand-compact {
+  align-items: center !important;
+  background: transparent !important;
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  flex-direction: row !important;
+  gap: 0 !important;
+  line-height: 0;
+  max-width: 100%;
+}
+
+.brand-logo,
+.brand-compact .brand-logo {
+  aspect-ratio: 1450 / 360 !important;
+  display: block !important;
+  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.34)) !important;
+  height: auto !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  width: clamp(180px, 17vw, 248px) !important;
+}
+
+.brand-academy-label,
+.brand-product-name,
+.brand-lockup.brand-compact::after,
+.boot-content::after {
+  content: none !important;
+  display: none !important;
+}
+
+.brand-compact .brand-logo {
+  width: clamp(132px, 11vw, 166px) !important;
+}
+
+.sidebar .brand-lockup {
+  width: 100%;
+}
+
+.sidebar .brand-logo {
+  width: min(196px, 100%) !important;
+}
+
+.mobile-brand .brand-logo,
+.quiz-header .brand-logo,
+.result-header .brand-logo {
+  width: clamp(132px, 15vw, 172px) !important;
+}
+
+/* Branded application environment. */
+.app-shell,
+.main-shell,
+.builder-page,
+.quiz-page,
+.result-page,
+.profile-page {
+  background:
+    radial-gradient(circle at 6% 88%, rgba(255, 177, 31, 0.11), transparent 30rem),
+    radial-gradient(circle at 94% 14%, rgba(230, 50, 47, 0.13), transparent 34rem),
+    linear-gradient(145deg, var(--brand-ink), #0a0b0c 52%, #050606) !important;
+}
+
+.sidebar {
+  background:
+    radial-gradient(circle at 30% 3%, rgba(255, 106, 34, 0.09), transparent 16rem),
+    linear-gradient(180deg, #0a0b0c, #060708) !important;
+  border-right: 1px solid var(--brand-line) !important;
+}
+
+.sidebar-top {
+  border-bottom-color: var(--brand-line) !important;
+}
+
+.workspace-label {
+  color: var(--brand-subtle) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase;
+}
+
+.topbar {
+  background: rgba(7, 8, 9, 0.9) !important;
+  border-bottom: 1px solid var(--brand-line) !important;
+  backdrop-filter: blur(22px) saturate(1.15);
+}
+
+.top-search,
+.user-chip,
+.icon-button,
+.secondary-button {
+  background-color: rgba(255, 255, 255, 0.035) !important;
+  border-color: var(--brand-line) !important;
+}
+
+.top-search:focus-within,
+.input-shell:focus-within,
+.field-label > input:focus,
+.field-label > textarea:focus,
+.field-label > select:focus {
+  border-color: rgba(255, 139, 70, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(255, 106, 34, 0.13) !important;
+}
+
+.sidebar-nav button.active,
+.role-switch button.active,
+.filter-tabs button.active,
+.select-button.active,
+.question-outline button.active,
+.builder-progress .active {
+  background: linear-gradient(105deg, rgba(255, 177, 31, 0.22), rgba(255, 106, 34, 0.28), rgba(230, 50, 47, 0.2)) !important;
+  border-color: var(--brand-line-warm) !important;
+  box-shadow: 0 14px 34px rgba(224, 57, 30, 0.16) !important;
+  color: #fff !important;
+}
+
+.primary-button,
+.hero-button,
+.row-button:not(:disabled),
+.login-button,
+.question-footer .primary-button,
+.result-actions .primary-button {
+  background-color: var(--brand-orange) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: transparent !important;
+  box-shadow: var(--brand-glow) !important;
+  color: #fff !important;
+}
+
+.primary-button:hover:not(:disabled),
+.hero-button:hover:not(:disabled),
+.row-button:hover:not(:disabled),
+.login-button:hover:not(:disabled) {
+  box-shadow: 0 20px 48px rgba(230, 58, 31, 0.34) !important;
+  filter: brightness(1.06);
+}
+
+.secondary-button,
+.text-button,
+.text-link,
+.card-kicker,
+.eyebrow,
+.section-kicker,
+.input-shell svg {
+  color: var(--brand-coral) !important;
+}
+
+.welcome-row,
+.page-intro,
+.admin-section-header,
+.metric-card,
+.admin-metrics article,
+.section-block,
+.analytics-card,
+.completion-card,
+.table-card,
+.course-card,
+.history-preview-card,
+.profile-card,
+.settings-card,
+.detail-card,
+.scoreboard-hero,
+.question-card,
+.result-card,
+.builder-card,
+.question-editor,
+.question-outline {
+  background-color: var(--brand-surface) !important;
+  border-color: var(--brand-line) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 139, 70, 0.045), 0 22px 58px rgba(0, 0, 0, 0.22) !important;
+}
+
+.welcome-row,
+.page-intro,
+.admin-section-header {
+  background:
+    radial-gradient(circle at 92% 10%, rgba(230, 50, 47, 0.09), transparent 18rem),
+    linear-gradient(145deg, rgba(20, 22, 22, 0.98), rgba(8, 10, 10, 0.99)) !important;
+}
+
+.hero-evaluation {
+  background:
+    linear-gradient(105deg, rgba(6, 7, 8, 0.42), rgba(6, 7, 8, 0.9)),
+    repeating-linear-gradient(90deg, rgba(255, 177, 31, 0.07) 0 2px, transparent 2px 15px),
+    radial-gradient(ellipse at 18% 68%, rgba(255, 177, 31, 0.94), transparent 34%),
+    radial-gradient(ellipse at 57% 72%, rgba(230, 50, 47, 0.74), transparent 43%),
+    linear-gradient(145deg, #201008, #110908 52%, #070809) !important;
+  border-color: rgba(255, 126, 47, 0.24) !important;
+}
+
+.metric-icon,
+.evaluation-icon,
+.avatar,
+.admin-avatar,
+.account-avatar,
+.profile-avatar {
+  background-color: var(--brand-orange) !important;
+  background-image: var(--brand-gradient) !important;
+  border-color: rgba(255, 139, 70, 0.3) !important;
+  color: #fff !important;
+}
+
+.score-ring,
+.completion-ring,
+.progress-ring {
+  background: conic-gradient(var(--brand-orange) var(--score, var(--progress, 0deg)), rgba(255, 255, 255, 0.09) 0) !important;
+}
+
+.boot-screen {
+  background: var(--brand-ink) !important;
+}
+
+.boot-content .brand-lockup {
+  max-width: 760px !important;
+  width: min(760px, 88vw) !important;
+}
+
+.boot-content .brand-logo {
+  filter: drop-shadow(0 18px 50px rgba(0, 0, 0, 0.48)) !important;
+  width: 100% !important;
+}
+
+.boot-bar {
+  background: rgba(56, 21, 10, 0.72) !important;
+  border: 1px solid rgba(255, 139, 70, 0.12);
+}
+
+.boot-bar span {
+  background: var(--brand-gradient) !important;
+  box-shadow: 0 0 26px rgba(255, 106, 34, 0.42) !important;
+}
+
+.login-page .login-brand-row {
+  width: min(39vw, 580px) !important;
+}
+
+.login-page .login-brand-row .brand-lockup,
+.login-page .login-brand-row .brand-logo {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.login-page .login-brand-row .brand-logo {
+  filter: drop-shadow(0 16px 52px rgba(0, 0, 0, 0.48)) !important;
+}
+
+.certificate-logo-panel .brand-logo {
+  filter: none !important;
+  width: min(290px, 100%) !important;
+}
+
+@media (max-width: 860px) {
+  .login-page .login-brand-row {
+    width: min(430px, 82vw) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .mobile-brand .brand-logo,
+  .brand-compact .brand-logo,
+  .quiz-header .brand-logo,
+  .result-header .brand-logo {
+    width: min(150px, 42vw) !important;
+  }
+
+  .boot-content .brand-lockup {
+    width: min(560px, 92vw) !important;
+  }
+
+  .welcome-row,
+  .page-intro,
+  .admin-section-header {
+    border-radius: var(--brand-radius-md) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .login-page .login-brand-row {
+    width: min(320px, 82vw) !important;
+  }
+
+  .mobile-brand .brand-logo,
+  .brand-compact .brand-logo {
+    width: min(132px, 40vw) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .brand-logo {
+    filter: none !important;
+  }
+}

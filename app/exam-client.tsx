@@ -204,20 +204,6 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
   };
 }
 
-const ACADEMY_WORDMARK = "KNOWLEDGE ACADEMY";
-
-function AcademyWordmark() {
-  return (
-    <span className="brand-academy-label" aria-hidden="true">
-      {Array.from(ACADEMY_WORDMARK).map((character, index) => (
-        <span key={`${character}-${index}`}>
-          {character === " " ? "\u00a0" : character}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function Logo({
   compact = false,
   priority = false,
@@ -228,20 +214,18 @@ function Logo({
   return (
     <div
       className={`brand-lockup ${compact ? "brand-compact" : ""}`}
-      aria-label="CGV Exams Knowledge Academy"
+      aria-label="CGV Knowledge Academy"
       role="img"
     >
       <Image
         className="brand-logo"
-        src={`${publicBasePath}/cgv-logo.svg`}
+        src={`${publicBasePath}/brand/cgv-knowledge-academy.svg`}
         alt=""
-        width={compact ? 56 : 72}
-        height={compact ? 25 : 32}
+        width={1450}
+        height={360}
         priority={priority}
         unoptimized
       />
-      <AcademyWordmark />
-      {!compact && <span className="brand-product-name">Exams</span>}
     </div>
   );
 }
@@ -384,7 +368,7 @@ function Login({
 
 function BootScreen() {
   return (
-    <main className="boot-screen" aria-label="CGV Exams is loading">
+    <main className="boot-screen" aria-label="CGV Knowledge Academy is loading">
       <div className="boot-glow boot-glow-one" />
       <div className="boot-glow boot-glow-two" />
       <div className="boot-content">

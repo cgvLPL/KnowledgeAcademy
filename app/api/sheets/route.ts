@@ -76,6 +76,6 @@ export async function GET() {
   return Response.json({
     ok: true,
     configured: Boolean(process.env.GOOGLE_APPS_SCRIPT_URL),
-    service: "CGV Exams Google Sheets bridge",
+    service: "CGV Knowledge Academy Google Sheets bridge",
   });
 }

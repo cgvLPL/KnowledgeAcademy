@@ -88,12 +88,12 @@ export default function RuntimeFunctionalityEnhancer() {
         .then((data: { ok?: boolean; version?: string }) => {
           if (!data.ok || data.version !== EXPECTED_BACKEND_VERSION) {
             console.warn(
-              `CGV Exams backend version mismatch. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`,
+              `CGV Knowledge Academy backend version mismatch. Expected ${EXPECTED_BACKEND_VERSION}, found ${data.version || "an older version"}.`,
             );
           }
         })
         .catch((error) => {
-          console.warn("CGV Exams backend health check skipped.", error);
+          console.warn("CGV Knowledge Academy backend health check skipped.", error);
         });
     }
 
