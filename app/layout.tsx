@@ -46,9 +46,16 @@ import "./performance-release.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
+const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
+const publicAssetOrigin = process.env.GITHUB_PAGES === "true"
+  ? "https://rayhanmawuntu-stack.github.io"
+  : publicSiteUrl.replace(/\/$/, "");
+const iconRevision = "2026-07-31";
+const publicAssetUrl = (path: string) => `${publicAssetOrigin}${publicBasePath}${path}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicSiteUrl),
+  applicationName: "CGV Knowledge Academy",
   title: "CGV Knowledge Academy — Evaluation Portal",
   description:
     "CGV Knowledge Academy's evaluation platform for learning courses, participant progress, certificates, and live results.",
@@ -73,11 +80,24 @@ export const metadata: Metadata = {
   },
   other: {
     "cgv-ui-release": "2026.07.31-knowledge-academy-brand-v1",
+    "mobile-web-app-capable": "yes",
   },
+  manifest: `${publicAssetUrl("/site.webmanifest")}?v=${iconRevision}`,
   icons: {
-    icon: "/brand/favicon.png",
-    shortcut: "/brand/favicon.png",
-    apple: "/brand/favicon.png",
+    icon: [
+      { url: `${publicAssetUrl("/brand/favicon-16.png")}?v=${iconRevision}`, sizes: "16x16", type: "image/png" },
+      { url: `${publicAssetUrl("/brand/favicon-32.png")}?v=${iconRevision}`, sizes: "32x32", type: "image/png" },
+      { url: `${publicAssetUrl("/brand/app-icon-192.png")}?v=${iconRevision}`, sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: `${publicAssetUrl("/brand/favicon-32.png")}?v=${iconRevision}`,
+    apple: [
+      { url: `${publicAssetUrl("/brand/apple-touch-icon.png")}?v=${iconRevision}`, sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CGV Academy",
   },
 };
 

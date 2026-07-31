@@ -50,6 +50,8 @@ for (const file of process.argv.slice(2)) {
   const rewritten = source
     .replaceAll("/assets/", "/CGV.Exams/assets/")
     .replaceAll("/favicon.svg", "/CGV.Exams/favicon.svg")
+    .replaceAll('"/brand/', '"/CGV.Exams/brand/')
+    .replaceAll('"/site.webmanifest', '"/CGV.Exams/site.webmanifest')
     .replaceAll('href="/cgv-logo.svg"', 'href="/CGV.Exams/cgv-logo.svg"');
   await writeFile(file, rewritten);
 }
@@ -58,7 +60,9 @@ NODE
 for exported_file in "${exported_files[@]}"; do
   if grep -qF '"/assets/' "$exported_file" ||
     grep -qF 'import("/assets/' "$exported_file" ||
-    grep -qF 'url(/assets/' "$exported_file"; then
+    grep -qF 'url(/assets/' "$exported_file" ||
+    grep -qF '"/brand/' "$exported_file" ||
+    grep -qF '"/site.webmanifest' "$exported_file"; then
     echo "GitHub Pages build still contains root-relative asset paths in $exported_file." >&2
     exit 1
   fi
