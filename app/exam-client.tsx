@@ -43,7 +43,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 type Role = "participant" | "admin";
 type ParticipantView = "home" | "evaluations" | "history" | "profile";
@@ -573,31 +573,58 @@ function CertificateModal({
   const participantName = user?.fullName || user?.username || "Participant";
   const branch = user?.branch || "CGV Knowledge Academy";
   const certificateId = certificateIdFor(item);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const restorePrintTitleRef = useRef<(() => void) | null>(null);
+  const participantNameClass = participantName.length > 42
+    ? "certificate-name certificate-name-very-long"
+    : participantName.length > 28
+      ? "certificate-name certificate-name-long"
+      : "certificate-name";
+  const courseTitleClass = item.title.length > 56
+    ? "certificate-course-title certificate-course-title-very-long"
+    : item.title.length > 36
+      ? "certificate-course-title certificate-course-title-long"
+      : "certificate-course-title";
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
+    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
+      if (previousFocus?.isConnected) previousFocus.focus();
     };
   }, [onClose]);
 
+  useEffect(() => () => restorePrintTitleRef.current?.(), []);
+
   function printCertificate() {
+    restorePrintTitleRef.current?.();
     const previousTitle = document.title;
-    const safeName = participantName.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "");
-    const safeCourse = item.title.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "");
+    const safeName = participantName.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "") || "Participant";
+    const safeCourse = item.title.replace(/[^a-z0-9]+/giu, "-").replace(/^-|-$/gu, "") || "Evaluation";
+    let restoreTimer = 0;
     const restoreTitle = () => {
+      if (restorePrintTitleRef.current !== restoreTitle) return;
+      window.removeEventListener("afterprint", restoreTitle);
+      window.clearTimeout(restoreTimer);
       document.title = previousTitle;
+      restorePrintTitleRef.current = null;
     };
+    restorePrintTitleRef.current = restoreTitle;
     document.title = `CGV-Certificate-${safeName}-${safeCourse}`;
     window.addEventListener("afterprint", restoreTitle, { once: true });
-    window.print();
-    window.setTimeout(restoreTitle, 1500);
+    restoreTimer = window.setTimeout(restoreTitle, 10_000);
+    window.requestAnimationFrame(() => window.print());
   }
 
   return (
@@ -608,14 +635,20 @@ function CertificateModal({
         if (event.currentTarget === event.target) onClose();
       }}
     >
-      <section className="certificate-dialog" role="dialog" aria-modal="true" aria-labelledby="certificate-dialog-title">
+      <section
+        className="certificate-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="certificate-dialog-title"
+        aria-describedby="certificate-dialog-description"
+      >
         <header className="certificate-toolbar">
           <div>
-            <span>COMPLETION CERTIFICATE</span>
+            <span id="certificate-dialog-description">COMPLETION CERTIFICATE</span>
             <strong id="certificate-dialog-title">{item.title}</strong>
           </div>
           <div>
-            <button className="secondary-button" type="button" onClick={onClose}>
+            <button ref={closeButtonRef} className="secondary-button" type="button" onClick={onClose}>
               <X size={17} /> Close
             </button>
             <button className="primary-button" type="button" onClick={printCertificate}>
@@ -646,11 +679,11 @@ function CertificateModal({
               <span className="certificate-kicker">CERTIFICATE</span>
               <h2>Certificate of Completion</h2>
               <p className="certificate-intro">This certificate is proudly presented to</p>
-              <h3>{participantName}</h3>
+              <h3 className={participantNameClass}>{participantName}</h3>
               <p className="certificate-statement">
                 for completing the CGV Knowledge Academy evaluation
               </p>
-              <h4>{item.title}</h4>
+              <h4 className={courseTitleClass}>{item.title}</h4>
               <p className="certificate-category">{item.category} learning programme</p>
             </section>
 
