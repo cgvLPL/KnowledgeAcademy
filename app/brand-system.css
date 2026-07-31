@@ -339,7 +339,7 @@ textarea:focus-visible,
 
 @media (max-width: 860px) {
   .login-page .login-brand-row {
-    width: min(430px, 82vw) !important;
+    width: min(330px, 78vw) !important;
   }
 }
 
@@ -364,7 +364,7 @@ textarea:focus-visible,
 
 @media (max-width: 420px) {
   .login-page .login-brand-row {
-    width: min(320px, 82vw) !important;
+    width: min(270px, 76vw) !important;
   }
 
   .mobile-brand .brand-logo,

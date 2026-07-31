@@ -106,7 +106,7 @@
 
 @media (max-width: 760px) {
   .boot-logo-stage {
-    width: min(560px, 88vw);
+    width: min(520px, 82vw);
   }
 
   .boot-logo-scan {
@@ -117,6 +117,12 @@
   @keyframes cgv-intro-caption {
     0% { letter-spacing: .34em; opacity: 0; transform: translateY(7px); }
     100% { letter-spacing: .27em; opacity: 1; transform: translateY(0); }
+  }
+}
+
+@media (max-width: 480px) {
+  .boot-logo-stage {
+    width: min(340px, 82vw);
   }
 }
 
