@@ -7,6 +7,7 @@ import "./course-table-containment.test.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const backend = read("google-apps-script/Code.gs");
+const client = read("app/exam-client.tsx");
 const layout = read("app/layout.tsx");
 const resultSync = read("app/result-sync-enhancer.tsx");
 const runtime = read("app/runtime-functionality-enhancer.tsx");
@@ -77,10 +78,14 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
 });
 
 test("quiz timing, exit protection, and duplicate-submit protection are active", () => {
-  assert.match(runtime, /remainingSeconds/);
-  assert.match(runtime, /clickFinishAndSubmit/);
+  assert.match(client, /const \[remainingSeconds, setRemainingSeconds\] = useState/);
+  assert.match(client, /const submitStartedRef = useRef\(false\)/);
+  assert.match(client, /submitQuizRef\.current\(true\)/);
+  assert.match(client, /Number\.isInteger\(selectedIndex\)/);
+  assert.match(client, /items\.filter\(\(item\) => item\.id !== completion\.id\)/);
+  assert.match(client, /Retry submission/);
   assert.match(runtime, /Exit this evaluation\?/);
-  assert.match(runtime, /cgvSubmitting/);
+  assert.doesNotMatch(runtime, /clickFinishAndSubmit|cgvSubmitting/);
   assert.match(layout, /RuntimeFunctionalityEnhancer/);
 });
 
