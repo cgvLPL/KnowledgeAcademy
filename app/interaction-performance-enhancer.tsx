@@ -108,10 +108,10 @@ export default function InteractionPerformanceEnhancer() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const slowUpdates = window.matchMedia("(update: slow)").matches;
     const lowMemory = Boolean(
-      performanceNavigator.deviceMemory && performanceNavigator.deviceMemory <= 4,
+      performanceNavigator.deviceMemory && performanceNavigator.deviceMemory <= 2,
     );
     const limitedCpu = Boolean(
-      performanceNavigator.hardwareConcurrency && performanceNavigator.hardwareConcurrency <= 4,
+      performanceNavigator.hardwareConcurrency && performanceNavigator.hardwareConcurrency <= 2,
     );
     const dataSaver = Boolean(performanceNavigator.connection?.saveData);
     const lowPowerMode = reducedMotion || slowUpdates || lowMemory || limitedCpu || dataSaver;

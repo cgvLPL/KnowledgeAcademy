@@ -1921,8 +1921,8 @@ export default function ExamClient() {
     };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const slowUpdates = window.matchMedia("(update: slow)").matches;
-    const limitedMemory = Boolean(startupNavigator.deviceMemory && startupNavigator.deviceMemory <= 4);
-    const limitedCpu = Boolean(startupNavigator.hardwareConcurrency && startupNavigator.hardwareConcurrency <= 4);
+    const limitedMemory = Boolean(startupNavigator.deviceMemory && startupNavigator.deviceMemory <= 2);
+    const limitedCpu = Boolean(startupNavigator.hardwareConcurrency && startupNavigator.hardwareConcurrency <= 2);
     const dataSaver = Boolean(startupNavigator.connection?.saveData);
     const useShortIntro = prefersReducedMotion || slowUpdates || limitedMemory || limitedCpu || dataSaver;
     const timer = window.setTimeout(
