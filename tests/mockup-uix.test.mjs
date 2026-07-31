@@ -28,6 +28,14 @@ test("participant dashboard uses the approved cinematic card system", () => {
   }
   assert.ok(participantCss.includes("aspect-ratio: 1 !important"));
   assert.ok(participantCss.includes("overflow: hidden !important"));
+  assert.match(
+    participantCss,
+    /\.history-summary \.score-ring > div\s*\{[\s\S]*?align-items:\s*center !important;[\s\S]*?justify-content:\s*center !important;/,
+  );
+  assert.match(
+    participantCss,
+    /\.history-summary \.score-ring span\s*\{[\s\S]*?line-height:\s*1 !important;[\s\S]*?transform:\s*translateY\(calc\(var\(--ring-size, 88px\) \* 0\.035\)\) !important;/,
+  );
 });
 
 test("login exposes only administrator and participant account options", () => {
