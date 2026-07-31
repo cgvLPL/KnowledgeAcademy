@@ -1,4 +1,4 @@
-name: Publish CGV Exams site
+name: Publish CGV Knowledge Academy site
 
 on:
   push:
@@ -49,8 +49,8 @@ jobs:
         run: |
           test -f dist/client/index.html
           test -d dist/client/assets
-          test -f dist/client/cgv-logo.svg
-          grep -q "CGV Exams" dist/client/index.html
+          test -f dist/client/brand/cgv-knowledge-academy.svg
+          grep -q "CGV Knowledge Academy" dist/client/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
