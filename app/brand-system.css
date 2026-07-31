@@ -378,3 +378,149 @@ textarea:focus-visible,
     filter: none !important;
   }
 }
+
+/* Larger application-header lockups. Navigation geometry remains unchanged. */
+.quiz-header .brand-logo,
+.result-header .brand-logo,
+.builder-header .brand-logo {
+  width: clamp(190px, 18vw, 228px) !important;
+}
+
+/* Mobile-only floating liquid-glass navigation. */
+@media (max-width: 760px) {
+  .topbar {
+    min-height: 76px !important;
+  }
+
+  .topbar .mobile-brand {
+    gap: 10px !important;
+  }
+
+  .topbar .mobile-brand .brand-lockup {
+    max-width: calc(100vw - 154px) !important;
+  }
+
+  .topbar .mobile-brand .brand-logo {
+    width: min(176px, 44vw) !important;
+  }
+
+  .quiz-header .brand-logo,
+  .result-header .brand-logo,
+  .builder-header .brand-logo {
+    width: min(176px, 46vw) !important;
+  }
+
+  .main-shell {
+    padding-bottom: calc(106px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-nav {
+    align-items: center !important;
+    backdrop-filter: blur(30px) saturate(1.8) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(1.8) !important;
+    background:
+      linear-gradient(180deg, rgba(38, 41, 42, 0.82), rgba(10, 11, 12, 0.9)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 999px !important;
+    bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+      0 20px 50px rgba(0, 0, 0, 0.48),
+      0 5px 18px rgba(230, 50, 47, 0.12) !important;
+    box-sizing: border-box;
+    display: grid !important;
+    gap: 4px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    height: 76px !important;
+    isolation: isolate;
+    left: max(12px, env(safe-area-inset-left)) !important;
+    overflow: hidden;
+    padding: 7px !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+  }
+
+  .mobile-nav::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.36), transparent);
+    content: "";
+    height: 1px;
+    inset: 1px 16% auto;
+    pointer-events: none;
+    position: absolute;
+    z-index: 3;
+  }
+
+  .mobile-nav button {
+    align-items: center !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: 1px solid transparent !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    color: #a6aca8 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    font-size: 8px !important;
+    gap: 4px !important;
+    height: 60px;
+    justify-content: center !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    padding: 6px 3px !important;
+    position: relative;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+    width: 100%;
+    z-index: 2;
+  }
+
+  .mobile-nav button span {
+    color: inherit !important;
+    font-size: 8px;
+    font-weight: 720;
+    letter-spacing: 0.015em;
+    line-height: 1;
+  }
+
+  .mobile-nav button svg {
+    color: inherit !important;
+    filter: drop-shadow(0 1px 5px rgba(0, 0, 0, 0.34));
+    stroke: currentColor !important;
+  }
+
+  .mobile-nav button.active,
+  .mobile-nav button[aria-current="page"] {
+    background-color: var(--brand-orange) !important;
+    background-image: var(--brand-gradient) !important;
+    border-color: rgba(255, 205, 139, 0.42) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.36),
+      inset 0 -1px 0 rgba(125, 22, 11, 0.28),
+      0 10px 24px rgba(230, 50, 47, 0.3) !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+  }
+
+  .mobile-nav button:active {
+    transform: scale(0.96);
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar .mobile-brand .brand-logo {
+    width: min(148px, 44vw) !important;
+  }
+
+  .mobile-nav {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    height: 70px !important;
+    left: max(8px, env(safe-area-inset-left)) !important;
+    padding: 6px !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+  }
+
+  .mobile-nav button {
+    gap: 3px !important;
+    height: 56px;
+    padding-inline: 2px !important;
+  }
+}

@@ -1853,10 +1853,22 @@ function MobileNav({ role, view, setView }: { role: Role; view: View; setView: (
     ? [{ id: "overview", icon: LayoutDashboard, label: "Home" }, { id: "courses", icon: Layers3, label: "Courses" }, { id: "participants", icon: Users, label: "People" }, { id: "scoreboard", icon: Trophy, label: "Scores" }]
     : [{ id: "home", icon: Home, label: "Home" }, { id: "evaluations", icon: BookOpen, label: "Courses" }, { id: "history", icon: History, label: "History" }, { id: "profile", icon: UserRound, label: "Profile" }];
   return (
-    <nav className="mobile-nav">
+    <nav className="mobile-nav" aria-label="Primary navigation">
       {items.map((item) => {
         const Icon = item.icon;
-        return <button key={item.id} className={view === item.id ? "active" : ""} onClick={() => setView(item.id as View)}><Icon size={19} /><span>{item.label}</span></button>;
+        const active = view === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            className={active ? "active" : ""}
+            aria-current={active ? "page" : undefined}
+            onClick={() => setView(item.id as View)}
+          >
+            <Icon size={19} />
+            <span>{item.label}</span>
+          </button>
+        );
       })}
     </nav>
   );
