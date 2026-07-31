@@ -22,79 +22,6 @@ function findLabel(scope: ParentNode, text: string) {
 export default function RuntimeFunctionalityEnhancer() {
 
   useEffect(() => {
-    let quizTimer = 0;
-    let remainingSeconds = -1;
-    let currentQuizTitle = "";
-    let timedOutQuizTitle = "";
-
-    const stopTimer = () => {
-      window.clearInterval(quizTimer);
-      quizTimer = 0;
-      remainingSeconds = -1;
-      currentQuizTitle = "";
-    };
-
-    const clickFinishAndSubmit = () => {
-      const lastQuestion = document.querySelector<HTMLButtonElement>(
-        ".question-progress-bars button:last-child",
-      );
-      lastQuestion?.click();
-
-      window.setTimeout(() => {
-        const finish = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-          .find((button) => normalized(button.textContent).includes("finish evaluation"));
-        if (!finish) return;
-        finish.disabled = false;
-        finish.click();
-
-        window.setTimeout(() => {
-          const submit = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-            .find((button) => normalized(button.textContent).includes("submit evaluation"));
-          if (submit && !submit.disabled) submit.click();
-        }, 120);
-      }, 80);
-    };
-
-    const updateTimer = () => {
-      const timerText = document.querySelector<HTMLElement>(".quiz-header .timer strong");
-      if (!timerText || remainingSeconds < 0) return;
-      const minutes = Math.floor(remainingSeconds / 60);
-      const seconds = remainingSeconds % 60;
-      timerText.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
-      timerText.closest(".timer")?.classList.toggle("timer-warning", remainingSeconds <= 60);
-      if (remainingSeconds <= 0) {
-        timedOutQuizTitle = currentQuizTitle;
-        stopTimer();
-        clickFinishAndSubmit();
-      }
-    };
-
-    const startTimer = () => {
-      const quiz = document.querySelector(".quiz-page");
-      const timerText = document.querySelector<HTMLElement>(".quiz-header .timer strong");
-      const title = document.querySelector<HTMLElement>(".quiz-course-title strong")?.textContent || "";
-      if (!quiz || !timerText) {
-        if (quizTimer) stopTimer();
-        timedOutQuizTitle = "";
-        return;
-      }
-      if (title === timedOutQuizTitle) return;
-      if (quizTimer && title === currentQuizTitle) return;
-
-      stopTimer();
-      currentQuizTitle = title;
-      const initialMinutes = Number.parseInt(timerText.textContent || "", 10);
-      remainingSeconds = Math.max(
-        1,
-        Number.isFinite(initialMinutes) ? initialMinutes * 60 : 20 * 60,
-      );
-      updateTimer();
-      quizTimer = window.setInterval(() => {
-        remainingSeconds -= 1;
-        updateTimer();
-      }, 1000);
-    };
-
     const normalizeBuilder = () => {
       const builder = document.querySelector(".builder-page");
       if (!builder) return;
@@ -124,7 +51,6 @@ export default function RuntimeFunctionalityEnhancer() {
     };
 
     const sync = () => {
-      startTimer();
       normalizeBuilder();
       const remember = document.querySelector<HTMLElement>(".login-options .check-label");
       if (remember) remember.hidden = true;
@@ -152,26 +78,6 @@ export default function RuntimeFunctionalityEnhancer() {
         return;
       }
 
-      if (label.includes("submit evaluation")) {
-        if (button.dataset.cgvSubmitting === "true") {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          return;
-        }
-        button.dataset.cgvSubmitting = "true";
-        window.setTimeout(() => {
-          if (!document.body.contains(button)) return;
-          button.disabled = true;
-          button.textContent = "Submitting…";
-        }, 0);
-        window.setTimeout(() => {
-          if (document.body.contains(button)) {
-            button.dataset.cgvSubmitting = "false";
-            button.disabled = false;
-            button.textContent = "Submit evaluation";
-          }
-        }, 12000);
-      }
     };
 
     document.addEventListener("click", onClick, true);
@@ -192,7 +98,6 @@ export default function RuntimeFunctionalityEnhancer() {
     }
 
     return () => {
-      stopTimer();
       observer.disconnect();
       document.removeEventListener("click", onClick, true);
     };
