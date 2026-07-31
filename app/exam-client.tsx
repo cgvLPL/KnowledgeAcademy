@@ -1112,16 +1112,71 @@ function Quiz({
   evaluation: Evaluation;
   questionsData: Question[];
   onExit: () => void;
-  onComplete: (score: number, answers: Record<number, number>) => void | Promise<void>;
+  onComplete: (score: number, answers: Record<number, number>) => Promise<string | null>;
 }) {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [showSubmit, setShowSubmit] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const initialSeconds = Math.max(1, Math.round(evaluation.duration * 60));
+  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
+  const submitStartedRef = useRef(false);
+  const submitQuizRef = useRef<(allowIncomplete?: boolean) => Promise<void>>(async () => undefined);
   const current = questionsData[index];
   const answered = Object.keys(answers).length;
   const progress = questionsData.length
     ? Math.round(((index + 1) / questionsData.length) * 100)
     : 0;
+  const remainingLabel = `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, "0")}`;
+
+  async function submitQuiz(allowIncomplete = false) {
+    if (submitStartedRef.current) return;
+    const missingAnswers = Math.max(0, questionsData.length - answered);
+    if (!allowIncomplete && missingAnswers > 0) {
+      setSubmitError(`Answer the remaining ${missingAnswers} question${missingAnswers === 1 ? "" : "s"} before submitting.`);
+      return;
+    }
+
+    submitStartedRef.current = true;
+    setSubmitting(true);
+    setSubmitError("");
+    const scorable = questionsData.length > 0
+      && questionsData.every((question) => question.correct !== undefined);
+    const correct = scorable
+      ? questionsData.reduce((sum, question, questionIndex) => sum + (answers[questionIndex] === question.correct ? 1 : 0), 0)
+      : 0;
+    const localScore = scorable ? Math.round((correct / questionsData.length) * 100) : 0;
+    const error = await onComplete(localScore, answers);
+    if (error) {
+      setSubmitError(error);
+      setSubmitting(false);
+      submitStartedRef.current = false;
+      setShowSubmit(true);
+    }
+  }
+
+  useEffect(() => {
+    submitQuizRef.current = submitQuiz;
+  });
+
+  useEffect(() => {
+    if (!questionsData.length) return undefined;
+    const timer = window.setInterval(() => {
+      setRemainingSeconds((value) => {
+        if (value <= 1) {
+          window.clearInterval(timer);
+          window.setTimeout(() => {
+            setShowSubmit(true);
+            void submitQuizRef.current(true);
+          }, 0);
+          return 0;
+        }
+        return value - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [evaluation.id, initialSeconds, questionsData.length]);
 
   if (!current) {
     return (
@@ -1136,15 +1191,6 @@ function Quiz({
     );
   }
 
-  async function submitQuiz() {
-    const scorable = questionsData.every((question) => question.correct !== undefined);
-    const correct = scorable
-      ? questionsData.reduce((sum, question, questionIndex) => sum + (answers[questionIndex] === question.correct ? 1 : 0), 0)
-      : 0;
-    const localScore = scorable ? Math.round((correct / questionsData.length) * 100) : 0;
-    await onComplete(localScore, answers);
-  }
-
   return (
     <main className="quiz-page">
       <div className="quiz-aurora quiz-aurora-left" />
@@ -1156,8 +1202,8 @@ function Quiz({
           <strong>{evaluation.title}</strong>
         </div>
         <div className="quiz-header-actions">
-          <span className="timer"><Clock3 size={18} /><strong>{evaluation.duration} min limit</strong></span>
-          <button className="icon-button" onClick={onExit} aria-label="Exit evaluation"><X size={20} /></button>
+          <span className={`timer${remainingSeconds <= 60 ? " timer-warning" : ""}`}><Clock3 size={18} /><strong>{remainingLabel}</strong></span>
+          <button className="icon-button" disabled={submitting} onClick={onExit} aria-label="Exit evaluation"><X size={20} /></button>
         </div>
       </header>
 
@@ -1237,8 +1283,8 @@ function Quiz({
                 <button
                   className="primary-button"
                   type="button"
-                  disabled={answered !== questionsData.length}
-                  onClick={() => setShowSubmit(true)}
+                  disabled={answered !== questionsData.length || submitting}
+                  onClick={() => { setSubmitError(""); setShowSubmit(true); }}
                 >
                   Finish evaluation <Check size={18} />
                 </button>
@@ -1249,15 +1295,21 @@ function Quiz({
       </div>
 
       {showSubmit && (
-        <div className="modal-backdrop">
-          <section className="confirm-modal">
+        <div className="modal-backdrop" role="presentation">
+          <section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="finish-evaluation-title" aria-busy={submitting}>
             <span className="modal-icon"><Send size={25} /></span>
-            <span className="card-kicker">READY TO SUBMIT?</span>
-            <h2>Finish this evaluation</h2>
-            <p>All {questionsData.length} questions have been answered. Your score will be recorded in your history.</p>
+            <span className="card-kicker">{remainingSeconds === 0 ? "TIME IS UP" : "READY TO SUBMIT?"}</span>
+            <h2 id="finish-evaluation-title">{remainingSeconds === 0 ? "Submitting your evaluation" : "Finish this evaluation"}</h2>
+            <p>{remainingSeconds === 0
+              ? "Your saved answers are being submitted automatically. Unanswered questions will be recorded without a selection."
+              : `All ${questionsData.length} questions have been answered. Your score will be recorded in your history.`}</p>
+            {submitError && <p className="quiz-submit-error" role="alert">{submitError}</p>}
             <div className="modal-actions">
-              <button className="secondary-button" onClick={() => setShowSubmit(false)}>Review answers</button>
-              <button className="primary-button" onClick={submitQuiz}>Submit evaluation <ArrowRight size={18} /></button>
+              <button className="secondary-button" disabled={submitting || remainingSeconds === 0} onClick={() => setShowSubmit(false)}>Review answers</button>
+              <button className="primary-button" disabled={submitting} onClick={() => void submitQuiz(remainingSeconds === 0)}>
+                {submitting ? "Submitting…" : submitError ? "Retry submission" : "Submit evaluation"}
+                {!submitting && <ArrowRight size={18} />}
+              </button>
             </div>
           </section>
         </div>
@@ -1977,15 +2029,18 @@ export default function ExamClient() {
     window.alert("The Google Sheets backend is required to start an evaluation.");
   }
 
-  async function completeQuiz(score: number, answers: Record<number, number>) {
-    if (!activeQuiz) return;
+  async function completeQuiz(score: number, answers: Record<number, number>): Promise<string | null> {
+    if (!activeQuiz) return "This evaluation is no longer active. Return to the dashboard and reopen it.";
     let finalScore = score;
     let completedAttemptId = activeAttemptId || `history-${Date.now()}`;
     let completedDurationSeconds = 0;
     if (backendMode === "sheets" && sessionToken && activeAttemptId) {
       try {
         const answerPayload = quizQuestions.reduce<Record<string, string>>((resultMap, question, index) => {
-          resultMap[question.id] = String.fromCharCode(65 + answers[index]);
+          const selectedIndex = answers[index];
+          resultMap[question.id] = Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex <= 3
+            ? String.fromCharCode(65 + selectedIndex)
+            : "";
           return resultMap;
         }, {});
         const submission = await sheetsRequest<{
@@ -2000,12 +2055,10 @@ export default function ExamClient() {
         completedAttemptId = String(submission.result.attemptId || activeAttemptId);
         completedDurationSeconds = Number(submission.result.durationSeconds || 0);
       } catch (error) {
-        window.alert(error instanceof Error ? error.message : "Unable to submit this evaluation.");
-        return;
+        return error instanceof Error ? error.message : "Unable to submit this evaluation.";
       }
     } else {
-      window.alert("The Google Sheets backend is required to submit this evaluation.");
-      return;
+      return "The Google Sheets backend is required to submit this evaluation.";
     }
     const completedEvaluation = activeQuiz;
     const completion: HistoryItem = {
@@ -2019,9 +2072,11 @@ export default function ExamClient() {
     };
     const newResult = { evaluation: completedEvaluation, score: finalScore, completion };
     setResult(newResult);
-    setHistory((items) => [completion, ...items]);
+    setHistory((items) => [completion, ...items.filter((item) => item.id !== completion.id)]);
     setActiveQuiz(null);
     setActiveAttemptId(null);
+    setQuizQuestions([]);
+    return null;
   }
 
   async function saveCourse(evaluation: Evaluation, draftQuestions: DraftQuestion[]) {
