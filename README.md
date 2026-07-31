@@ -1,15 +1,18 @@
 <table align="center">
   <tr>
-    <td bgcolor="#050706" align="center">
-      <img src="public/cgv-logo.svg" alt="CGV (exams)" width="520">
+    <td bgcolor="#070809" align="center">
+      <img src="public/brand/cgv-knowledge-academy.svg" alt="CGV Knowledge Academy" width="620">
     </td>
   </tr>
 </table>
 
-# CGV Exams
+# CGV Knowledge Academy
 
-An online evaluation platform for quiz courses, participant accounts, score
-history, live rankings, and administrator-managed content.
+CGV Knowledge Academy is an online learning and evaluation platform for quiz
+courses, participant accounts, score history, certificates, live rankings, and
+administrator-managed content.
+
+> Focused learning. Cinematic energy.
 
 ## What is included
 
