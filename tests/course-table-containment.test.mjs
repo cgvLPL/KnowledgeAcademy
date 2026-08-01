@@ -58,7 +58,7 @@ test("login keeps the cinematic split layout and centred Knowledge Academy locku
   assert.match(loginCss, /linear-gradient\(100deg, #ffac21 0%, #ff641d 43%, #df2e32 100%\)/);
   assert.match(loginCss, /width:\s*100%\s*!important/);
   assert.match(loginCopyCss, /content:\s*"Welcome back"/);
-  assert.match(loginCopyCss, /content:\s*"Sign in to your CGV Knowledge Academy account"/);
+  assert.match(loginCopyCss, /content:\s*"Sign in once — we’ll open the right workspace automatically"/);
   assert.match(loginCopyCss, /content:\s*"Sign in"/);
 });
 

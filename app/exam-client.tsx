@@ -285,27 +285,20 @@ function Initials({ name, size = "md" }: { name: string; size?: "sm" | "md" | "l
 function Login({
   onLogin,
 }: {
-  onLogin: (role: Role, username: string, password: string) => Promise<string | null>;
+  onLogin: (username: string, password: string) => Promise<string | null>;
 }) {
-  const [role, setRole] = useState<Role>("admin");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  function switchRole(nextRole: Role) {
-    setRole(nextRole);
-    setUsername("");
-    setPassword("");
-  }
-
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!username.trim() || !password.trim()) return;
     setSubmitting(true);
     setError("");
-    const nextError = await onLogin(role, username, password);
+    const nextError = await onLogin(username, password);
     if (nextError) setError(nextError);
     setSubmitting(false);
   }
@@ -321,28 +314,7 @@ function Login({
           <div className="login-card-heading">
             <span className="card-kicker">WELCOME BACK</span>
             <h1>Ready to continue?</h1>
-            <p>Choose your workspace and enter your account details.</p>
-          </div>
-
-          <div className="role-switch" role="tablist" aria-label="Account type">
-            <button
-              type="button"
-              className={role === "admin" ? "active" : ""}
-              onClick={() => switchRole("admin")}
-              role="tab"
-              aria-selected={role === "admin"}
-            >
-              <Gauge size={17} /> Admin
-            </button>
-            <button
-              type="button"
-              className={role === "participant" ? "active" : ""}
-              onClick={() => switchRole("participant")}
-              role="tab"
-              aria-selected={role === "participant"}
-            >
-              <UserRound size={17} /> Participant
-            </button>
+            <p>Sign in once and we will open the right workspace for your account.</p>
           </div>
 
           <label className="field-label">
@@ -2101,7 +2073,7 @@ export default function ExamClient() {
     };
   }, [role]);
 
-  async function login(nextRole: Role, username: string, password: string): Promise<string | null> {
+  async function login(username: string, password: string): Promise<string | null> {
     try {
       const response = await sheetsFetch({ action: "login", username, password });
       const loginData = (await response.json()) as {
@@ -2122,10 +2094,11 @@ export default function ExamClient() {
         return loginData.error || "Unable to sign in.";
       }
 
-      const authenticatedRole: Role = loginData.user?.role === "admin" ? "admin" : "participant";
-      if (authenticatedRole !== nextRole) {
-        return `This account belongs to the ${authenticatedRole} workspace.`;
+      const roleValue = String(loginData.user?.role || "").trim().toLowerCase();
+      if (roleValue !== "admin" && roleValue !== "participant") {
+        return "This account does not have a valid workspace role. Contact an administrator.";
       }
+      const authenticatedRole = roleValue as Role;
 
       if (authenticatedRole === "participant") {
         const homeData = await sheetsRequest<{

@@ -14,7 +14,7 @@
 }
 
 .login-page .login-card-heading p::after {
-  content: "Sign in to your CGV Knowledge Academy account";
+  content: "Sign in once — we’ll open the right workspace automatically";
   display: block;
   font-size: 15px;
 }

@@ -1,28 +1,6 @@
-/* Explicit account-type switch for the sign-in screen. */
+/* One shared sign-in surface. Account roles are resolved after authentication. */
 .login-page .role-switch {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-inline: auto !important;
-  max-width: 560px;
-  width: 100%;
-}
-
-.login-page .role-switch button {
-  align-items: center;
-  display: inline-flex;
-  font-size: 14px;
-  font-weight: 650;
-  gap: 8px;
-  justify-content: center;
-  min-width: 0;
-  padding-inline: 16px;
-  white-space: nowrap;
-}
-
-.login-page .role-switch button.active {
-  background: linear-gradient(100deg, rgba(255, 174, 34, 0.2), rgba(255, 99, 29, 0.22), rgba(223, 47, 50, 0.2)) !important;
-  border: 1px solid rgba(255, 125, 50, 0.34) !important;
-  color: #fff !important;
+  display: none !important;
 }
 
 /* Social and SSO login rows are intentionally unsupported. */
@@ -32,11 +10,4 @@
 .login-page .sso-login,
 .login-page .oauth-login {
   display: none !important;
-}
-
-@media (max-width: 420px) {
-  .login-page .role-switch button {
-    font-size: 13px;
-    padding-inline: 10px;
-  }
 }

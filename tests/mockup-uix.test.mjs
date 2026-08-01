@@ -38,14 +38,16 @@ test("participant dashboard uses the approved cinematic card system", () => {
   );
 });
 
-test("login exposes only administrator and participant account options", () => {
+test("login uses one account form and resolves the workspace after authentication", () => {
   assert.ok(layout.includes('import "./login-account-switch.css";'));
-  assert.ok(loginSource.includes('aria-label="Account type"'));
-  assert.ok(loginSource.includes("> Admin"));
-  assert.ok(loginSource.includes("> Participant"));
+  assert.ok(!loginSource.includes('aria-label="Account type"'));
+  assert.ok(!loginSource.includes('role="tablist"'));
+  assert.ok(!loginSource.includes("switchRole"));
+  assert.ok(loginSource.includes("onLogin(username, password)"));
   assert.ok(!loginSource.includes("Google"));
   assert.ok(!loginSource.includes("SSO"));
-  assert.ok(loginCss.includes("grid-template-columns: repeat(2, minmax(0, 1fr))"));
+  assert.ok(loginCss.includes("Account roles are resolved after authentication"));
+  assert.ok(loginCss.includes("display: none !important"));
   assert.ok(loginCss.includes('[data-provider="google"]'));
   assert.ok(loginCss.includes('[data-provider="sso"]'));
 });
