@@ -282,7 +282,7 @@ function Initials({ name, size = "md" }: { name: string; size?: "sm" | "md" | "l
   );
 }
 
-function BrandAtmosphere({ variant }: { variant: "app" | "boot" | "builder" | "login" | "quiz" | "result" }) {
+function BrandAtmosphere({ variant }: { variant: "app" | "builder" | "login" | "quiz" | "result" }) {
   return (
     <div className={`brand-atmosphere brand-atmosphere-${variant}`} aria-hidden="true">
       <span className="brand-atmosphere-bloom" />
@@ -404,7 +404,6 @@ function Login({
 function BootScreen() {
   return (
     <main className="boot-screen" aria-label="CGV Knowledge Academy is loading">
-      <BrandAtmosphere variant="boot" />
       <div className="boot-glow boot-glow-one" />
       <div className="boot-glow boot-glow-two" />
       <div className="boot-content">

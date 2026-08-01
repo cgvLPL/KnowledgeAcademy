@@ -18,9 +18,10 @@ test("the branded atmosphere is installed as the final visual layer", () => {
 
 test("decorative atmosphere covers every primary application surface", () => {
   assert.match(client, /function BrandAtmosphere/);
-  for (const variant of ["app", "boot", "builder", "login", "quiz", "result"]) {
+  for (const variant of ["app", "builder", "login", "quiz", "result"]) {
     assert.ok(client.includes(`<BrandAtmosphere variant="${variant}" />`), `Missing atmosphere variant: ${variant}`);
   }
+  assert.ok(!client.includes('<BrandAtmosphere variant="boot" />'));
   assert.ok(client.includes('aria-hidden="true"'));
 });
 

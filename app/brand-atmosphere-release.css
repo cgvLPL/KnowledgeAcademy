@@ -194,34 +194,29 @@
   opacity: 0.055;
 }
 
-.brand-atmosphere-login .brand-atmosphere-ribbon-primary,
-.brand-atmosphere-boot .brand-atmosphere-ribbon-primary {
+.brand-atmosphere-login .brand-atmosphere-ribbon-primary {
   right: -22vw;
   top: 2vh;
 }
 
-.brand-atmosphere-login .brand-atmosphere-bloom,
-.brand-atmosphere-boot .brand-atmosphere-bloom {
+.brand-atmosphere-login .brand-atmosphere-bloom {
   left: -18vw;
   right: auto;
   top: 8vh;
   transform: rotate(8deg);
 }
 
-.brand-atmosphere-login .brand-atmosphere-capsules,
-.brand-atmosphere-boot .brand-atmosphere-capsules {
+.brand-atmosphere-login .brand-atmosphere-capsules {
   right: 7vw;
   top: 6vh;
 }
 
-.brand-atmosphere-login .brand-atmosphere-halo,
-.brand-atmosphere-boot .brand-atmosphere-halo {
+.brand-atmosphere-login .brand-atmosphere-halo {
   bottom: -36vh;
   left: -9vw;
 }
 
-.brand-atmosphere-login .brand-atmosphere-slices,
-.brand-atmosphere-boot .brand-atmosphere-slices {
+.brand-atmosphere-login .brand-atmosphere-slices {
   right: 5vw;
   top: 48vh;
 }
