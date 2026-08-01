@@ -1,0 +1,124 @@
+/* Explicit post-quiz outcome state for participant submissions. */
+.result-outcome {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 8px 0 22px;
+  width: 100%;
+}
+
+.result-status-icon {
+  align-items: center;
+  border: 1px solid rgba(255, 177, 31, 0.42);
+  border-radius: 50%;
+  display: inline-flex;
+  height: 78px;
+  justify-content: center;
+  margin-bottom: 5px;
+  width: 78px;
+}
+
+.result-outcome-passed .result-status-icon {
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 246, 218, 0.25), transparent 35%),
+    linear-gradient(145deg, rgba(255, 177, 31, 0.23), rgba(255, 106, 34, 0.13));
+  box-shadow: 0 0 44px rgba(255, 148, 35, 0.17);
+  color: #ffc65c;
+}
+
+.result-outcome-not-passed .result-status-icon {
+  background:
+    radial-gradient(circle at 36% 28%, rgba(255, 220, 210, 0.18), transparent 35%),
+    linear-gradient(145deg, rgba(230, 50, 47, 0.22), rgba(125, 25, 27, 0.14));
+  border-color: rgba(255, 91, 78, 0.48);
+  box-shadow: 0 0 44px rgba(230, 50, 47, 0.16);
+  color: #ff786d;
+}
+
+.result-status-label {
+  color: #ffc05c;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  line-height: 1;
+}
+
+.result-outcome-not-passed .result-status-label {
+  color: #ff786d;
+}
+
+.result-outcome h1 {
+  color: #f8f8f4;
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 620;
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+  margin: 6px 0 3px;
+  max-width: 560px;
+}
+
+.result-outcome p {
+  color: #aeb2ad;
+  font-size: 13px;
+  margin: 0;
+}
+
+.result-message {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 15px 18px;
+  width: 100%;
+}
+
+.result-message-passed {
+  background: linear-gradient(110deg, rgba(255, 177, 31, 0.08), rgba(255, 106, 34, 0.04));
+}
+
+.result-message-not-passed {
+  background: linear-gradient(110deg, rgba(230, 50, 47, 0.09), rgba(255, 106, 34, 0.035));
+  border-color: rgba(255, 91, 78, 0.18);
+}
+
+@media (max-width: 760px) {
+  .result-outcome {
+    margin-bottom: 18px;
+  }
+
+  .result-status-icon {
+    height: 66px;
+    width: 66px;
+  }
+
+  .result-outcome h1 {
+    font-size: clamp(32px, 10.5vw, 42px);
+    max-width: 320px;
+  }
+
+  .result-outcome p {
+    max-width: 290px;
+  }
+
+  .result-message {
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .result-outcome-passed .result-status-icon,
+  .result-outcome-not-passed .result-status-icon,
+  .result-message-passed,
+  .result-message-not-passed {
+    background: #151716;
+    box-shadow: none;
+  }
+}
+
+@media print {
+  .result-outcome,
+  .result-message,
+  .result-stats,
+  .result-actions {
+    display: none !important;
+  }
+}

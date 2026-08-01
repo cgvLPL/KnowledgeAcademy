@@ -1378,19 +1378,27 @@ function Result({
           <Logo compact />
           <p>Your evaluation has been submitted and the result is ready.</p>
         </div>
-        <span className="result-spark"><Sparkles size={34} /></span>
-        <span className="card-kicker">{passed ? "WELL DONE" : "KEEP LEARNING"}</span>
-        <h1>{passed ? "You passed." : "Almost there."}</h1>
-        <p>{evaluation.title}</p>
+        <div
+          className={`result-outcome ${passed ? "result-outcome-passed" : "result-outcome-not-passed"}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="result-status-icon" aria-hidden="true">
+            {passed ? <ShieldCheck size={38} /> : <X size={38} />}
+          </span>
+          <span className="result-status-label">{passed ? "PASSED" : "NOT PASSED"}</span>
+          <h1>{passed ? "You passed this quiz" : "You did not pass this quiz"}</h1>
+          <p>{evaluation.title}</p>
+        </div>
         <ScoreRing score={score} size="lg" />
-        <div className="result-message">
+        <div className={`result-message ${passed ? "result-message-passed" : "result-message-not-passed"}`}>
           <strong>{passed ? "A strong result" : "A review is recommended"}</strong>
           <span>{passed ? "Your score has been added to your evaluation history." : `The passing score is ${evaluation.passingScore}%. Review the course and try again.`}</span>
         </div>
         <div className="result-stats">
           <div><span>Your score</span><strong>{score}%</strong></div>
           <div><span>Passing score</span><strong>{evaluation.passingScore}%</strong></div>
-          <div><span>Outcome</span><strong>{passed ? "Passed" : "Review"}</strong></div>
+          <div><span>Outcome</span><strong>{passed ? "Passed" : "Not passed"}</strong></div>
         </div>
         <div className="result-actions">
           <button className="secondary-button" onClick={onHistory}>View score history</button>
