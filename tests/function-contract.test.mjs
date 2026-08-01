@@ -79,11 +79,14 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
 });
 
 test("scoreboard stays scoped to the selected evaluation and refreshes live results", () => {
-  assert.match(client, /const \[scoreboardRows, setScoreboardRows\] = useState<LeaderboardRow\[]>\(\[\]\)/);
+  assert.match(client, /const \[scoreboardSnapshot, setScoreboardSnapshot\] = useState/);
   assert.match(client, /evaluations\.find\(\(item\) => item\.participants > 0\)/);
-  assert.match(client, /scoreboardLoaderRef\.current\(evaluation\)/);
+  assert.match(client, /scoreboardLoaderRef\.current\(selectedEvaluationId\)/);
   assert.match(client, /scoreboardRequestRef\.current !== requestId/);
-  assert.match(client, /setScoreboardRows\(result\.rows\)/);
+  assert.match(client, /setScoreboardSnapshot\(\{/);
+  assert.match(client, /scoreboardLoadingRef\.current/);
+  assert.match(client, /disabled=\{!evaluations\.length\}/);
+  assert.doesNotMatch(client, /disabled=\{!evaluations\.length \|\| loading\}/);
   assert.match(client, /courseId: evaluationId,[\s\S]*?fresh: true/);
   assert.match(client, /value=\{searchTerm\}/);
   assert.match(client, /outcomeFilter === "passed"/);

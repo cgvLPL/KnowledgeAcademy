@@ -1663,20 +1663,35 @@ function ScoreboardView({
   onEvaluationChange: (evaluationId: string) => Promise<ScoreboardLoadResult>;
   onDownloadReport: (evaluationId: string) => Promise<string | null>;
 }) {
-  const initialEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0];
-  const [evaluation, setEvaluation] = useState(initialEvaluation?.id || "");
-  const [scoreboardRows, setScoreboardRows] = useState<LeaderboardRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
+  const [evaluation, setEvaluation] = useState("");
+  const [scoreboardSnapshot, setScoreboardSnapshot] = useState<{
+    evaluationId: string;
+    rows: LeaderboardRow[];
+    error: string;
+  }>({ evaluationId: "", rows: [], error: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState<"all" | "passed" | "review">("all");
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [reportMessage, setReportMessage] = useState("");
   const scoreboardRequestRef = useRef(0);
-  const loadedEvaluationRef = useRef("");
+  const scoreboardLoadingRef = useRef(false);
   const scoreboardLoaderRef = useRef(onEvaluationChange);
-  const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || null;
+  const fallbackEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0] || null;
+  const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || fallbackEvaluation;
+  const selectedEvaluationId = selectedEvaluation?.id || "";
+  const scoreboardRows = useMemo(
+    () => scoreboardSnapshot.evaluationId === selectedEvaluationId
+      ? scoreboardSnapshot.rows
+      : [],
+    [scoreboardSnapshot, selectedEvaluationId],
+  );
+  const loadError = scoreboardSnapshot.evaluationId === selectedEvaluationId
+    ? scoreboardSnapshot.error
+    : "";
+  const loading = Boolean(
+    selectedEvaluationId && scoreboardSnapshot.evaluationId !== selectedEvaluationId,
+  );
   const average = scoreboardRows.length
     ? Math.round(scoreboardRows.reduce((sum, item) => sum + item.score, 0) / scoreboardRows.length)
     : 0;
@@ -1703,54 +1718,55 @@ function ScoreboardView({
   }, [onEvaluationChange]);
 
   useEffect(() => {
-    if (evaluation && evaluations.some((item) => item.id === evaluation)) return;
-    const nextEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0];
-    setEvaluation(nextEvaluation?.id || "");
-  }, [evaluation, evaluations]);
-
-  useEffect(() => {
-    if (!evaluation) {
-      setScoreboardRows([]);
-      setLoadError("");
-      setLoading(false);
+    if (!selectedEvaluationId) {
+      scoreboardRequestRef.current += 1;
+      scoreboardLoadingRef.current = false;
       return;
     }
 
     const requestId = scoreboardRequestRef.current + 1;
     scoreboardRequestRef.current = requestId;
-    const evaluationChanged = loadedEvaluationRef.current !== evaluation;
-    loadedEvaluationRef.current = evaluation;
-    if (evaluationChanged) setScoreboardRows([]);
-    setLoading(true);
-    setLoadError("");
-    setReportMessage("");
+    scoreboardLoadingRef.current = true;
 
-    void scoreboardLoaderRef.current(evaluation).then((result) => {
+    void scoreboardLoaderRef.current(selectedEvaluationId).then((result) => {
       if (scoreboardRequestRef.current !== requestId) return;
-      if (result.error) {
-        setLoadError(result.error);
-      } else {
-        setScoreboardRows(result.rows);
-      }
-      setLoading(false);
+      scoreboardLoadingRef.current = false;
+      setScoreboardSnapshot({
+        evaluationId: selectedEvaluationId,
+        rows: result.error ? [] : result.rows,
+        error: result.error || "",
+      });
+    }).catch((error: unknown) => {
+      if (scoreboardRequestRef.current !== requestId) return;
+      scoreboardLoadingRef.current = false;
+      setScoreboardSnapshot({
+        evaluationId: selectedEvaluationId,
+        rows: [],
+        error: error instanceof Error ? error.message : "Unable to load this scoreboard.",
+      });
     });
-  }, [evaluation, refreshVersion]);
+  }, [refreshVersion, selectedEvaluationId]);
 
   useEffect(() => {
     const refreshScoreboard = (event: Event) => {
       const detail = (event as CustomEvent<{ evaluationId?: string }>).detail;
-      if (!detail?.evaluationId || detail.evaluationId === evaluation) {
+      if (
+        !scoreboardLoadingRef.current &&
+        (!detail?.evaluationId || detail.evaluationId === selectedEvaluationId)
+      ) {
         setRefreshVersion((value) => value + 1);
       }
     };
     window.addEventListener("cgv:scoreboard-refresh", refreshScoreboard);
     return () => window.removeEventListener("cgv:scoreboard-refresh", refreshScoreboard);
-  }, [evaluation]);
+  }, [selectedEvaluationId]);
 
   function selectEvaluation(evaluationId: string) {
+    if (!evaluationId || evaluationId === selectedEvaluationId) return;
     setEvaluation(evaluationId);
     setSearchTerm("");
     setOutcomeFilter("all");
+    setReportMessage("");
   }
 
   function cycleOutcomeFilter() {
@@ -1791,9 +1807,10 @@ function ScoreboardView({
         <div>
           <span className="card-kicker">SELECT EVALUATION</span>
           <select
-            value={evaluation}
+            aria-label="Select evaluation scoreboard"
+            value={selectedEvaluationId}
             onChange={(event) => selectEvaluation(event.target.value)}
-            disabled={!evaluations.length || loading}
+            disabled={!evaluations.length}
           >
             {!evaluations.length && <option value="">No evaluations available</option>}
             {evaluations.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
