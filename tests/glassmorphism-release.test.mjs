@@ -44,3 +44,13 @@ test("glass effects retain accessibility and performance fallbacks", () => {
   assert.match(glass, /@media \(hover: hover\) and \(pointer: fine\)/);
   assert.match(glass, /@media \(max-width: 760px\)/);
 });
+
+test("scoreboard glass never inherits dark text from legacy light surfaces", () => {
+  assert.match(glass, /\.scoreboard-hero select,\s*\n\.scoreboard-hero select:disabled/);
+  assert.match(glass, /color:\s*#f7f8f6 !important/);
+  assert.match(glass, /-webkit-text-fill-color:\s*#f7f8f6 !important/);
+  assert.match(glass, /\.scoreboard-hero select option\s*\{[\s\S]*background:\s*#151718 !important/);
+  assert.match(glass, /\.scoreboard-kpis > div\s*\{[\s\S]*rgba\(7, 9, 10, 0\.7\) !important/);
+  assert.match(glass, /\.scoreboard-kpis strong\s*\{[\s\S]*color:\s*#ffffff !important/);
+  assert.match(glass, /\.scoreboard-kpis small\s*\{[\s\S]*color:\s*#ff9d62 !important/);
+});

@@ -221,6 +221,84 @@
     0 16px 34px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Scoreboard contrast lock. Earlier light-theme safeguards supplied a dark
+   foreground; the final glass surface must explicitly restore a light one. */
+.scoreboard-hero {
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.11), transparent 18rem),
+    radial-gradient(circle at 100% 100%, rgba(230, 50, 47, 0.11), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 44%),
+    rgba(13, 15, 16, 0.78) !important;
+}
+
+.scoreboard-hero select,
+.scoreboard-hero select:disabled {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09), transparent 58%),
+    rgba(4, 6, 7, 0.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.17) !important;
+  color: #f7f8f6 !important;
+  color-scheme: dark !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  -webkit-text-fill-color: #f7f8f6 !important;
+}
+
+.scoreboard-hero select:focus {
+  background:
+    linear-gradient(135deg, rgba(255, 139, 70, 0.13), transparent 58%),
+    rgba(4, 6, 7, 0.88) !important;
+}
+
+.scoreboard-hero select option {
+  background: #151718 !important;
+  color: #f7f8f6 !important;
+  -webkit-text-fill-color: #f7f8f6 !important;
+}
+
+.scoreboard-hero p {
+  color: #b9c0bc !important;
+  opacity: 1 !important;
+}
+
+.scoreboard-hero .scoreboard-error {
+  color: #ffb49b !important;
+  font-weight: 700;
+}
+
+.scoreboard-kpis > div {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.025)),
+    rgba(7, 9, 10, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    0 14px 34px rgba(0, 0, 0, 0.22) !important;
+  color: #f7f8f6 !important;
+  color-scheme: dark !important;
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+  backdrop-filter: blur(12px) saturate(1.15);
+}
+
+.scoreboard-kpis span {
+  color: #bbc2be !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #bbc2be !important;
+}
+
+.scoreboard-kpis strong {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.38);
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.scoreboard-kpis small {
+  color: #ff9d62 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #ff9d62 !important;
+}
+
 /* Rows appear suspended inside their glass containers. */
 .evaluation-row,
 .responsive-table tbody tr {
@@ -359,6 +437,7 @@ html.cgv-low-power .table-card,
 html.cgv-low-power .course-card,
 html.cgv-low-power .history-preview-card,
 html.cgv-low-power .scoreboard-hero,
+html.cgv-low-power .scoreboard-kpis > div,
 html.cgv-low-power .question-card,
 html.cgv-low-power .result-card,
 html.cgv-low-power .builder-card,
@@ -397,6 +476,7 @@ html.cgv-low-power .settings-card:hover {
   .course-card,
   .history-preview-card,
   .scoreboard-hero,
+  .scoreboard-kpis > div,
   .question-card,
   .result-card,
   .builder-card,
