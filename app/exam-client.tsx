@@ -289,6 +289,16 @@ function BrandAtmosphere({ variant }: { variant: "app" | "boot" | "builder" | "l
       <span className="brand-atmosphere-ribbon brand-atmosphere-ribbon-primary" />
       <span className="brand-atmosphere-ribbon brand-atmosphere-ribbon-secondary" />
       <span className="brand-atmosphere-orbit" />
+      <span className="brand-atmosphere-capsules">
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="brand-atmosphere-halo" />
+      <span className="brand-atmosphere-slices" />
       <span className="brand-atmosphere-lightfield" />
       <span className="brand-atmosphere-grain" />
     </div>

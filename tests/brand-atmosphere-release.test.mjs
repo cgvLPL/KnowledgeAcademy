@@ -30,6 +30,9 @@ test("warm ribbons, glass grain, light fields, and editorial frames stay accessi
     "--cgv-atmosphere-orange: #ff6a22",
     "--cgv-atmosphere-red: #e6322f",
     ".brand-atmosphere-ribbon",
+    ".brand-atmosphere-capsules",
+    ".brand-atmosphere-halo",
+    ".brand-atmosphere-slices",
     ".brand-atmosphere-lightfield",
     ".brand-atmosphere-grain",
     ".participant-page-header::before",
@@ -38,6 +41,7 @@ test("warm ribbons, glass grain, light fields, and editorial frames stay accessi
     assert.ok(css.includes(token), `Missing atmosphere safeguard: ${token}`);
   }
   assert.ok(css.includes("html.cgv-low-power .brand-atmosphere-ribbon"));
+  assert.ok(css.includes("html.cgv-low-power .brand-atmosphere-capsules"));
   assert.ok(css.includes("@media (max-width: 760px)"));
   assert.ok(css.includes("@media (prefers-reduced-transparency: reduce)"));
   assert.ok(css.includes("@media print"));

@@ -89,6 +89,84 @@
   width: min(58vw, 840px);
 }
 
+/* Refractive capsule chain adapted from the supplied glass study. */
+.brand-atmosphere-capsules {
+  display: flex !important;
+  gap: 0;
+  opacity: 0.32;
+  right: 5vw;
+  top: 7vh;
+  transform: rotate(-4deg);
+}
+
+.brand-atmosphere-capsules i {
+  background:
+    linear-gradient(145deg, rgba(255, 250, 235, 0.52), rgba(255, 177, 31, 0.2) 36%, rgba(230, 50, 47, 0.08) 58%, rgba(7, 10, 10, 0.72) 78%),
+    rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 235, 210, 0.34);
+  border-radius: 999px;
+  box-shadow:
+    inset 6px 0 14px rgba(255, 255, 255, 0.08),
+    inset -8px -10px 18px rgba(5, 6, 6, 0.38),
+    0 12px 28px rgba(230, 50, 47, 0.08);
+  display: block;
+  height: clamp(76px, 8vw, 124px);
+  margin-left: clamp(-10px, -0.7vw, -5px);
+  transform: translateY(var(--capsule-offset, 0));
+  width: clamp(32px, 3.5vw, 54px);
+}
+
+.brand-atmosphere-capsules i:nth-child(2),
+.brand-atmosphere-capsules i:nth-child(5) {
+  --capsule-offset: 8px;
+}
+
+.brand-atmosphere-capsules i:nth-child(3),
+.brand-atmosphere-capsules i:nth-child(6) {
+  --capsule-offset: 2px;
+}
+
+/* A segmented warm halo keeps the motion-study reference in brand colours. */
+.brand-atmosphere-halo {
+  background: repeating-conic-gradient(
+    from 12deg,
+    rgba(255, 177, 31, 0.06) 0deg,
+    rgba(255, 177, 31, 0.72) 3deg,
+    rgba(255, 106, 34, 0.52) 6deg,
+    transparent 8deg,
+    transparent 11deg
+  );
+  border-radius: 50%;
+  bottom: -31vh;
+  height: min(58vw, 760px);
+  left: 10vw;
+  -webkit-mask-image: radial-gradient(circle, transparent 0 42%, #000 47% 65%, transparent 70%);
+  mask-image: radial-gradient(circle, transparent 0 42%, #000 47% 65%, transparent 70%);
+  opacity: 0.25;
+  transform: rotate(-18deg);
+  width: min(58vw, 760px);
+}
+
+/* Horizontal light slices create a soft, sculptural secondary focal point. */
+.brand-atmosphere-slices {
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 246, 222, 0.6) 0 4px,
+    rgba(255, 177, 31, 0.7) 5px 10px,
+    rgba(255, 106, 34, 0.58) 11px 17px,
+    transparent 18px 26px
+  );
+  border-radius: 50%;
+  height: min(38vw, 510px);
+  opacity: 0.2;
+  right: -3vw;
+  top: 35vh;
+  transform: skewY(-3deg) rotate(-8deg);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 0 46%, rgba(0, 0, 0, 0.7) 58%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 0 46%, rgba(0, 0, 0, 0.7) 58%, transparent 72%);
+  width: min(31vw, 420px);
+}
+
 .brand-atmosphere-lightfield {
   background: repeating-linear-gradient(
     90deg,
@@ -128,6 +206,31 @@
   right: auto;
   top: 8vh;
   transform: rotate(8deg);
+}
+
+.brand-atmosphere-login .brand-atmosphere-capsules,
+.brand-atmosphere-boot .brand-atmosphere-capsules {
+  right: 7vw;
+  top: 6vh;
+}
+
+.brand-atmosphere-login .brand-atmosphere-halo,
+.brand-atmosphere-boot .brand-atmosphere-halo {
+  bottom: -36vh;
+  left: -9vw;
+}
+
+.brand-atmosphere-login .brand-atmosphere-slices,
+.brand-atmosphere-boot .brand-atmosphere-slices {
+  right: 5vw;
+  top: 48vh;
+}
+
+.brand-atmosphere-quiz .brand-atmosphere-capsules,
+.brand-atmosphere-result .brand-atmosphere-capsules,
+.brand-atmosphere-builder .brand-atmosphere-capsules {
+  right: 4vw;
+  top: 11vh;
 }
 
 .brand-atmosphere-quiz .brand-atmosphere-ribbon-secondary,
@@ -196,6 +299,10 @@
   .brand-atmosphere-ribbon-secondary {
     animation: cgv-atmosphere-drift-secondary 30s ease-in-out infinite alternate;
   }
+
+  .brand-atmosphere-halo {
+    animation: cgv-atmosphere-halo 42s linear infinite;
+  }
 }
 
 @keyframes cgv-atmosphere-drift {
@@ -206,6 +313,11 @@
 @keyframes cgv-atmosphere-drift-secondary {
   from { transform: rotate(12deg) translate3d(0, 0, 0); }
   to { transform: rotate(8deg) translate3d(3vw, -2vh, 0); }
+}
+
+@keyframes cgv-atmosphere-halo {
+  from { transform: rotate(-18deg); }
+  to { transform: rotate(342deg); }
 }
 
 @media (max-width: 760px) {
@@ -229,8 +341,18 @@
   }
 
   .brand-atmosphere-ribbon-secondary,
-  .brand-atmosphere-orbit {
+  .brand-atmosphere-orbit,
+  .brand-atmosphere-halo,
+  .brand-atmosphere-slices {
     display: none;
+  }
+
+  .brand-atmosphere-capsules {
+    opacity: 0.16;
+    right: -12vw;
+    top: 9vh;
+    transform: scale(0.72) rotate(-4deg);
+    transform-origin: top right;
   }
 
   .brand-atmosphere-lightfield {
@@ -253,7 +375,10 @@
 
 html.cgv-low-power .brand-atmosphere-ribbon,
 html.cgv-low-power .brand-atmosphere-orbit,
-html.cgv-low-power .brand-atmosphere-grain {
+html.cgv-low-power .brand-atmosphere-grain,
+html.cgv-low-power .brand-atmosphere-capsules,
+html.cgv-low-power .brand-atmosphere-halo,
+html.cgv-low-power .brand-atmosphere-slices {
   display: none !important;
 }
 
@@ -270,7 +395,10 @@ html.cgv-low-power .brand-atmosphere-lightfield {
 @media (prefers-reduced-transparency: reduce) {
   .brand-atmosphere-ribbon,
   .brand-atmosphere-orbit,
-  .brand-atmosphere-grain {
+  .brand-atmosphere-grain,
+  .brand-atmosphere-capsules,
+  .brand-atmosphere-halo,
+  .brand-atmosphere-slices {
     display: none !important;
   }
 
