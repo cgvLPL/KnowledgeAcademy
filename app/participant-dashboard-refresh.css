@@ -174,7 +174,7 @@
   min-height: 104px;
 }
 
-.participant-home .evaluation-row:hover:not(.is-upcoming) {
+.participant-home .evaluation-row:hover:not(.is-scheduled) {
   background: rgba(255, 104, 36, 0.055) !important;
   border-color: rgba(255, 116, 47, 0.2) !important;
 }

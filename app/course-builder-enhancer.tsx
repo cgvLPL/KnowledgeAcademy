@@ -12,7 +12,7 @@ type SaveCoursePayload = {
 type PublishingSettings = {
   startAt: string;
   endAt: string;
-  status: "draft" | "upcoming" | "live" | "completed";
+  status: "draft" | "live" | "completed";
 };
 
 type SaveContext = {
@@ -67,25 +67,21 @@ function readPublishingSettings(): PublishingSettings | null {
   const startAt = localDateToIso(startValue);
   const endAt = localDateToIso(endValue, true);
   const now = Date.now();
-  const startsAtMs = startAt ? new Date(startAt).getTime() : 0;
   const endsAtMs = endAt ? new Date(endAt).getTime() : 0;
 
-  let status: PublishingSettings["status"] = "draft";
-  if (publishImmediately) {
-    status = endsAtMs && endsAtMs < now ? "completed" : "live";
-  } else if (startAt) {
-    if (startsAtMs > now) status = "upcoming";
-    else if (endsAtMs && endsAtMs < now) status = "completed";
-    else status = "live";
-  }
+  const shouldPublish = publishImmediately || Boolean(startAt);
+  const status: PublishingSettings["status"] = shouldPublish
+    ? endsAtMs && endsAtMs < now ? "completed" : "live"
+    : "draft";
 
   return { startAt, endAt, status };
 }
 
 function publicationLabel(settings: PublishingSettings | null) {
   if (!settings) return "Course draft";
+  const startsAtMs = settings.startAt ? new Date(settings.startAt).getTime() : 0;
+  if (settings.status === "live" && startsAtMs > Date.now()) return "Will publish as scheduled";
   if (settings.status === "live") return "Will publish as live";
-  if (settings.status === "upcoming") return "Will publish as upcoming";
   if (settings.status === "completed") return "Schedule has already ended";
   return "Will save as draft";
 }

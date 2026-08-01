@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { courseAuthoringStatus, deriveQuizLifecycle } from "./quiz-lifecycle";
 
 const endpointFromBuild = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const TOKEN_KEY = "cgv-exams-session-token";
@@ -83,11 +84,6 @@ function dateInput(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
 
-function statusLabel(value: string | undefined) {
-  const status = normalize(value) || "draft";
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
 async function api<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
   const token = window.sessionStorage.getItem(TOKEN_KEY);
   const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
@@ -129,8 +125,9 @@ function updateCourseRow(originalTitle: string, course: ApiCourse) {
   if (title) title.textContent = String(course.title || originalTitle);
   if (subtitle) subtitle.textContent = `${course.category || "General"} · ${Number(course.questionCount || 0)} questions`;
   if (status) {
-    status.textContent = statusLabel(course.status);
-    status.className = `status-pill status-${normalize(course.status) || "draft"}`;
+    const lifecycle = deriveQuizLifecycle(course);
+    status.textContent = lifecycle;
+    status.className = `status-pill status-${lifecycle.toLowerCase()}`;
   }
   if (schedule) schedule.textContent = course.endAt ? new Date(course.endAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Not scheduled";
   if (duration) duration.textContent = `${Number(course.duration || 20)} minute limit`;
@@ -308,7 +305,7 @@ export default function AdminFunctionalityEnhancer() {
           if (action === "preview") {
             setModal({ type: "preview", course: data.course, questions: data.questions || [] });
           } else {
-            setEditCourse(data.course);
+            setEditCourse({ ...data.course, status: courseAuthoringStatus(data.course.status) });
             setEditQuestions(data.questions || []);
             setModal({
               type: "edit",
@@ -443,7 +440,7 @@ export default function AdminFunctionalityEnhancer() {
         status,
       });
       updateCourseRow(course.title || "", data.course);
-      toast(`Course status changed to ${status}.`);
+      toast(`Course is now ${deriveQuizLifecycle(data.course).toLowerCase()}.`);
       setModal(null);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Unable to change course status.");
@@ -566,7 +563,7 @@ export default function AdminFunctionalityEnhancer() {
                 <h2>{modal.course.title}</h2>
                 <p>{modal.course.description || "No description."}</p>
                 <div className="cgv-account-summary">
-                  <div><span>Status</span><strong>{statusLabel(modal.course.status)}</strong></div>
+                  <div><span>Status</span><strong>{deriveQuizLifecycle(modal.course)}</strong></div>
                   <div><span>Duration</span><strong>{modal.course.duration} min</strong></div>
                   <div><span>Passing score</span><strong>{modal.course.passingScore}%</strong></div>
                 </div>
@@ -601,7 +598,7 @@ export default function AdminFunctionalityEnhancer() {
                   <label className="field-label">Category<input value={editCourse.category || ""} onChange={(event) => setEditCourse({ ...editCourse, category: event.target.value })} /></label>
                   <label className="field-label">Duration<input type="number" min={1} value={editCourse.duration || 20} onChange={(event) => setEditCourse({ ...editCourse, duration: Number(event.target.value) })} /></label>
                   <label className="field-label">Passing score<input type="number" min={1} max={100} value={editCourse.passingScore || 75} onChange={(event) => setEditCourse({ ...editCourse, passingScore: Number(event.target.value) })} /></label>
-                  <label className="field-label">Status<select value={normalize(editCourse.status) || "draft"} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="upcoming">Upcoming</option><option value="live">Live</option><option value="completed">Completed</option></select></label>
+                  <label className="field-label">Publishing<select value={courseAuthoringStatus(editCourse.status)} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="live">Published</option><option value="completed">Completed</option></select></label>
                   <label className="field-label">Opens on<input type="date" value={dateInput(editCourse.startAt)} onChange={(event) => setEditCourse({ ...editCourse, startAt: event.target.value ? new Date(`${event.target.value}T00:00:00`).toISOString() : "" })} /></label>
                   <label className="field-label">Closes on<input type="date" value={dateInput(editCourse.endAt)} onChange={(event) => setEditCourse({ ...editCourse, endAt: event.target.value ? new Date(`${event.target.value}T23:59:59`).toISOString() : "" })} /></label>
                 </div>

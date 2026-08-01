@@ -45,6 +45,7 @@ import {
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { ExecutiveReportData } from "./executive-report";
+import { deriveQuizLifecycle } from "./quiz-lifecycle";
 
 type Role = "participant" | "admin";
 type ParticipantView = "home" | "evaluations" | "history" | "profile";
@@ -60,7 +61,9 @@ type Evaluation = {
   duration: number;
   due: string;
   opens?: string;
-  status: "Live" | "Upcoming" | "Completed" | "Draft";
+  startAt?: string;
+  endAt?: string;
+  status: "Live" | "Scheduled" | "Completed" | "Draft";
   participants: number;
   average: number;
   passingScore: number;
@@ -204,12 +207,6 @@ function apiScoreboardToLeaderboard(items: Record<string, unknown>[]): Leaderboa
 }
 
 function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Evaluation {
-  const statuses: Record<string, Evaluation["status"]> = {
-    live: "Live",
-    upcoming: "Upcoming",
-    completed: "Completed",
-    draft: "Draft",
-  };
   const colors: Evaluation["color"][] = ["green", "orange", "blue", "violet"];
   return {
     id: String(course.id || `course-${index}`),
@@ -220,7 +217,9 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     duration: Number(course.duration || 20),
     due: formatApiDate(course.endAt),
     opens: formatApiDate(course.startAt, "Scheduled"),
-    status: statuses[String(course.status || "").toLowerCase()] || "Draft",
+    startAt: String(course.startAt || ""),
+    endAt: String(course.endAt || ""),
+    status: deriveQuizLifecycle(course),
     participants: Number(course.participants || 0),
     average: Number(course.average || 0),
     passingScore: Number(course.passingScore || 75),
@@ -764,8 +763,8 @@ function ParticipantHome({
   user: AuthUser | null;
 }) {
   const liveEvaluations = evaluations.filter((item) => item.status === "Live");
-  const upcomingEvaluations = evaluations.filter((item) => item.status === "Upcoming");
-  const visibleEvaluations = [...liveEvaluations, ...upcomingEvaluations];
+  const scheduledEvaluations = evaluations.filter((item) => item.status === "Scheduled");
+  const visibleEvaluations = [...liveEvaluations, ...scheduledEvaluations];
   const featured = liveEvaluations[0] || null;
   const average = history.length
     ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
@@ -787,9 +786,9 @@ function ParticipantHome({
           </span>
           <h2>Welcome back, {firstName}.</h2>
           <p>{liveEvaluations.length
-            ? `${liveEvaluations.length} evaluation${liveEvaluations.length === 1 ? "" : "s"} ready for you.${upcomingEvaluations.length ? ` ${upcomingEvaluations.length} scheduled.` : ""}`
-            : upcomingEvaluations.length
-              ? `${upcomingEvaluations.length} scheduled evaluation${upcomingEvaluations.length === 1 ? "" : "s"} coming up.`
+            ? `${liveEvaluations.length} evaluation${liveEvaluations.length === 1 ? "" : "s"} ready for you.${scheduledEvaluations.length ? ` ${scheduledEvaluations.length} scheduled.` : ""}`
+            : scheduledEvaluations.length
+              ? `${scheduledEvaluations.length} scheduled evaluation${scheduledEvaluations.length === 1 ? "" : "s"} coming up.`
               : "No evaluations are assigned right now."}</p>
         </div>
         <button className="secondary-button" onClick={() => setView("history")}>
@@ -821,8 +820,8 @@ function ParticipantHome({
         <section className="section-block">
           <EmptyState
             icon={BookOpen}
-            title={upcomingEvaluations.length ? "No evaluation is open yet" : "No evaluations assigned"}
-            description={upcomingEvaluations.length
+            title={scheduledEvaluations.length ? "No evaluation is open yet" : "No evaluations assigned"}
+            description={scheduledEvaluations.length
               ? "Your scheduled evaluations are listed below and will unlock automatically."
               : "New evaluations will appear here when an administrator publishes them."}
           />
@@ -859,8 +858,8 @@ function ParticipantHome({
       <section className="section-block">
         <div className="section-heading">
           <div>
-            <h3>{upcomingEvaluations.length ? "Ready and scheduled" : "Ready for you"}</h3>
-            <p>{upcomingEvaluations.length
+            <h3>{scheduledEvaluations.length ? "Ready and scheduled" : "Ready for you"}</h3>
+            <p>{scheduledEvaluations.length
               ? "Live evaluations can be started now. Scheduled evaluations unlock automatically."
               : "Complete these evaluations before their due dates."}</p>
           </div>
@@ -870,7 +869,7 @@ function ParticipantHome({
         </div>
         <div className="evaluation-list">
           {visibleEvaluations.slice(0, 4).map((evaluation, index) => (
-            <article className={`evaluation-row${evaluation.status === "Upcoming" ? " is-upcoming" : ""}`} key={evaluation.id}>
+            <article className={`evaluation-row${evaluation.status === "Scheduled" ? " is-scheduled" : ""}`} key={evaluation.id}>
               <EvaluationIcon color={evaluation.color} icon={index === 1 ? "shield" : "book"} />
               <div className="evaluation-main">
                 <span>{evaluation.category}</span>
@@ -882,15 +881,15 @@ function ParticipantHome({
                 <span><Clock3 size={15} /> {evaluation.duration} min</span>
               </div>
               <div className="due-block">
-                <span>{evaluation.status === "Upcoming" ? "Opens" : "Due date"}</span>
-                <strong>{evaluation.status === "Upcoming" ? evaluation.opens : evaluation.due}</strong>
+                <span>{evaluation.status === "Scheduled" ? "Opens" : "Due date"}</span>
+                <strong>{evaluation.status === "Scheduled" ? evaluation.opens : evaluation.due}</strong>
               </div>
               <button
                 className="row-button"
-                disabled={evaluation.status === "Upcoming"}
-                onClick={() => evaluation.status !== "Upcoming" && onStart(evaluation)}
+                disabled={evaluation.status === "Scheduled"}
+                onClick={() => evaluation.status === "Live" && onStart(evaluation)}
               >
-                {evaluation.status === "Upcoming" ? <><LockKeyhole size={15} /> Not open yet</> : <>Start <ArrowRight size={17} /></>}
+                {evaluation.status === "Scheduled" ? <><LockKeyhole size={15} /> Not open yet</> : <>Start <ArrowRight size={17} /></>}
               </button>
             </article>
           ))}
@@ -963,7 +962,7 @@ function EvaluationsView({
       </section>
       <div className="toolbar">
         <div className="filter-tabs">
-          {["All", "Live", "Upcoming", "Completed"].map((item) => (
+          {["All", "Live", "Scheduled", "Completed"].map((item) => (
             <button key={item} className={filter === item ? "active" : ""} onClick={() => setFilter(item)}>
               {item}
             </button>
@@ -972,8 +971,12 @@ function EvaluationsView({
         <button className="secondary-button"><Filter size={17} /> More filters</button>
       </div>
       <div className="course-grid">
-        {shown.map((item) => (
-          <article className={`course-card accent-${item.color}${item.status === "Upcoming" ? " is-upcoming" : ""}`} key={item.id}>
+        {shown.map((item) => {
+          const isScheduled = item.status === "Scheduled";
+          const isClosed = item.status === "Completed";
+          const isUnavailable = item.status !== "Live";
+          return (
+          <article className={`course-card accent-${item.color}${isScheduled ? " is-scheduled" : ""}${isClosed ? " is-completed" : ""}`} key={item.id}>
             <div className="course-card-top">
               <EvaluationIcon color={item.color} icon={item.category === "Safety" ? "shield" : item.category === "Service" ? "spark" : "book"} />
               <span className={`status-pill status-${item.status.toLowerCase()}`}>{item.status}</span>
@@ -987,20 +990,21 @@ function EvaluationsView({
             </div>
             <div className="course-card-footer">
               <div>
-                <span>{item.status === "Upcoming" ? "Opens" : "Due date"}</span>
-                <strong>{item.status === "Upcoming" ? item.opens : item.due}</strong>
+                <span>{isScheduled ? "Opens" : isClosed ? "Closed" : item.status === "Draft" ? "Availability" : "Due date"}</span>
+                <strong>{isScheduled ? item.opens : isClosed ? item.due : item.status === "Draft" ? "Not published" : item.due}</strong>
               </div>
               <button
-                className={item.status === "Upcoming" ? "secondary-button" : "primary-button small"}
-                disabled={item.status === "Upcoming"}
-                onClick={() => item.status !== "Upcoming" && onStart(item)}
+                className={isUnavailable ? "secondary-button" : "primary-button small"}
+                disabled={isUnavailable}
+                onClick={() => item.status === "Live" && onStart(item)}
               >
-                {item.status === "Completed" ? "Retake" : item.status === "Upcoming" ? <><LockKeyhole size={15} /> Not open yet</> : "Start"}
-                {item.status !== "Upcoming" && <ArrowRight size={16} />}
+                {isClosed ? <><LockKeyhole size={15} /> Closed</> : isScheduled ? <><LockKeyhole size={15} /> Not open yet</> : item.status === "Draft" ? "Draft" : "Start"}
+                {item.status === "Live" && <ArrowRight size={16} />}
               </button>
             </div>
           </article>
-        ))}
+          );
+        })}
         {!shown.length && (
           <EmptyState
             icon={BookOpen}
@@ -2026,7 +2030,7 @@ export default function ExamClient() {
 
   const titleMap = useMemo<Record<View, [string, string]>>(() => ({
     home: ["Overview", "Your evaluation snapshot"],
-    evaluations: ["Evaluations", "Current and upcoming courses"],
+    evaluations: ["Evaluations", "Live, scheduled, and completed courses"],
     history: ["Score history", "Every result, in one place"],
     profile: ["My profile", "Account and learning details"],
     overview: ["Admin overview", "Evaluation performance at a glance"],
@@ -2052,6 +2056,33 @@ export default function ExamClient() {
     );
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!role) return;
+
+    const refreshLifecycle = () => {
+      setEvaluations((items) => {
+        let changed = false;
+        const nextItems = items.map((item) => {
+          const status = deriveQuizLifecycle(item);
+          if (status === item.status) return item;
+          changed = true;
+          return { ...item, status };
+        });
+        return changed ? nextItems : items;
+      });
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshLifecycle();
+    };
+
+    const timer = window.setInterval(refreshLifecycle, 30_000);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [role]);
 
   async function login(nextRole: Role, username: string, password: string): Promise<string | null> {
     try {
@@ -2154,6 +2185,18 @@ export default function ExamClient() {
   }
 
   async function startQuiz(evaluation: Evaluation) {
+    const lifecycle = deriveQuizLifecycle(evaluation);
+    if (lifecycle !== "Live") {
+      setEvaluations((items) => items.map((item) => (
+        item.id === evaluation.id ? { ...item, status: lifecycle } : item
+      )));
+      window.alert(lifecycle === "Scheduled"
+        ? "This evaluation has not opened yet."
+        : lifecycle === "Completed"
+          ? "This evaluation has closed."
+          : "This evaluation is not available.");
+      return;
+    }
     if (backendMode === "sheets" && sessionToken) {
       try {
         const data = await sheetsRequest<{

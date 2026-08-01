@@ -137,6 +137,7 @@
   color: #7de59a !important;
 }
 
+.status-scheduled,
 .status-upcoming {
   background: rgba(255, 128, 52, 0.1) !important;
   border-color: rgba(255, 128, 52, 0.18) !important;

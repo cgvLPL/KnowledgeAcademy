@@ -270,6 +270,7 @@ input:-webkit-autofill:focus {
   color: #d7ddd4 !important;
 }
 
+.status-scheduled,
 .status-upcoming,
 .outcome-pill.review {
   background: rgba(255, 138, 69, 0.16) !important;

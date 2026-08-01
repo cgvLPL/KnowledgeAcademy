@@ -242,6 +242,7 @@ test("visibility safeguards cover every high-risk interface state", () => {
     "button:disabled",
     ".status-draft",
     ".status-upcoming",
+    ".status-scheduled",
     ".status-live",
     ".status-completed",
     ".scoreboard-kpis strong",
@@ -267,6 +268,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.07\.31-executive-reports"/);
-  assert.match(runtime, /2026\.07\.31-executive-reports/);
+  assert.match(backend, /version:\s*"2026\.08\.01-quiz-lifecycle"/);
+  assert.match(runtime, /2026\.08\.01-quiz-lifecycle/);
 });

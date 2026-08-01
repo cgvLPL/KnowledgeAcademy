@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.07.31-executive-reports",
+  version: "2026.08.01-quiz-lifecycle",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   sheets: Object.freeze({
@@ -214,20 +214,15 @@ function logout_(body) {
 
 function getParticipantHome_(body) {
   const context = requireSession_(body.token, "participant");
-  const now = new Date();
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses))
     .filter(function (course) {
-      const status = String(course.status || "").toLowerCase();
-      const closes = !course.end_at || new Date(course.end_at) >= now;
-      return closes && (status === "live" || status === "upcoming");
+      return courseLifecycleStatus_(course) !== "draft";
     })
-    .map(function (course) {
-      const item = publicCourse_(course);
-      const startsLater = Boolean(course.start_at) && new Date(course.start_at) > now;
-      if (startsLater || String(course.status || "").toLowerCase() === "upcoming") {
-        item.status = "upcoming";
-      }
-      return item;
+    .map(publicCourse_)
+    .sort(function (first, second) {
+      const priority = { live: 0, scheduled: 1, completed: 2, draft: 3 };
+      return priority[first.status] - priority[second.status] ||
+        new Date(first.startAt || first.endAt || 0) - new Date(second.startAt || second.endAt || 0);
     });
   const history = attemptsForUser_(context.user.user_id)
     .filter(function (attempt) { return attempt.status === "submitted"; })
@@ -246,10 +241,12 @@ function startAttempt_(body) {
   const context = requireSession_(body.token, "participant");
   const courseId = String(body.courseId || "").trim();
   const course = findById_(APP.sheets.courses, "course_id", courseId);
-  if (!course || course.status !== "live") throw new Error("This evaluation is not available.");
+  if (!course) throw new Error("This evaluation is not available.");
   const now = new Date();
-  if (course.start_at && new Date(course.start_at) > now) throw new Error("This evaluation has not opened yet.");
-  if (course.end_at && new Date(course.end_at) < now) throw new Error("This evaluation has closed.");
+  const lifecycle = courseLifecycleStatus_(course, now);
+  if (lifecycle === "scheduled") throw new Error("This evaluation has not opened yet.");
+  if (lifecycle === "completed") throw new Error("This evaluation has closed.");
+  if (lifecycle !== "live") throw new Error("This evaluation is not available.");
   const questions = questionsForCourse_(courseId);
   if (!questions.length) throw new Error("This evaluation has no published questions.");
 
@@ -666,6 +663,13 @@ function adminSaveCourse_(body) {
     const courseId = String(input.id || Utilities.getUuid());
     const existing = findById_(APP.sheets.courses, "course_id", courseId);
     const now = new Date();
+    const startAt = input.startAt ? new Date(input.startAt) : "";
+    const endAt = input.endAt ? new Date(input.endAt) : "";
+    if (startAt && isNaN(startAt.getTime())) throw new Error("Opening date is invalid.");
+    if (endAt && isNaN(endAt.getTime())) throw new Error("Closing date is invalid.");
+    if (startAt && endAt && endAt <= startAt) {
+      throw new Error("Closing date must be after the opening date.");
+    }
     const record = {
       course_id: courseId,
       title: title,
@@ -673,11 +677,9 @@ function adminSaveCourse_(body) {
       category: String(input.category || "General"),
       passing_score: clamp_(Number(input.passingScore || 75), 1, 100),
       time_limit_min: Math.max(1, Number(input.duration || 20)),
-      start_at: input.startAt ? new Date(input.startAt) : "",
-      end_at: input.endAt ? new Date(input.endAt) : "",
-      status: ["draft", "upcoming", "live", "completed"].indexOf(String(input.status)) >= 0
-        ? String(input.status)
-        : "draft",
+      start_at: startAt,
+      end_at: endAt,
+      status: coursePublishingStatus_(input.status),
       created_by: existing ? existing.created_by : context.user.user_id,
       created_at: existing ? existing.created_at : now,
       updated_at: now,
@@ -737,10 +739,11 @@ function adminDuplicateCourse_(body) {
 function adminSetCourseStatus_(body) {
   requireSession_(body.token, "admin");
   const courseId = String(body.courseId || "").trim();
-  const status = String(body.status || "").trim().toLowerCase();
-  if (["draft", "upcoming", "live", "completed"].indexOf(status) < 0) {
+  const requestedStatus = String(body.status || "").trim().toLowerCase();
+  if (["draft", "upcoming", "scheduled", "live", "completed"].indexOf(requestedStatus) < 0) {
     throw new Error("Invalid course status.");
   }
+  const status = coursePublishingStatus_(requestedStatus);
   return withScriptLock_(10000, function () {
     const course = findById_(APP.sheets.courses, "course_id", courseId);
     if (!course) throw new Error("Course not found.");
@@ -1172,9 +1175,30 @@ function publicCourse_(course) {
     duration: Number(course.time_limit_min || 0),
     startAt: toIso_(course.start_at),
     endAt: toIso_(course.end_at),
-    status: course.status,
+    status: courseLifecycleStatus_(course),
     questionCount: questionsForCourse_(course.course_id).length,
   };
+}
+
+function coursePublishingStatus_(value) {
+  const status = String(value || "").trim().toLowerCase();
+  if (status === "completed") return "completed";
+  if (["live", "upcoming", "scheduled"].indexOf(status) >= 0) return "live";
+  return "draft";
+}
+
+function courseLifecycleStatus_(course, now) {
+  const storedStatus = String(course.status || "").trim().toLowerCase();
+  if (storedStatus === "draft") return "draft";
+  if (storedStatus === "completed") return "completed";
+
+  const nowMs = now instanceof Date ? now.getTime() : Number(now || Date.now());
+  const startAt = course.start_at ? new Date(course.start_at).getTime() : NaN;
+  const endAt = course.end_at ? new Date(course.end_at).getTime() : NaN;
+  if (!isNaN(endAt) && endAt < nowMs) return "completed";
+  if (!isNaN(startAt) && startAt > nowMs) return "scheduled";
+  if (["live", "upcoming", "scheduled"].indexOf(storedStatus) >= 0) return "live";
+  return "draft";
 }
 
 function publicAttempt_(attempt) {

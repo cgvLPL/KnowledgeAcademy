@@ -1299,6 +1299,7 @@ button:disabled {
 
 .status-live,
 .outcome-pill.pass { background: #e9f9e5; color: #34713b; }
+.status-scheduled,
 .status-upcoming { background: #e9efff; color: #4b68bd; }
 .status-completed { background: #f0f1ef; color: #747974; }
 .status-draft,

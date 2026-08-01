@@ -17,8 +17,9 @@ test("course management table has stable proportions and bounded actions", () =>
 });
 
 test("scheduled evaluations stay readable and show opening information", () => {
-  assert.ok(client.includes('item.status === "Upcoming" ? "Opens" : "Due date"'));
-  assert.ok(client.includes('item.status === "Upcoming" ? item.opens : item.due'));
+  assert.ok(client.includes('const isScheduled = item.status === "Scheduled"'));
+  assert.ok(client.includes('isScheduled ? "Opens"'));
+  assert.ok(client.includes('isScheduled ? item.opens'));
   assert.ok(client.includes("<LockKeyhole size={15} /> Not open yet"));
   assert.ok(css.includes("filter: none !important"));
   assert.ok(css.includes("opacity: 1 !important"));

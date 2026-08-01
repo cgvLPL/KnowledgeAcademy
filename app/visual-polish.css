@@ -130,43 +130,44 @@
 }
 
 /* Do not fade the whole scheduled item: preserve accessible text contrast. */
-.evaluation-row.is-upcoming,
-.course-card.is-upcoming {
+.evaluation-row.is-scheduled,
+.course-card.is-scheduled {
   filter: none !important;
   opacity: 1 !important;
 }
 
-.evaluation-row.is-upcoming {
+.evaluation-row.is-scheduled {
   background:
     linear-gradient(150deg, rgba(24, 28, 24, 0.96), rgba(13, 16, 14, 0.98)) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.evaluation-row.is-upcoming .evaluation-main h4,
-.course-card.is-upcoming h3 {
+.evaluation-row.is-scheduled .evaluation-main h4,
+.course-card.is-scheduled h3 {
   color: #e2e6df !important;
 }
 
-.evaluation-row.is-upcoming .evaluation-main > span,
-.evaluation-row.is-upcoming .evaluation-main p,
-.evaluation-row.is-upcoming .evaluation-details span,
-.evaluation-row.is-upcoming .due-block span,
-.course-card.is-upcoming .course-category,
-.course-card.is-upcoming > p,
-.course-card.is-upcoming .course-meta span,
-.course-card.is-upcoming .course-card-footer span {
+.evaluation-row.is-scheduled .evaluation-main > span,
+.evaluation-row.is-scheduled .evaluation-main p,
+.evaluation-row.is-scheduled .evaluation-details span,
+.evaluation-row.is-scheduled .due-block span,
+.course-card.is-scheduled .course-category,
+.course-card.is-scheduled > p,
+.course-card.is-scheduled .course-meta span,
+.course-card.is-scheduled .course-card-footer span {
   color: #959d93 !important;
 }
 
-.evaluation-row.is-upcoming .evaluation-icon,
-.course-card.is-upcoming .evaluation-icon {
+.evaluation-row.is-scheduled .evaluation-icon,
+.course-card.is-scheduled .evaluation-icon {
   background: rgba(201, 209, 198, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #afb7ad !important;
 }
 
-.evaluation-row.is-upcoming .row-button,
-.course-card.is-upcoming button:disabled {
+.evaluation-row.is-scheduled .row-button,
+.course-card.is-scheduled button:disabled,
+.course-card.is-completed button:disabled {
   background: rgba(255, 255, 255, 0.055) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: none !important;
@@ -210,7 +211,7 @@
   overflow-wrap: anywhere;
 }
 
-.course-card.is-upcoming {
+.course-card.is-scheduled {
   background:
     radial-gradient(circle at 100% 0%, rgba(134, 145, 131, 0.09), transparent 16rem),
     linear-gradient(150deg, rgba(25, 29, 25, 0.97), rgba(13, 16, 14, 0.98)) !important;
@@ -218,16 +219,17 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28) !important;
 }
 
-.course-card.is-upcoming::before {
+.course-card.is-scheduled::before {
   background: linear-gradient(90deg, #707870, #9ca49a) !important;
 }
 
-.course-card.is-upcoming:hover,
-.evaluation-row.is-upcoming:hover {
+.course-card.is-scheduled:hover,
+.evaluation-row.is-scheduled:hover {
   border-color: rgba(255, 255, 255, 0.16) !important;
   transform: none !important;
 }
 
+.status-scheduled,
 .status-upcoming {
   background: rgba(143, 158, 181, 0.14) !important;
   border: 1px solid rgba(156, 172, 197, 0.16);

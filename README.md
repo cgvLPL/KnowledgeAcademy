@@ -17,7 +17,7 @@ administrator-managed content.
 ## What is included
 
 - Username-based participant and administrator sign-in workspaces
-- Current, upcoming, completed, and draft evaluations
+- Live, scheduled, completed, and draft evaluations with date-driven state changes
 - Responsive one-question-at-a-time quiz flow with progress and results
 - Personal score history for current and previous evaluations
 - Administrator course and question builder
