@@ -99,12 +99,21 @@ test("executive reports include per-quiz score and question analytics", () => {
   assert.match(backend, /function adminGetExecutiveReport_\(body\)/);
   assert.match(backend, /correctPercentage/);
   assert.match(backend, /mostCommonAnswer/);
+  assert.match(backend, /participantResponses/);
+  assert.match(backend, /participantName: participant\.name/);
+  assert.match(backend, /selectedAnswer:/);
+  assert.match(backend, /status === "correct"/);
   assert.match(backend, /scoreDistribution/);
   assert.match(client, /Download executive report/);
   assert.match(client, /adminGetExecutiveReport/);
+  assert.match(client, /adminGetExecutiveReport[\s\S]*?courseId: evaluationId,[\s\S]*?fresh: true/);
   assert.match(client, /loadExecutiveReportLogo\(`\$\{publicBasePath\}\/cgv-logo\.svg`\)/);
   assert.match(report, /Participant results/);
   assert.match(report, /Response patterns and item performance/);
+  assert.match(report, /PARTICIPANT ANSWER AUDIT/);
+  assert.match(report, /Every submitted attempt is listed below and grouped by outcome/);
+  assert.match(report, /No answer submitted/);
+  assert.match(report, /addQuestionAuditPage/);
   assert.match(report, /downloadExecutiveReportPdf/);
   assert.match(report, /orientation:\s*"portrait"/);
   assert.doesNotMatch(report, /addPage\("a4",\s*"landscape"\)/);
@@ -271,6 +280,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.01-quiz-lifecycle"/);
-  assert.match(runtime, /2026\.08\.01-quiz-lifecycle/);
+  assert.match(backend, /version:\s*"2026\.08\.01-question-audit"/);
+  assert.match(runtime, /2026\.08\.01-question-audit/);
 });

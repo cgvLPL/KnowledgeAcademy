@@ -2393,6 +2393,7 @@ export default function ExamClient() {
         sheetsRequest<{ ok: boolean; report: ExecutiveReportData }>("adminGetExecutiveReport", {
           token: sessionToken,
           courseId: evaluationId,
+          fresh: true,
         }),
         import("./executive-report"),
       ]);

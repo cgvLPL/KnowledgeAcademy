@@ -12,6 +12,18 @@ export type ExecutiveReportParticipant = {
   passed: boolean;
 };
 
+export type ExecutiveReportQuestionResponse = {
+  attemptId: string;
+  participantId: string;
+  participantName: string;
+  branch: string;
+  submittedAt: string;
+  selectedOption: string;
+  selectedAnswer: string;
+  status: "correct" | "incorrect" | "unanswered";
+  isCorrect: boolean;
+};
+
 export type ExecutiveReportQuestion = {
   id: string;
   order: number;
@@ -35,6 +47,7 @@ export type ExecutiveReportQuestion = {
     percentage: number;
     isCorrect: boolean;
   }>;
+  responses: ExecutiveReportQuestionResponse[];
 };
 
 export type ExecutiveReportData = {
@@ -452,15 +465,167 @@ function drawQuestionBlock(doc: jsPDF, question: ExecutiveReportQuestion, startY
   return tableY;
 }
 
+const AUDIT_BOTTOM = PAGE_HEIGHT - 16;
+const AUDIT_COLUMNS = [
+  { label: "Participant", key: "participant" as const, width: 42 },
+  { label: "Branch", key: "branch" as const, width: 24 },
+  { label: "Submitted answer", key: "answer" as const, width: 68 },
+  { label: "Outcome", key: "outcome" as const, width: 23 },
+  { label: "Submitted", key: "submitted" as const, width: 25 },
+];
+
+function questionResponseOrder(status: ExecutiveReportQuestionResponse["status"]) {
+  if (status === "correct") return 0;
+  if (status === "incorrect") return 1;
+  return 2;
+}
+
+function responseOutcomeLabel(status: ExecutiveReportQuestionResponse["status"]) {
+  if (status === "correct") return "Correct";
+  if (status === "incorrect") return "Incorrect";
+  return "Unanswered";
+}
+
+function responseOutcomeColor(status: ExecutiveReportQuestionResponse["status"]): RGB {
+  if (status === "correct") return ORANGE;
+  if (status === "incorrect") return RED;
+  return MUTED;
+}
+
+function drawAuditTableHeader(doc: jsPDF, y: number) {
+  let x = MARGIN;
+  AUDIT_COLUMNS.forEach((column) => {
+    doc.setFillColor(...INK);
+    doc.setDrawColor(...LINE);
+    doc.rect(x, y, column.width, 8, "FD");
+    setText(doc, [255, 255, 255], 5.5, "bold");
+    doc.text(column.label, x + 2.5, y + 5.2);
+    x += column.width;
+  });
+  return y + 8;
+}
+
+function drawAuditIntroduction(doc: jsPDF, question: ExecutiveReportQuestion, y: number, continued = false) {
+  const responses = question.responses || [];
+  const correct = responses.filter((response) => response.status === "correct").length;
+  const incorrect = responses.filter((response) => response.status === "incorrect").length;
+  const unanswered = responses.filter((response) => response.status === "unanswered").length;
+  setText(doc, RED, 7, "bold");
+  doc.text(continued ? "PARTICIPANT ANSWER AUDIT - CONTINUED" : "PARTICIPANT ANSWER AUDIT", MARGIN, y);
+  setText(doc, INK, 7.2, "bold");
+  doc.text(`Correct ${correct} | Incorrect ${incorrect} | Unanswered ${unanswered}`, MARGIN, y + 6);
+  setText(doc, MUTED, 6.1);
+  doc.text("Every submitted attempt is listed below and grouped by outcome.", MARGIN, y + 11);
+  return drawAuditTableHeader(doc, y + 15);
+}
+
+function addQuestionAuditPage(
+  doc: jsPDF,
+  report: ExecutiveReportData,
+  question: ExecutiveReportQuestion,
+  logoDataUrl?: string | null,
+) {
+  doc.addPage("a4", "portrait");
+  drawPageHeader(doc, report, logoDataUrl);
+  setText(doc, ORANGE, 7, "bold");
+  doc.text(`QUESTION ${String(question.order).padStart(2, "0")} | ANSWER AUDIT`, MARGIN, 43);
+  setText(doc, INK, 9.2, "bold");
+  const promptLines = doc.splitTextToSize(question.prompt, PAGE_WIDTH - MARGIN * 2).slice(0, 3);
+  doc.text(promptLines, MARGIN, 50);
+  return 50 + promptLines.length * 4.1 + 6;
+}
+
+function drawQuestionAnswerAudit(
+  doc: jsPDF,
+  report: ExecutiveReportData,
+  question: ExecutiveReportQuestion,
+  startY: number,
+  logoDataUrl?: string | null,
+) {
+  const responses = [...(question.responses || [])].sort((a, b) => (
+    questionResponseOrder(a.status) - questionResponseOrder(b.status) ||
+    a.participantName.localeCompare(b.participantName) ||
+    new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+  ));
+  let y = startY;
+  if (y + 32 > AUDIT_BOTTOM) {
+    drawPageFooter(doc, doc.getNumberOfPages(), TOTAL_PAGES_TOKEN, report.generatedAt);
+    y = addQuestionAuditPage(doc, report, question, logoDataUrl);
+    y = drawAuditIntroduction(doc, question, y, true);
+  } else {
+    y = drawAuditIntroduction(doc, question, y);
+  }
+
+  if (!responses.length) {
+    doc.setFillColor(...PAPER);
+    doc.setDrawColor(...LINE);
+    doc.rect(MARGIN, y, PAGE_WIDTH - MARGIN * 2, 12, "FD");
+    setText(doc, MUTED, 6.2);
+    doc.text("No submitted attempts are available for this question.", MARGIN + 3, y + 7.3);
+    drawPageFooter(doc, doc.getNumberOfPages(), TOTAL_PAGES_TOKEN, report.generatedAt);
+    return;
+  }
+
+  responses.forEach((response, rowIndex) => {
+    const answer = response.selectedOption
+      ? `${response.selectedOption}. ${response.selectedAnswer}`
+      : "No answer submitted";
+    const values = {
+      participant: response.participantName || "Unknown participant",
+      branch: response.branch || "-",
+      answer,
+      outcome: responseOutcomeLabel(response.status),
+      submitted: safeDate(response.submittedAt),
+    };
+    const participantLines = doc.splitTextToSize(values.participant, AUDIT_COLUMNS[0].width - 5).slice(0, 2);
+    const answerLines = doc.splitTextToSize(values.answer, AUDIT_COLUMNS[2].width - 5).slice(0, 3);
+    const submittedLines = doc.splitTextToSize(values.submitted, AUDIT_COLUMNS[4].width - 5).slice(0, 2);
+    const rowHeight = Math.max(
+      9,
+      participantLines.length * 3.4 + 3.5,
+      answerLines.length * 3.4 + 3.5,
+      submittedLines.length * 3.4 + 3.5,
+    );
+
+    if (y + rowHeight > AUDIT_BOTTOM) {
+      drawPageFooter(doc, doc.getNumberOfPages(), TOTAL_PAGES_TOKEN, report.generatedAt);
+      y = addQuestionAuditPage(doc, report, question, logoDataUrl);
+      y = drawAuditIntroduction(doc, question, y, true);
+    }
+
+    let x = MARGIN;
+    AUDIT_COLUMNS.forEach((column) => {
+      doc.setFillColor(...(rowIndex % 2 ? [255, 255, 255] as RGB : PAPER));
+      doc.setDrawColor(...LINE);
+      doc.rect(x, y, column.width, rowHeight, "FD");
+      const value = values[column.key];
+      const color = column.key === "outcome" ? responseOutcomeColor(response.status) : INK;
+      const style = column.key === "outcome" || column.key === "participant" ? "bold" : "normal";
+      setText(doc, color, 5.6, style);
+      if (column.key === "participant") {
+        doc.text(participantLines, x + 2.5, y + 5.2);
+      } else if (column.key === "answer") {
+        doc.text(answerLines, x + 2.5, y + 5.2);
+      } else if (column.key === "submitted") {
+        doc.text(submittedLines, x + 2.5, y + 5.2);
+      } else {
+        doc.text(fitText(doc, value, column.width - 5), x + 2.5, y + 5.2);
+      }
+      x += column.width;
+    });
+    y += rowHeight;
+  });
+  drawPageFooter(doc, doc.getNumberOfPages(), TOTAL_PAGES_TOKEN, report.generatedAt);
+}
+
 function drawQuestionSections(doc: jsPDF, report: ExecutiveReportData, logoDataUrl?: string | null) {
   if (!report.questions.length) return;
   report.questions.forEach((question) => {
     doc.addPage("a4", "portrait");
-    const pageNumber = doc.getNumberOfPages();
     drawPageHeader(doc, report, logoDataUrl);
     drawQuestionHeading(doc);
-    drawQuestionBlock(doc, question, 65);
-    drawPageFooter(doc, pageNumber, TOTAL_PAGES_TOKEN, report.generatedAt);
+    const questionBottom = drawQuestionBlock(doc, question, 65);
+    drawQuestionAnswerAudit(doc, report, question, questionBottom + 8, logoDataUrl);
   });
 }
 
@@ -484,10 +649,11 @@ function drawReportNotes(doc: jsPDF, report: ExecutiveReportData, logoDataUrl?: 
     "Submissions include every completed attempt. Repeat attempts are listed separately, while the unique participant metric counts each account once.",
     "Scores are calculated by the secure evaluation backend using the question answer key and configured point values.",
     "Question percentages use all submitted attempts as the denominator. Unanswered attempts are reported separately from incorrect answers.",
+    "The participant answer audit lists every submitted attempt, its selected answer, and whether that response was correct, incorrect, or unanswered.",
     "Percentages are rounded to whole numbers, so displayed shares may differ from 100% by one percentage point.",
   ];
   notes.forEach((note, index) => {
-    const y = 94 + index * 30;
+    const y = 92 + index * 25;
     doc.setFillColor(...(index % 2 ? RED : ORANGE));
     doc.circle(25, y - 1.5, 2.1, "F");
     setText(doc, [255, 255, 255], 6.5, "bold");

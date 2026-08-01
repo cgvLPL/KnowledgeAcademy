@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.01-quiz-lifecycle"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.01-question-audit"}
 ```
 
 The response contains additional fields, but the version value must match.

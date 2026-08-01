@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.01-quiz-lifecycle",
+  version: "2026.08.01-question-audit",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   sheets: Object.freeze({
@@ -564,6 +564,31 @@ function adminGetExecutiveReport_(body) {
     const mostCommonOption = answeredCount
       ? optionKeys.reduce(function (best, key) { return counts[key] > counts[best] ? key : best; }, "A")
       : "";
+    const answerByAttempt = questionAnswers.reduce(function (result, answer) {
+      result[String(answer.attempt_id)] = answer;
+      return result;
+    }, {});
+    const participantResponses = participantResults.map(function (participant) {
+      const answer = answerByAttempt[participant.attemptId] || {};
+      const selectedOption = String(answer.selected_option || "").trim().toUpperCase();
+      const selectedIndex = optionKeys.indexOf(selectedOption);
+      const status = !selectedOption
+        ? "unanswered"
+        : selectedOption === correctOption
+          ? "correct"
+          : "incorrect";
+      return {
+        attemptId: participant.attemptId,
+        participantId: participant.participantId,
+        participantName: participant.name,
+        branch: participant.branch,
+        submittedAt: participant.submittedAt,
+        selectedOption: selectedOption,
+        selectedAnswer: selectedIndex >= 0 ? String(optionText[selectedIndex] || "") : "",
+        status: status,
+        isCorrect: status === "correct",
+      };
+    });
     return {
       id: String(question.question_id),
       order: Number(question.order_no || 0),
@@ -591,6 +616,7 @@ function adminGetExecutiveReport_(body) {
           isCorrect: key === correctOption,
         };
       }),
+      responses: participantResponses,
     };
   });
 
