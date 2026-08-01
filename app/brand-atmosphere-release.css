@@ -1,0 +1,290 @@
+/* Warm editorial atmosphere inspired by the supplied glass, ribbon, and
+   presentation references. All geometry stays behind the functional UI. */
+
+:root {
+  --cgv-atmosphere-amber: #ffb11f;
+  --cgv-atmosphere-orange: #ff6a22;
+  --cgv-atmosphere-red: #e6322f;
+  --cgv-atmosphere-ink: #050606;
+}
+
+.brand-atmosphere {
+  contain: strict;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+.brand-atmosphere > span {
+  display: block;
+  pointer-events: none;
+  position: absolute;
+}
+
+.brand-atmosphere-bloom {
+  background:
+    radial-gradient(circle at 38% 46%, rgba(255, 177, 31, 0.42), transparent 24%),
+    radial-gradient(circle at 61% 50%, rgba(255, 106, 34, 0.34), transparent 31%),
+    radial-gradient(circle at 78% 54%, rgba(230, 50, 47, 0.24), transparent 36%);
+  filter: blur(34px);
+  height: min(72vw, 1040px);
+  opacity: 0.44;
+  right: -20vw;
+  top: -18vh;
+  transform: rotate(-16deg);
+  width: min(92vw, 1380px);
+}
+
+.brand-atmosphere-ribbon {
+  background: conic-gradient(
+    from 218deg,
+    rgba(255, 177, 31, 0.08),
+    rgba(255, 177, 31, 0.9) 15%,
+    rgba(255, 106, 34, 0.94) 34%,
+    rgba(230, 50, 47, 0.78) 53%,
+    rgba(230, 50, 47, 0.06) 72%,
+    rgba(255, 177, 31, 0.08)
+  );
+  border-radius: 50%;
+  filter: drop-shadow(0 22px 58px rgba(230, 50, 47, 0.2));
+  padding: 28px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.58;
+  will-change: transform;
+}
+
+.brand-atmosphere-ribbon-primary {
+  height: min(32vw, 410px);
+  right: -14vw;
+  top: 7vh;
+  transform: rotate(-19deg);
+  width: min(64vw, 920px);
+}
+
+.brand-atmosphere-ribbon-secondary {
+  bottom: -15vh;
+  height: min(28vw, 360px);
+  left: 8vw;
+  opacity: 0.3;
+  transform: rotate(12deg);
+  width: min(52vw, 760px);
+}
+
+.brand-atmosphere-orbit {
+  border: 1px solid rgba(255, 145, 70, 0.3);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 24px rgba(255, 106, 34, 0.025),
+    0 0 0 74px rgba(230, 50, 47, 0.018);
+  height: min(42vw, 610px);
+  opacity: 0.58;
+  right: -18vw;
+  top: 34vh;
+  transform: rotate(-24deg);
+  width: min(58vw, 840px);
+}
+
+.brand-atmosphere-lightfield {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 177, 31, 0.13) 0,
+    rgba(255, 106, 34, 0.08) 1px,
+    transparent 1px,
+    transparent 17px
+  );
+  bottom: -8vh;
+  height: 48vh;
+  left: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.82) 38%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.82) 38%, transparent 100%);
+  opacity: 0.28;
+  transform: perspective(620px) rotateX(58deg) scaleX(1.18);
+  transform-origin: bottom;
+  width: 100%;
+}
+
+.brand-atmosphere-grain {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.55px, transparent 0.7px);
+  background-size: 4px 4px;
+  inset: 0;
+  mix-blend-mode: soft-light;
+  opacity: 0.055;
+}
+
+.brand-atmosphere-login .brand-atmosphere-ribbon-primary,
+.brand-atmosphere-boot .brand-atmosphere-ribbon-primary {
+  right: -22vw;
+  top: 2vh;
+}
+
+.brand-atmosphere-login .brand-atmosphere-bloom,
+.brand-atmosphere-boot .brand-atmosphere-bloom {
+  left: -18vw;
+  right: auto;
+  top: 8vh;
+  transform: rotate(8deg);
+}
+
+.brand-atmosphere-quiz .brand-atmosphere-ribbon-secondary,
+.brand-atmosphere-result .brand-atmosphere-ribbon-secondary,
+.brand-atmosphere-builder .brand-atmosphere-ribbon-secondary {
+  left: 28vw;
+}
+
+.login-layout,
+.boot-content,
+.builder-header,
+.builder-progress,
+.builder-content,
+.quiz-header,
+.quiz-layout,
+.result-header,
+.result-card,
+.app-shell > .sidebar,
+.app-shell > .main-shell,
+.app-shell > .mobile-nav {
+  position: relative;
+  z-index: 2;
+}
+
+/* Editorial corner marks echo the presentation reference without changing
+   any content or interaction area. */
+.participant-page-header,
+.admin-section-header,
+.scoreboard-hero {
+  isolation: isolate;
+  position: relative;
+}
+
+.participant-page-header::before,
+.admin-section-header::before,
+.scoreboard-hero::before {
+  background:
+    linear-gradient(90deg, rgba(255, 153, 79, 0.62) 0 18px, transparent 18px) left top / 42px 1px no-repeat,
+    linear-gradient(180deg, rgba(255, 153, 79, 0.62) 0 18px, transparent 18px) left top / 1px 42px no-repeat,
+    linear-gradient(270deg, rgba(230, 50, 47, 0.5) 0 18px, transparent 18px) right top / 42px 1px no-repeat,
+    linear-gradient(180deg, rgba(230, 50, 47, 0.5) 0 18px, transparent 18px) right top / 1px 42px no-repeat,
+    linear-gradient(90deg, rgba(255, 177, 31, 0.42) 0 18px, transparent 18px) left bottom / 42px 1px no-repeat,
+    linear-gradient(0deg, rgba(255, 177, 31, 0.42) 0 18px, transparent 18px) left bottom / 1px 42px no-repeat,
+    linear-gradient(270deg, rgba(255, 106, 34, 0.46) 0 18px, transparent 18px) right bottom / 42px 1px no-repeat,
+    linear-gradient(0deg, rgba(255, 106, 34, 0.46) 0 18px, transparent 18px) right bottom / 1px 42px no-repeat;
+  content: "";
+  inset: 10px;
+  opacity: 0.72;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.participant-page-header > *,
+.admin-section-header > *,
+.scoreboard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  .brand-atmosphere-ribbon-primary {
+    animation: cgv-atmosphere-drift 24s ease-in-out infinite alternate;
+  }
+
+  .brand-atmosphere-ribbon-secondary {
+    animation: cgv-atmosphere-drift-secondary 30s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes cgv-atmosphere-drift {
+  from { transform: rotate(-19deg) translate3d(0, 0, 0); }
+  to { transform: rotate(-15deg) translate3d(-2vw, 2vh, 0); }
+}
+
+@keyframes cgv-atmosphere-drift-secondary {
+  from { transform: rotate(12deg) translate3d(0, 0, 0); }
+  to { transform: rotate(8deg) translate3d(3vw, -2vh, 0); }
+}
+
+@media (max-width: 760px) {
+  .brand-atmosphere-bloom {
+    filter: blur(24px);
+    height: 78vh;
+    opacity: 0.28;
+    right: -58vw;
+    top: 2vh;
+    width: 120vw;
+  }
+
+  .brand-atmosphere-ribbon-primary {
+    height: 210px;
+    opacity: 0.32;
+    padding: 18px;
+    right: -48vw;
+    top: 14vh;
+    transform: rotate(-24deg);
+    width: 118vw;
+  }
+
+  .brand-atmosphere-ribbon-secondary,
+  .brand-atmosphere-orbit {
+    display: none;
+  }
+
+  .brand-atmosphere-lightfield {
+    bottom: 5vh;
+    height: 32vh;
+    opacity: 0.17;
+  }
+
+  .brand-atmosphere-grain {
+    opacity: 0.035;
+  }
+
+  .participant-page-header::before,
+  .admin-section-header::before,
+  .scoreboard-hero::before {
+    inset: 8px;
+    opacity: 0.48;
+  }
+}
+
+html.cgv-low-power .brand-atmosphere-ribbon,
+html.cgv-low-power .brand-atmosphere-orbit,
+html.cgv-low-power .brand-atmosphere-grain {
+  display: none !important;
+}
+
+html.cgv-low-power .brand-atmosphere-bloom {
+  filter: none !important;
+  opacity: 0.13 !important;
+}
+
+html.cgv-low-power .brand-atmosphere-lightfield {
+  opacity: 0.08 !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .brand-atmosphere-ribbon,
+  .brand-atmosphere-orbit,
+  .brand-atmosphere-grain {
+    display: none !important;
+  }
+
+  .brand-atmosphere-bloom {
+    filter: none;
+    opacity: 0.12;
+  }
+}
+
+@media print {
+  .brand-atmosphere,
+  .participant-page-header::before,
+  .admin-section-header::before,
+  .scoreboard-hero::before {
+    display: none !important;
+  }
+}

@@ -49,6 +49,7 @@ import "./login-spacing-polish.css";
 import "./app-update-enhancer.css";
 import "./glassmorphism-release.css";
 import "./mobile-containment-release.css";
+import "./brand-atmosphere-release.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
