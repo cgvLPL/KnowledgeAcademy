@@ -1,0 +1,434 @@
+/* Layered CGV glass system. Kept in one final release layer so legacy panels
+   share the same depth, edge lighting, and low-power fallbacks. */
+
+:root {
+  --cgv-glass-fill: rgba(18, 20, 21, 0.7);
+  --cgv-glass-fill-strong: rgba(11, 13, 14, 0.82);
+  --cgv-glass-fill-soft: rgba(255, 255, 255, 0.045);
+  --cgv-glass-edge: rgba(255, 255, 255, 0.13);
+  --cgv-glass-edge-soft: rgba(255, 255, 255, 0.075);
+  --cgv-glass-warm-edge: rgba(255, 124, 36, 0.25);
+  --cgv-glass-highlight: rgba(255, 255, 255, 0.1);
+  --cgv-glass-blur: 18px;
+  --cgv-glass-shadow:
+    inset 0 1px 0 var(--cgv-glass-highlight),
+    inset 1px 0 0 rgba(255, 255, 255, 0.035),
+    0 22px 58px rgba(0, 0, 0, 0.28);
+  --cgv-glass-shadow-raised:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 1px 0 0 rgba(255, 255, 255, 0.055),
+    0 28px 72px rgba(0, 0, 0, 0.38),
+    0 8px 28px rgba(230, 50, 47, 0.07);
+}
+
+/* Structural glass: translucent enough to reveal the cinematic backdrop. */
+.topbar,
+.sidebar,
+.quiz-header,
+.result-header,
+.builder-header {
+  -webkit-backdrop-filter: blur(var(--cgv-glass-blur)) saturate(1.2) !important;
+  backdrop-filter: blur(var(--cgv-glass-blur)) saturate(1.2) !important;
+}
+
+.topbar {
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.065), transparent 32%),
+    rgba(7, 8, 9, 0.72) !important;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.035), 0 14px 40px rgba(0, 0, 0, 0.18) !important;
+}
+
+.sidebar {
+  background:
+    radial-gradient(circle at 18% 5%, rgba(255, 113, 31, 0.11), transparent 17rem),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.045), transparent 28%),
+    rgba(6, 7, 8, 0.78) !important;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.035), 18px 0 48px rgba(0, 0, 0, 0.16) !important;
+}
+
+/* Primary panels and cards. */
+.welcome-row,
+.page-intro,
+.admin-section-header,
+.participant-page-header,
+.metric-card,
+.admin-metrics article,
+.section-block,
+.analytics-card,
+.completion-card,
+.table-card,
+.course-card,
+.history-preview-card,
+.history-summary,
+.history-score-card,
+.leaderboard-card,
+.profile-card,
+.settings-card,
+.detail-card,
+.scoreboard-hero,
+.quiz-progress-panel,
+.question-card,
+.result-card,
+.builder-card,
+.question-editor,
+.question-outline,
+.evaluation-list {
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.09), transparent 17rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 42%),
+    var(--cgv-glass-fill) !important;
+  border-color: var(--cgv-glass-edge) !important;
+  box-shadow: var(--cgv-glass-shadow) !important;
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .welcome-row,
+  .page-intro,
+  .admin-section-header,
+  .participant-page-header,
+  .metric-card,
+  .admin-metrics article,
+  .section-block,
+  .analytics-card,
+  .completion-card,
+  .table-card,
+  .course-card,
+  .history-preview-card,
+  .history-summary,
+  .history-score-card,
+  .leaderboard-card,
+  .profile-card,
+  .settings-card,
+  .detail-card,
+  .scoreboard-hero,
+  .quiz-progress-panel,
+  .question-card,
+  .result-card,
+  .builder-card,
+  .question-editor,
+  .question-outline,
+  .evaluation-list {
+    -webkit-backdrop-filter: blur(var(--cgv-glass-blur)) saturate(1.16);
+    backdrop-filter: blur(var(--cgv-glass-blur)) saturate(1.16);
+  }
+}
+
+/* Header glass gets a restrained specular sweep without blocking controls. */
+.welcome-row,
+.page-intro,
+.admin-section-header,
+.participant-page-header {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+}
+
+.welcome-row::after,
+.page-intro::after,
+.admin-section-header::after,
+.participant-page-header::after {
+  background: linear-gradient(100deg, transparent 5%, rgba(255, 255, 255, 0.085) 37%, transparent 64%);
+  content: "";
+  height: 1px;
+  inset: 0 10% auto;
+  opacity: 0.85;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+/* Preserve the branded hero art while giving it a laminated glass surface. */
+.hero-evaluation {
+  border-color: rgba(255, 161, 74, 0.3) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(108, 25, 10, 0.35),
+    0 30px 78px rgba(0, 0, 0, 0.4),
+    0 10px 38px rgba(230, 50, 47, 0.1) !important;
+}
+
+/* Glass controls and segmented surfaces. */
+.top-search,
+.user-chip,
+.notification,
+.icon-button,
+.secondary-button,
+.role-switch,
+.filter-tabs,
+.quiz-coach p,
+.result-coach p,
+.live-pill,
+.eyebrow,
+.status-pill,
+.cgv-settings-version,
+.cgv-settings-row,
+.cgv-update-version {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.025)),
+    rgba(14, 16, 17, 0.58) !important;
+  border-color: var(--cgv-glass-edge) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 10px 28px rgba(0, 0, 0, 0.16) !important;
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .top-search,
+  .user-chip,
+  .notification,
+  .icon-button,
+  .secondary-button,
+  .role-switch,
+  .filter-tabs,
+  .quiz-coach p,
+  .result-coach p,
+  .live-pill,
+  .eyebrow,
+  .status-pill,
+  .cgv-settings-version,
+  .cgv-settings-row,
+  .cgv-update-version {
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(12px) saturate(1.2);
+  }
+}
+
+.input-shell,
+.field-label > input,
+.field-label > textarea,
+.field-label > select,
+.scoreboard-hero select,
+.admin-search input {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 55%),
+    rgba(7, 9, 10, 0.56) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.065), 0 10px 26px rgba(0, 0, 0, 0.13) !important;
+}
+
+.input-shell:focus-within,
+.field-label > input:focus,
+.field-label > textarea:focus,
+.field-label > select:focus,
+.scoreboard-hero select:focus {
+  background:
+    linear-gradient(135deg, rgba(255, 139, 70, 0.1), transparent 58%),
+    rgba(7, 9, 10, 0.74) !important;
+  border-color: rgba(255, 139, 70, 0.68) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 4px rgba(255, 106, 34, 0.12),
+    0 16px 34px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Rows appear suspended inside their glass containers. */
+.evaluation-row,
+.responsive-table tbody tr {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.025), transparent 44%) !important;
+}
+
+.evaluation-row + .evaluation-row,
+.responsive-table tbody tr + tr {
+  border-top-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+.course-card-footer,
+.question-footer,
+.table-card-header {
+  border-color: rgba(255, 255, 255, 0.085) !important;
+}
+
+/* Dialogs become a second, sharper sheet of glass over their backdrops. */
+.modal-backdrop,
+.certificate-backdrop,
+.cgv-settings-backdrop {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 106, 34, 0.13), transparent 30rem),
+    rgba(2, 3, 4, 0.72) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.08) !important;
+  backdrop-filter: blur(16px) saturate(1.08) !important;
+}
+
+.confirm-modal,
+.add-participant-modal,
+.cgv-settings-panel {
+  background:
+    radial-gradient(circle at 95% 0, rgba(255, 103, 31, 0.14), transparent 21rem),
+    linear-gradient(140deg, rgba(255, 255, 255, 0.075), transparent 38%),
+    rgba(13, 15, 16, 0.84) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: var(--cgv-glass-shadow-raised) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+
+.modal-close,
+.cgv-settings-close {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035)) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13), 0 8px 22px rgba(0, 0, 0, 0.22) !important;
+}
+
+/* Mandatory update screen uses a centered glass sheet while still covering the viewport. */
+.cgv-update-content {
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 105, 31, 0.13), transparent 22rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    rgba(9, 11, 12, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: clamp(24px, 4vw, 40px);
+  box-shadow: var(--cgv-glass-shadow-raised);
+  padding: clamp(28px, 6vh, 58px) clamp(22px, 5vw, 54px);
+  -webkit-backdrop-filter: blur(24px) saturate(1.16);
+  backdrop-filter: blur(24px) saturate(1.16);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .metric-card,
+  .admin-metrics article,
+  .course-card:not(.is-scheduled),
+  .history-preview-card,
+  .analytics-card,
+  .completion-card,
+  .history-score-card,
+  .settings-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .metric-card:hover,
+  .admin-metrics article:hover,
+  .course-card:not(.is-scheduled):hover,
+  .history-preview-card:hover,
+  .analytics-card:hover,
+  .completion-card:hover,
+  .history-score-card:hover,
+  .settings-card:hover {
+    border-color: var(--cgv-glass-warm-edge) !important;
+    box-shadow: var(--cgv-glass-shadow-raised) !important;
+    transform: translateY(-3px);
+  }
+
+  .top-search:hover,
+  .user-chip:hover,
+  .icon-button:hover,
+  .secondary-button:hover,
+  .cgv-settings-row:hover {
+    border-color: rgba(255, 139, 70, 0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 14px 32px rgba(0, 0, 0, 0.22) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --cgv-glass-blur: 11px;
+    --cgv-glass-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.09),
+      0 14px 32px rgba(0, 0, 0, 0.24);
+  }
+
+  .mobile-nav {
+    background:
+      linear-gradient(150deg, rgba(255, 255, 255, 0.12), transparent 42%),
+      rgba(12, 14, 15, 0.76) !important;
+    border-color: rgba(255, 255, 255, 0.19) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 18px 46px rgba(0, 0, 0, 0.46),
+      0 7px 24px rgba(230, 50, 47, 0.1) !important;
+  }
+
+  .cgv-update-content {
+    border-radius: 26px;
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    padding: 28px 20px;
+  }
+}
+
+/* Expensive transparency gracefully drops away on constrained hardware. */
+html.cgv-low-power .topbar,
+html.cgv-low-power .sidebar,
+html.cgv-low-power .mobile-nav,
+html.cgv-low-power .welcome-row,
+html.cgv-low-power .page-intro,
+html.cgv-low-power .admin-section-header,
+html.cgv-low-power .participant-page-header,
+html.cgv-low-power .metric-card,
+html.cgv-low-power .section-block,
+html.cgv-low-power .table-card,
+html.cgv-low-power .course-card,
+html.cgv-low-power .history-preview-card,
+html.cgv-low-power .scoreboard-hero,
+html.cgv-low-power .question-card,
+html.cgv-low-power .result-card,
+html.cgv-low-power .builder-card,
+html.cgv-low-power .question-editor,
+html.cgv-low-power .question-outline,
+html.cgv-low-power .confirm-modal,
+html.cgv-low-power .add-participant-modal,
+html.cgv-low-power .cgv-settings-panel,
+html.cgv-low-power .cgv-update-content {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: #131516 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 28px rgba(0, 0, 0, 0.22) !important;
+}
+
+html.cgv-low-power .metric-card:hover,
+html.cgv-low-power .course-card:hover,
+html.cgv-low-power .history-preview-card:hover,
+html.cgv-low-power .analytics-card:hover,
+html.cgv-low-power .completion-card:hover,
+html.cgv-low-power .settings-card:hover {
+  transform: none !important;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .topbar,
+  .sidebar,
+  .mobile-nav,
+  .welcome-row,
+  .page-intro,
+  .admin-section-header,
+  .participant-page-header,
+  .metric-card,
+  .section-block,
+  .table-card,
+  .course-card,
+  .history-preview-card,
+  .scoreboard-hero,
+  .question-card,
+  .result-card,
+  .builder-card,
+  .question-editor,
+  .question-outline,
+  .confirm-modal,
+  .add-participant-modal,
+  .cgv-settings-panel,
+  .cgv-update-content {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background-color: #131516 !important;
+  }
+}
+
+@media print {
+  .topbar,
+  .sidebar,
+  .welcome-row,
+  .page-intro,
+  .admin-section-header,
+  .participant-page-header,
+  .metric-card,
+  .section-block,
+  .table-card,
+  .course-card,
+  .history-preview-card,
+  .scoreboard-hero,
+  .question-card,
+  .result-card {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+}
