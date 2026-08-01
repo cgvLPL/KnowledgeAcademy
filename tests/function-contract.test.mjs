@@ -86,9 +86,14 @@ test("executive reports include per-quiz score and question analytics", () => {
   assert.match(backend, /scoreDistribution/);
   assert.match(client, /Download executive report/);
   assert.match(client, /adminGetExecutiveReport/);
+  assert.match(client, /loadExecutiveReportLogo\(`\$\{publicBasePath\}\/cgv-logo\.svg`\)/);
   assert.match(report, /Participant results/);
   assert.match(report, /Response patterns and item performance/);
   assert.match(report, /downloadExecutiveReportPdf/);
+  assert.match(report, /orientation:\s*"portrait"/);
+  assert.doesNotMatch(report, /addPage\("a4",\s*"landscape"\)/);
+  assert.match(report, /context\.fillStyle = "#e6322f"/);
+  assert.match(report, /setText\(doc, INK, 8\.4, "bold"\)/);
 });
 
 test("quiz timing, exit protection, and duplicate-submit protection are active", () => {

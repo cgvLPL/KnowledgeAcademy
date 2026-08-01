@@ -2242,7 +2242,7 @@ export default function ExamClient() {
         import("./executive-report"),
       ]);
       const logo = await reportModule
-        .loadExecutiveReportLogo(`${publicBasePath}/brand/cgv-knowledge-academy.svg`)
+        .loadExecutiveReportLogo(`${publicBasePath}/cgv-logo.svg`)
         .catch(() => null);
       reportModule.downloadExecutiveReportPdf(report, logo);
       return null;
