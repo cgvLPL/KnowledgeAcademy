@@ -200,6 +200,8 @@ test("settings panel persists and applies real interface preferences", () => {
   assert.match(settings, /cgv-enhanced-contrast/);
   assert.match(settings, /Automatic live refresh/);
   assert.match(settings, /cgv:settings-refresh-now/);
+  assert.match(settings, /APP_VERSION_LABEL/);
+  assert.match(settings, /App version/);
   assert.match(resultSync, /autoRefreshEnabled/);
   assert.match(resultSync, /cgv:settings-refresh-now/);
   for (const selector of [

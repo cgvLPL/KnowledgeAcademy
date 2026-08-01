@@ -13,6 +13,9 @@ if [[ ! -x "${vinext}" ]]; then
   exit 69
 fi
 
+app_version="$(node "${SITES_PROJECT_ROOT}/scripts/prepare-app-version.mjs")"
+export NEXT_PUBLIC_APP_VERSION="$app_version"
+
 node --input-type=module - "${SITES_PROJECT_ROOT}/dist" <<'NODE'
 import { rm } from "node:fs/promises";
 

@@ -21,6 +21,8 @@ if [[ -f "$api_route" ]]; then
 fi
 
 cd "$project_dir"
+app_version="$(node scripts/prepare-app-version.mjs)"
+export NEXT_PUBLIC_APP_VERSION="$app_version"
 node --input-type=module - "$project_dir/dist" <<'NODE'
 import { rm } from "node:fs/promises";
 
@@ -29,6 +31,7 @@ NODE
 
 GITHUB_PAGES=true \
 NEXT_PUBLIC_BASE_PATH="/CGV.Exams" \
+NEXT_PUBLIC_APP_VERSION="$NEXT_PUBLIC_APP_VERSION" \
 bash scripts/sites-env.sh -- vinext build
 
 if [[ ! -f "$project_dir/dist/client/index.html" ]]; then

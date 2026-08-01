@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { APP_VERSION_LABEL } from "./app-version";
 
 const STORAGE_KEY = "cgv-exams-interface-settings-v1";
 const AUTO_REFRESH_KEY = "cgv-exams-auto-refresh";
@@ -145,6 +146,14 @@ export default function SettingsEnhancer() {
         </p>
 
         <div className="cgv-settings-list">
+          <div className="cgv-settings-version" aria-label={`App version ${APP_VERSION_LABEL}`}>
+            <span>
+              <strong>App version</strong>
+              <small>The portal checks automatically for a newer release.</small>
+            </span>
+            <code>{APP_VERSION_LABEL}</code>
+          </div>
+
           <label className="cgv-settings-row">
             <span>
               <strong>Compact interface</strong>

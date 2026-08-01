@@ -76,6 +76,48 @@
   gap: 10px;
 }
 
+.cgv-settings-version {
+  align-items: center;
+  background: linear-gradient(105deg, rgba(255, 151, 29, 0.14), rgba(238, 45, 48, 0.09));
+  border: 1px solid rgba(255, 124, 36, 0.3);
+  border-radius: 17px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 76px;
+  padding: 15px 17px;
+}
+
+.cgv-settings-version > span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.cgv-settings-version strong {
+  color: #f4f6ef;
+  font-size: 13px;
+}
+
+.cgv-settings-version small {
+  color: #aab3a7;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.cgv-settings-version code {
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: #ff9a2e;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 8px 11px;
+  white-space: nowrap;
+}
+
 .cgv-settings-row {
   align-items: center;
   background: rgba(255, 255, 255, 0.055);
@@ -262,6 +304,15 @@ body.cgv-enhanced-contrast textarea::placeholder {
   .cgv-settings-row {
     min-height: 88px;
     padding: 15px;
+  }
+
+  .cgv-settings-version {
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+  }
+
+  .cgv-settings-version code {
+    justify-self: start;
   }
 
   .cgv-settings-actions {

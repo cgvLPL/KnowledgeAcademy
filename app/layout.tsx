@@ -7,6 +7,7 @@ import AdminFunctionalityEnhancer from "./admin-functionality-enhancer";
 import AdminAvatarEnhancer from "./admin-avatar-enhancer";
 import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
+import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
@@ -45,6 +46,7 @@ import "./brand-system.css";
 import "./logo-intro-animation.css";
 import "./performance-release.css";
 import "./login-spacing-polish.css";
+import "./app-update-enhancer.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
@@ -120,6 +122,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {children}
+        <AppUpdateEnhancer />
         <SettingsEnhancer />
         <ButtonSafetyNet />
         <CourseBuilderEnhancer />
