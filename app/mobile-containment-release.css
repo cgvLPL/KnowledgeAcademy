@@ -148,6 +148,140 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* History records become scannable result cards instead of a squeezed
+     six-column table. The desktop table and its semantics remain unchanged. */
+  .participant-history .responsive-table {
+    margin-inline: 0 !important;
+    overflow: visible !important;
+    padding-inline: 0 !important;
+  }
+
+  .history-results-table,
+  .history-results-table tbody {
+    display: block !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .history-results-table thead {
+    block-size: 1px;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    inline-size: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.055), transparent 55%),
+      rgba(9, 11, 11, 0.72) !important;
+    border: 1px solid rgba(255, 255, 255, 0.11) !important;
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.075), 0 14px 32px rgba(0, 0, 0, 0.2);
+    display: grid !important;
+    gap: 0 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    inline-size: 100% !important;
+    margin-bottom: 12px;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow: hidden;
+    padding: 16px;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row):last-child {
+    margin-bottom: 0;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td {
+    align-items: flex-start;
+    border: 0 !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 6px;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    padding: 11px 0 !important;
+    white-space: normal !important;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td::before {
+    color: #858d88;
+    content: attr(data-label);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td:first-child,
+  .history-results-table tbody tr:not(.empty-table-row) td:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td:first-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.085) !important;
+    padding-bottom: 15px !important;
+    padding-top: 0 !important;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td:first-child::before {
+    display: none;
+  }
+
+  .history-results-table .table-title-cell,
+  .history-results-table .table-title-cell > div {
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .history-results-table .table-title-cell strong,
+  .history-results-table .table-title-cell span {
+    overflow-wrap: anywhere;
+    white-space: normal !important;
+  }
+
+  .history-results-table .table-score {
+    font-size: 24px !important;
+    line-height: 1 !important;
+  }
+
+  .history-results-table .outcome-pill {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-block-size: 30px;
+    white-space: nowrap !important;
+  }
+
+  .history-results-table tbody tr:not(.empty-table-row) td:last-child {
+    border-top: 1px solid rgba(255, 255, 255, 0.085) !important;
+    padding-bottom: 0 !important;
+    padding-top: 15px !important;
+  }
+
+  .history-results-table .certificate-row-button {
+    inline-size: 100% !important;
+    justify-content: center !important;
+    min-block-size: 44px;
+  }
+
+  .history-results-table .empty-table-row,
+  .history-results-table .empty-table-row td {
+    display: block !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+  }
+
+  .history-results-table .empty-table-row td::before {
+    display: none;
+  }
+
   .mobile-nav {
     inline-size: auto !important;
     max-inline-size: none !important;

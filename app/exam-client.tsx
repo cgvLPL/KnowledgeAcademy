@@ -1055,20 +1055,20 @@ function HistoryView({
       <section className="table-card">
         <div className="table-card-header">
           <div><h3>Evaluation results</h3><p>Current and previous evaluation records.</p></div>
-          <div className="table-actions"><button className="icon-button"><Search size={18} /></button><button className="icon-button"><Filter size={18} /></button></div>
+          <div className="table-actions"><button className="icon-button" aria-label="Search evaluation results"><Search size={18} /></button><button className="icon-button" aria-label="Filter evaluation results"><Filter size={18} /></button></div>
         </div>
         <div className="responsive-table">
-          <table>
+          <table className="history-results-table">
             <thead><tr><th>Evaluation</th><th>Completed</th><th>Duration</th><th>Score</th><th>Outcome</th><th>Certificate</th></tr></thead>
             <tbody>
               {history.map((item) => (
                 <tr key={item.id}>
-                  <td><div className="table-title-cell"><EvaluationIcon color={item.score >= 80 ? "green" : "orange"} /><div><strong>{item.title}</strong><span>{item.category}</span></div></div></td>
-                  <td>{item.date}</td>
-                  <td>{item.duration}</td>
-                  <td><strong className="table-score">{item.score}%</strong></td>
-                  <td><span className={`outcome-pill ${item.status === "Passed" ? "pass" : "review"}`}>{item.status}</span></td>
-                  <td>
+                  <td data-label="Evaluation"><div className="table-title-cell"><EvaluationIcon color={item.score >= 80 ? "green" : "orange"} /><div><strong>{item.title}</strong><span>{item.category}</span></div></div></td>
+                  <td data-label="Completed">{item.date}</td>
+                  <td data-label="Duration">{item.duration}</td>
+                  <td data-label="Score"><strong className="table-score">{item.score}%</strong></td>
+                  <td data-label="Outcome"><span className={`outcome-pill ${item.status === "Passed" ? "pass" : "review"}`}>{item.status}</span></td>
+                  <td data-label="Certificate">
                     <button className="certificate-row-button" type="button" onClick={() => onCertificate(item)}>
                       <FileText size={15} /> View
                     </button>
