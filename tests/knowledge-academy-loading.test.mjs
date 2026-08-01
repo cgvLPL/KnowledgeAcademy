@@ -48,11 +48,14 @@ test("loading screen uses the real CGV SVG and a visible Knowledge Academy locku
 });
 
 test("opening animation presents the app tagline before the loading status", () => {
+  const introCss = read("app/logo-intro-animation.css");
   assert.ok(client.includes('<p className="boot-tagline">Focused learning. Cinematic energy.</p>'));
   assert.ok(client.indexOf('className="boot-tagline"') < client.indexOf('className="boot-bar"'));
   assert.ok(client.includes('<p className="boot-status">Preparing your evaluation portal</p>'));
-  assert.ok(read("app/logo-intro-animation.css").includes("@keyframes cgv-intro-tagline"));
-  assert.ok(read("app/logo-intro-animation.css").includes(".boot-screen .boot-tagline"));
+  assert.ok(introCss.includes("@keyframes cgv-intro-tagline"));
+  assert.match(introCss, /\.boot-screen \.boot-tagline\s*\{[\s\S]*?margin:\s*-28px auto 0 !important/);
+  assert.match(introCss, /\.boot-screen \.boot-bar\s*\{[\s\S]*?margin-top:\s*18px !important/);
+  assert.match(introCss, /\.boot-screen \.boot-status\s*\{[\s\S]*?margin-top:\s*15px !important/);
 });
 
 test("shared logo remains prominent without overflowing smaller surfaces", () => {
