@@ -1,0 +1,174 @@
+/* Final phone containment layer.
+ * Keep application panels inside the visual viewport while preserving
+ * intentional horizontal scrolling for wide data tables.
+ */
+
+@media (max-width: 760px) {
+  html,
+  body {
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    overflow-x: clip !important;
+  }
+
+  .app-shell,
+  .main-shell,
+  .content,
+  .participant-section,
+  .participant-home,
+  .participant-evaluations,
+  .participant-history,
+  .participant-profile {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .main-shell {
+    overflow-x: clip !important;
+    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .content,
+  .participant-section {
+    margin-inline: 0 !important;
+    padding-left: max(14px, env(safe-area-inset-left)) !important;
+    padding-right: max(14px, env(safe-area-inset-right)) !important;
+  }
+
+  .participant-section {
+    gap: 16px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding-bottom: calc(128px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .participant-section > *,
+  .participant-page-header,
+  .participant-page-header > div,
+  .participant-home .hero-evaluation,
+  .participant-home .hero-copy,
+  .participant-home .section-block,
+  .participant-home .metric-grid,
+  .participant-home .metric-card,
+  .participant-home .history-preview-grid,
+  .participant-home .history-preview-card,
+  .participant-evaluations .toolbar,
+  .participant-evaluations .course-grid,
+  .participant-evaluations .course-card,
+  .participant-history .history-summary,
+  .participant-history .table-card,
+  .participant-profile .profile-grid,
+  .participant-profile .profile-card,
+  .empty-state {
+    box-sizing: border-box !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .participant-section > *,
+  .participant-page-header,
+  .participant-home .hero-evaluation,
+  .participant-home .section-block,
+  .participant-home .metric-grid,
+  .participant-evaluations .toolbar,
+  .participant-evaluations .course-grid,
+  .participant-history .history-summary,
+  .participant-history .table-card,
+  .participant-profile .profile-grid {
+    inline-size: 100% !important;
+  }
+
+  .participant-page-header {
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .participant-page-header h2,
+  .participant-page-header p,
+  .participant-home h3,
+  .participant-home p,
+  .participant-home span,
+  .participant-evaluations h3,
+  .participant-evaluations p,
+  .participant-history h3,
+  .participant-history p {
+    max-inline-size: 100% !important;
+    overflow-wrap: anywhere;
+  }
+
+  .participant-page-header .secondary-button,
+  .participant-page-header .primary-button,
+  .participant-home .hero-button,
+  .participant-home .row-button,
+  .participant-evaluations .row-button {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    justify-content: center !important;
+    white-space: normal !important;
+  }
+
+  .participant-home .metric-grid,
+  .participant-home .history-preview-grid,
+  .participant-evaluations .course-grid,
+  .participant-history .history-summary,
+  .participant-profile .profile-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .participant-home .metric-card,
+  .participant-home .history-preview-card,
+  .participant-evaluations .course-card {
+    inline-size: 100% !important;
+  }
+
+  .participant-home .metric-card > div,
+  .participant-home .history-preview-card > div,
+  .participant-evaluations .course-card > div,
+  .empty-state > * {
+    min-inline-size: 0 !important;
+  }
+
+  .participant-home .section-block,
+  .participant-history .table-card {
+    overflow: hidden !important;
+  }
+
+  .participant-history .responsive-table,
+  .participant-evaluations .responsive-table {
+    box-sizing: border-box !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-nav {
+    inline-size: auto !important;
+    max-inline-size: none !important;
+    min-inline-size: 0 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .content,
+  .participant-section {
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+  }
+
+  .participant-page-header,
+  .participant-home .hero-evaluation,
+  .participant-home .section-block,
+  .participant-home .metric-card,
+  .participant-evaluations .course-card,
+  .participant-history .table-card {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+}
