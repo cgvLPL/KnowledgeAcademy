@@ -1,0 +1,116 @@
+/* Final login rhythm pass: a larger lockup and a tighter, balanced form stack. */
+.login-page .login-brand-row {
+  width: min(44vw, 660px) !important;
+}
+
+.login-page .login-card-heading {
+  margin-bottom: clamp(18px, 2.2vh, 22px) !important;
+}
+
+.login-page .role-switch {
+  margin-bottom: clamp(16px, 2vh, 20px) !important;
+}
+
+.login-page .field-label {
+  gap: 7px !important;
+  margin-bottom: clamp(12px, 1.6vh, 15px) !important;
+}
+
+.login-page .input-shell {
+  min-height: 56px !important;
+}
+
+.login-page .login-options {
+  margin: 0 auto clamp(16px, 2vh, 20px) !important;
+}
+
+.login-page .login-button {
+  min-height: 56px !important;
+}
+
+.login-page .login-card::after {
+  margin-top: clamp(18px, 2.4vh, 24px) !important;
+  padding-top: 0 !important;
+}
+
+@media (max-width: 1100px) and (min-width: 861px) {
+  .login-page .login-brand-row {
+    width: min(37vw, 500px) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .login-page .login-card {
+    padding:
+      max(22px, env(safe-area-inset-top))
+      max(22px, env(safe-area-inset-right))
+      max(24px, env(safe-area-inset-bottom))
+      max(22px, env(safe-area-inset-left)) !important;
+  }
+
+  .login-page .login-brand-row {
+    margin: 0 auto clamp(20px, 3vh, 26px) !important;
+    width: min(500px, 90vw) !important;
+  }
+
+  .login-page .login-card-heading {
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .login-page .login-card {
+    padding-left: max(18px, env(safe-area-inset-left)) !important;
+    padding-right: max(18px, env(safe-area-inset-right)) !important;
+  }
+
+  .login-page .login-brand-row {
+    margin-bottom: 18px !important;
+    width: min(370px, 90vw) !important;
+  }
+
+  .login-page .login-card-heading {
+    margin-bottom: 18px !important;
+  }
+
+  .login-page .role-switch {
+    margin-bottom: 15px !important;
+  }
+
+  .login-page .field-label {
+    margin-bottom: 12px !important;
+  }
+
+  .login-page .input-shell,
+  .login-page .login-button {
+    min-height: 52px !important;
+  }
+
+  .login-page .login-options {
+    margin-bottom: 15px !important;
+  }
+
+  .login-page .login-card::after {
+    margin: 15px auto 0 !important;
+  }
+}
+
+@media (max-width: 860px) and (max-height: 700px) {
+  .login-page .login-brand-row {
+    margin-bottom: 14px !important;
+    width: min(430px, 86vw) !important;
+  }
+
+  .login-page .login-card-heading,
+  .login-page .role-switch {
+    margin-bottom: 14px !important;
+  }
+
+  .login-page .field-label {
+    margin-bottom: 10px !important;
+  }
+
+  .login-page .login-options {
+    margin-bottom: 12px !important;
+  }
+}
