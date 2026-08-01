@@ -51,16 +51,29 @@
   z-index: 2;
 }
 
+.boot-screen .boot-tagline {
+  animation: cgv-intro-tagline .5s cubic-bezier(.2, .78, .18, 1) .92s both;
+  color: rgba(255, 255, 255, 0.96) !important;
+  font-size: clamp(11px, 1.05vw, 15px) !important;
+  font-weight: 520 !important;
+  letter-spacing: 0.14em !important;
+  line-height: 1.4 !important;
+  margin: 22px auto 0 !important;
+  text-transform: none !important;
+}
+
 .boot-screen .boot-bar {
-  animation: cgv-intro-bar-arrive .42s ease-out 1.12s both;
+  animation: cgv-intro-bar-arrive .42s ease-out 1.16s both;
+  margin-top: 27px !important;
 }
 
 .boot-screen .boot-bar span {
-  animation: cgv-intro-progress 1.12s cubic-bezier(.3, .72, .18, 1) 1.2s both !important;
+  animation: cgv-intro-progress 1.08s cubic-bezier(.3, .72, .18, 1) 1.22s both !important;
 }
 
-.boot-screen .boot-content p {
-  animation: cgv-intro-caption .45s ease-out 1.32s both;
+.boot-screen .boot-status {
+  animation: cgv-intro-caption .42s ease-out 1.38s both;
+  margin-top: 22px !important;
 }
 
 @keyframes cgv-intro-aperture {
@@ -92,6 +105,11 @@
   100% { opacity: 1; transform: translateY(0) scaleX(1); }
 }
 
+@keyframes cgv-intro-tagline {
+  0% { letter-spacing: .2em; opacity: 0; transform: translateY(9px); }
+  100% { letter-spacing: .14em; opacity: 1; transform: translateY(0); }
+}
+
 @keyframes cgv-intro-progress {
   0% { transform: scaleX(0); }
   36% { transform: scaleX(.28); }
@@ -114,6 +132,21 @@
     top: 12%;
   }
 
+  .boot-screen .boot-tagline {
+    font-size: clamp(9px, 2.8vw, 12px) !important;
+    letter-spacing: .1em !important;
+    margin-top: 18px !important;
+    white-space: nowrap;
+  }
+
+  .boot-screen .boot-bar {
+    margin-top: 23px !important;
+  }
+
+  .boot-screen .boot-status {
+    margin-top: 20px !important;
+  }
+
   @keyframes cgv-intro-caption {
     0% { letter-spacing: .34em; opacity: 0; transform: translateY(7px); }
     100% { letter-spacing: .27em; opacity: 1; transform: translateY(0); }
@@ -134,9 +167,10 @@
 
   .boot-logo-reveal,
   .boot-logo-reveal .brand-lockup,
+  .boot-screen .boot-tagline,
   .boot-screen .boot-bar,
   .boot-screen .boot-bar span,
-  .boot-screen .boot-content p {
+  .boot-screen .boot-status {
     animation: none !important;
     clip-path: none !important;
     filter: none !important;

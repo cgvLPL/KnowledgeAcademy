@@ -397,10 +397,11 @@ function BootScreen() {
           </div>
           <span className="boot-logo-scan" aria-hidden="true" />
         </div>
+        <p className="boot-tagline">Focused learning. Cinematic energy.</p>
         <div className="boot-bar" role="progressbar" aria-label="Loading application">
           <span />
         </div>
-        <p>Preparing your evaluation portal</p>
+        <p className="boot-status">Preparing your evaluation portal</p>
       </div>
     </main>
   );

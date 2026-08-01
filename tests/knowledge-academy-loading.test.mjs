@@ -47,6 +47,14 @@ test("loading screen uses the real CGV SVG and a visible Knowledge Academy locku
   assert.ok(css.includes(".boot-content img"));
 });
 
+test("opening animation presents the app tagline before the loading status", () => {
+  assert.ok(client.includes('<p className="boot-tagline">Focused learning. Cinematic energy.</p>'));
+  assert.ok(client.indexOf('className="boot-tagline"') < client.indexOf('className="boot-bar"'));
+  assert.ok(client.includes('<p className="boot-status">Preparing your evaluation portal</p>'));
+  assert.ok(read("app/logo-intro-animation.css").includes("@keyframes cgv-intro-tagline"));
+  assert.ok(read("app/logo-intro-animation.css").includes(".boot-screen .boot-tagline"));
+});
+
 test("shared logo remains prominent without overflowing smaller surfaces", () => {
   for (const selector of [
     ".sidebar .brand-logo",
