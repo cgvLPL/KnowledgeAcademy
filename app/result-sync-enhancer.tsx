@@ -218,7 +218,9 @@ export default function ResultSyncEnhancer() {
 
       const scoreboardSelect = document.querySelector<HTMLSelectElement>(".scoreboard-hero select");
       if (scoreboardSelect && !scoreboardSelect.disabled && scoreboardSelect.value) {
-        scoreboardSelect.dispatchEvent(new Event("change", { bubbles: true }));
+        window.dispatchEvent(new CustomEvent("cgv:scoreboard-refresh", {
+          detail: { evaluationId: scoreboardSelect.value },
+        }));
         return;
       }
 

@@ -39,6 +39,17 @@
   opacity: 1 !important;
 }
 
+.scoreboard-filter-button.active {
+  background: linear-gradient(135deg, #ff9f1c, #ef3139) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+
+.scoreboard-filter-button:focus-visible {
+  outline: 2px solid #ff9f1c;
+  outline-offset: 2px;
+}
+
 .admin-header-actions .executive-report-button {
   min-width: 218px;
 }

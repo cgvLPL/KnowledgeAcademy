@@ -85,14 +85,22 @@ type Question = {
 };
 
 type LeaderboardRow = {
+  attemptId: string;
   rank: number;
   name: string;
   branch: string;
   score: number;
   correctCount: number;
   totalQuestions: number;
+  durationSeconds: number;
   time: string;
   submittedAt?: string;
+  submittedAtEpoch: number;
+};
+
+type ScoreboardLoadResult = {
+  rows: LeaderboardRow[];
+  error: string | null;
 };
 
 type ParticipantRow = {
@@ -167,18 +175,32 @@ function formatDuration(totalSeconds: number) {
 }
 
 function apiScoreboardToLeaderboard(items: Record<string, unknown>[]): LeaderboardRow[] {
-  return items.map((item, index) => ({
-    rank: Number(item.rank || index + 1),
-    name: String(item.name || "Participant"),
-    branch: String(item.branch || ""),
-    score: Number(item.score || 0),
-    correctCount: Number(item.correctCount || 0),
-    totalQuestions: Number(item.totalQuestions || 0),
-    time: formatDuration(Number(item.durationSeconds || 0))
-      .replace("m ", ":")
-      .replace("s", ""),
-    submittedAt: formatApiDate(item.submittedAt, "—"),
-  }));
+  return items
+    .map((item, index) => {
+      const durationSeconds = Math.max(0, Number(item.durationSeconds || 0));
+      const submittedAtEpoch = new Date(String(item.submittedAt || "")).getTime();
+      return {
+        attemptId: String(item.attemptId || `score-${index}`),
+        rank: index + 1,
+        name: String(item.name || "Participant"),
+        branch: String(item.branch || ""),
+        score: Math.min(100, Math.max(0, Number(item.score || 0))),
+        correctCount: Math.max(0, Number(item.correctCount || 0)),
+        totalQuestions: Math.max(0, Number(item.totalQuestions || 0)),
+        durationSeconds,
+        time: formatDuration(durationSeconds)
+          .replace("m ", ":")
+          .replace("s", ""),
+        submittedAt: formatApiDate(item.submittedAt, "—"),
+        submittedAtEpoch: Number.isNaN(submittedAtEpoch) ? 0 : submittedAtEpoch,
+      };
+    })
+    .sort((first, second) => (
+      second.score - first.score ||
+      first.durationSeconds - second.durationSeconds ||
+      second.submittedAtEpoch - first.submittedAtEpoch
+    ))
+    .map((item, index) => ({ ...item, rank: index + 1 }));
 }
 
 function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Evaluation {
@@ -1629,40 +1651,106 @@ function ParticipantsView({
 }
 
 function ScoreboardView({
-  leaderboardData,
   evaluations,
   onEvaluationChange,
   onDownloadReport,
 }: {
-  leaderboardData: LeaderboardRow[];
   evaluations: Evaluation[];
-  onEvaluationChange: (evaluationId: string) => Promise<string | null>;
+  onEvaluationChange: (evaluationId: string) => Promise<ScoreboardLoadResult>;
   onDownloadReport: (evaluationId: string) => Promise<string | null>;
 }) {
-  const [evaluation, setEvaluation] = useState(evaluations[0]?.id || "");
+  const initialEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0];
+  const [evaluation, setEvaluation] = useState(initialEvaluation?.id || "");
+  const [scoreboardRows, setScoreboardRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [outcomeFilter, setOutcomeFilter] = useState<"all" | "passed" | "review">("all");
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [reportMessage, setReportMessage] = useState("");
-  const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || evaluations[0] || null;
-  const average = leaderboardData.length
-    ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
+  const scoreboardRequestRef = useRef(0);
+  const loadedEvaluationRef = useRef("");
+  const scoreboardLoaderRef = useRef(onEvaluationChange);
+  const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || null;
+  const average = scoreboardRows.length
+    ? Math.round(scoreboardRows.reduce((sum, item) => sum + item.score, 0) / scoreboardRows.length)
     : 0;
-  const topScore = leaderboardData.length
-    ? Math.max(...leaderboardData.map((item) => item.score))
+  const topScore = scoreboardRows.length
+    ? Math.max(...scoreboardRows.map((item) => item.score))
     : 0;
-  const passRate = leaderboardData.length && selectedEvaluation
-    ? Math.round(leaderboardData.filter((item) => item.score >= selectedEvaluation.passingScore).length / leaderboardData.length * 100)
+  const passRate = scoreboardRows.length && selectedEvaluation
+    ? Math.round(scoreboardRows.filter((item) => item.score >= selectedEvaluation.passingScore).length / scoreboardRows.length * 100)
     : 0;
+  const visibleRows = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return scoreboardRows.filter((item) => {
+      const matchesSearch = !normalizedSearch ||
+        `${item.name} ${item.branch}`.toLowerCase().includes(normalizedSearch);
+      const passed = selectedEvaluation ? item.score >= selectedEvaluation.passingScore : false;
+      const matchesOutcome = outcomeFilter === "all" ||
+        (outcomeFilter === "passed" ? passed : !passed);
+      return matchesSearch && matchesOutcome;
+    });
+  }, [outcomeFilter, scoreboardRows, searchTerm, selectedEvaluation]);
 
-  async function selectEvaluation(evaluationId: string) {
-    setEvaluation(evaluationId);
+  useEffect(() => {
+    scoreboardLoaderRef.current = onEvaluationChange;
+  }, [onEvaluationChange]);
+
+  useEffect(() => {
+    if (evaluation && evaluations.some((item) => item.id === evaluation)) return;
+    const nextEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0];
+    setEvaluation(nextEvaluation?.id || "");
+  }, [evaluation, evaluations]);
+
+  useEffect(() => {
+    if (!evaluation) {
+      setScoreboardRows([]);
+      setLoadError("");
+      setLoading(false);
+      return;
+    }
+
+    const requestId = scoreboardRequestRef.current + 1;
+    scoreboardRequestRef.current = requestId;
+    const evaluationChanged = loadedEvaluationRef.current !== evaluation;
+    loadedEvaluationRef.current = evaluation;
+    if (evaluationChanged) setScoreboardRows([]);
     setLoading(true);
     setLoadError("");
     setReportMessage("");
-    const error = await onEvaluationChange(evaluationId);
-    if (error) setLoadError(error);
-    setLoading(false);
+
+    void scoreboardLoaderRef.current(evaluation).then((result) => {
+      if (scoreboardRequestRef.current !== requestId) return;
+      if (result.error) {
+        setLoadError(result.error);
+      } else {
+        setScoreboardRows(result.rows);
+      }
+      setLoading(false);
+    });
+  }, [evaluation, refreshVersion]);
+
+  useEffect(() => {
+    const refreshScoreboard = (event: Event) => {
+      const detail = (event as CustomEvent<{ evaluationId?: string }>).detail;
+      if (!detail?.evaluationId || detail.evaluationId === evaluation) {
+        setRefreshVersion((value) => value + 1);
+      }
+    };
+    window.addEventListener("cgv:scoreboard-refresh", refreshScoreboard);
+    return () => window.removeEventListener("cgv:scoreboard-refresh", refreshScoreboard);
+  }, [evaluation]);
+
+  function selectEvaluation(evaluationId: string) {
+    setEvaluation(evaluationId);
+    setSearchTerm("");
+    setOutcomeFilter("all");
+  }
+
+  function cycleOutcomeFilter() {
+    setOutcomeFilter((current) => current === "all" ? "passed" : current === "passed" ? "review" : "all");
   }
 
   async function downloadReport() {
@@ -1700,7 +1788,7 @@ function ScoreboardView({
           <span className="card-kicker">SELECT EVALUATION</span>
           <select
             value={evaluation}
-            onChange={(event) => void selectEvaluation(event.target.value)}
+            onChange={(event) => selectEvaluation(event.target.value)}
             disabled={!evaluations.length || loading}
           >
             {!evaluations.length && <option value="">No evaluations available</option>}
@@ -1710,17 +1798,17 @@ function ScoreboardView({
           {loadError && <p className="scoreboard-error" role="alert">{loadError}</p>}
         </div>
         <div className="scoreboard-kpis">
-          <div><span>Submissions</span><strong>{leaderboardData.length}</strong></div>
+          <div><span>Submissions</span><strong>{scoreboardRows.length}</strong></div>
           <div><span>Average</span><strong>{average}<small>%</small></strong></div>
           <div><span>Pass rate</span><strong>{passRate}<small>%</small></strong></div>
           <div><span>Top score</span><strong>{topScore}<small>%</small></strong></div>
         </div>
       </section>
       <div className="podium-grid">
-        {[leaderboardData[1], leaderboardData[0], leaderboardData[2]]
+        {[scoreboardRows[1], scoreboardRows[0], scoreboardRows[2]]
           .filter((item): item is LeaderboardRow => Boolean(item))
           .map((item) => (
-          <article className={`podium-card podium-${item.rank}`} key={item.rank}>
+          <article className={`podium-card podium-${item.rank}`} key={item.attemptId}>
             <span className="podium-rank">{item.rank === 1 ? <Trophy size={24} /> : `#${item.rank}`}</span>
             <Initials name={item.name} size="lg" />
             <h3>{item.name}</h3><p>{item.branch}</p><strong>{item.score}%</strong><small>{item.time}</small>
@@ -1729,18 +1817,22 @@ function ScoreboardView({
         ))}
       </div>
       <section className="table-card">
-        <div className="table-card-header"><div><h3>All participants</h3><p>Sorted by score, then completion time.</p></div><div className="table-actions"><div className="admin-search"><Search size={16} /><input placeholder="Find participant…" /></div><button className="icon-button"><Filter size={18} /></button></div></div>
+        <div className="table-card-header"><div><h3>All participants</h3><p>Sorted by score, then completion time.</p></div><div className="table-actions"><div className="admin-search"><Search size={16} /><input aria-label="Find participant" placeholder="Find participant…" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /></div><button className={`icon-button scoreboard-filter-button ${outcomeFilter !== "all" ? "active" : ""}`} type="button" data-button-safety-net aria-label={`Result filter: ${outcomeFilter === "all" ? "all submissions" : outcomeFilter}`} title={`Showing ${outcomeFilter === "all" ? "all submissions" : outcomeFilter}`} onClick={cycleOutcomeFilter}><Filter size={18} /></button></div></div>
         <div className="responsive-table">
           <table>
             <thead><tr><th>Rank</th><th>Participant</th><th>Branch</th><th>Score</th><th>Correct</th><th>Time</th><th>Completed</th></tr></thead>
             <tbody>
-              {leaderboardData.map((item) => (
-                <tr key={`${item.rank}-${item.name}`}><td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td><td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td><td>{item.branch || "—"}</td><td><strong className="table-score">{item.score}%</strong></td><td>{item.totalQuestions ? `${item.correctCount}/${item.totalQuestions}` : "—"}</td><td>{item.time}</td><td>{item.submittedAt || "—"}</td></tr>
+              {visibleRows.map((item) => (
+                <tr key={item.attemptId}><td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td><td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td><td>{item.branch || "—"}</td><td><strong className="table-score">{item.score}%</strong></td><td>{item.totalQuestions ? `${item.correctCount}/${item.totalQuestions}` : "—"}</td><td>{item.time}</td><td>{item.submittedAt || "—"}</td></tr>
               ))}
-              {!leaderboardData.length && (
+              {!visibleRows.length && (
                 <tr className="empty-table-row">
                   <td colSpan={7}>
-                    <EmptyState icon={Trophy} title="No submitted scores" description="The scoreboard will populate after participants complete an evaluation." />
+                    <EmptyState
+                      icon={Trophy}
+                      title={scoreboardRows.length ? "No matching scores" : "No submitted scores"}
+                      description={scoreboardRows.length ? "Adjust the participant search or result filter." : "The scoreboard will populate after participants complete this evaluation."}
+                    />
                   </td>
                 </tr>
               )}
@@ -2210,9 +2302,9 @@ export default function ExamClient() {
     }
   }
 
-  async function loadScoreboard(evaluationId: string): Promise<string | null> {
+  async function loadScoreboard(evaluationId: string): Promise<ScoreboardLoadResult> {
     if (backendMode !== "sheets" || !sessionToken) {
-      return "The Google Sheets backend is required to load a scoreboard.";
+      return { rows: [], error: "The Google Sheets backend is required to load a scoreboard." };
     }
     try {
       const data = await sheetsRequest<{
@@ -2221,11 +2313,14 @@ export default function ExamClient() {
       }>("adminGetDashboard", {
         token: sessionToken,
         courseId: evaluationId,
+        fresh: true,
       });
-      setLeaderboardData(apiScoreboardToLeaderboard(data.scoreboard));
-      return null;
+      return { rows: apiScoreboardToLeaderboard(data.scoreboard), error: null };
     } catch (error) {
-      return error instanceof Error ? error.message : "Unable to load this scoreboard.";
+      return {
+        rows: [],
+        error: error instanceof Error ? error.message : "Unable to load this scoreboard.",
+      };
     }
   }
 
@@ -2286,7 +2381,7 @@ export default function ExamClient() {
         {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} evaluations={evaluations} participantsData={participantsData} />}
         {role === "admin" && view === "courses" && <CoursesView evaluations={evaluations} onCreate={() => setBuilderOpen(true)} />}
         {role === "admin" && view === "participants" && <ParticipantsView participantsData={participantsData} onAdd={addParticipant} />}
-        {role === "admin" && view === "scoreboard" && <ScoreboardView leaderboardData={leaderboardData} evaluations={evaluations} onEvaluationChange={loadScoreboard} onDownloadReport={downloadExecutiveReport} />}
+        {role === "admin" && view === "scoreboard" && <ScoreboardView evaluations={evaluations} onEvaluationChange={loadScoreboard} onDownloadReport={downloadExecutiveReport} />}
       </div>
       <MobileNav role={role} view={view} setView={setView} />
       {certificateItem && (

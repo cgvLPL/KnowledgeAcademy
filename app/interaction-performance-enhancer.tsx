@@ -203,7 +203,7 @@ export default function InteractionPerformanceEnhancer() {
       const payload = parsePayload(init);
       const action = String(payload?.action || "");
 
-      if (payload && READ_TTL[action]) {
+      if (payload && READ_TTL[action] && payload.fresh !== true) {
         return cachedRead(input, init, payload);
       }
 

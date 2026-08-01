@@ -78,6 +78,19 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
   assert.match(resultSync, /for \(let attempt = 0; attempt < 3;/);
 });
 
+test("scoreboard stays scoped to the selected evaluation and refreshes live results", () => {
+  assert.match(client, /const \[scoreboardRows, setScoreboardRows\] = useState<LeaderboardRow\[]>\(\[\]\)/);
+  assert.match(client, /evaluations\.find\(\(item\) => item\.participants > 0\)/);
+  assert.match(client, /scoreboardLoaderRef\.current\(evaluation\)/);
+  assert.match(client, /scoreboardRequestRef\.current !== requestId/);
+  assert.match(client, /setScoreboardRows\(result\.rows\)/);
+  assert.match(client, /courseId: evaluationId,[\s\S]*?fresh: true/);
+  assert.match(client, /value=\{searchTerm\}/);
+  assert.match(client, /outcomeFilter === "passed"/);
+  assert.match(resultSync, /new CustomEvent\("cgv:scoreboard-refresh"/);
+  assert.match(performance, /READ_TTL\[action\] && payload\.fresh !== true/);
+});
+
 test("executive reports include per-quiz score and question analytics", () => {
   const report = read("app/executive-report.ts");
   assert.match(backend, /function adminGetExecutiveReport_\(body\)/);
