@@ -336,9 +336,7 @@ function Login({
             <span>Secure portal</span>
           </div>
           <div className="login-card-heading">
-            <span className="card-kicker">WELCOME BACK</span>
-            <h1>Ready to continue?</h1>
-            <p>Sign in once and we will open the right workspace for your account.</p>
+            <h1>Welcome Back!</h1>
           </div>
 
           <label className="field-label">

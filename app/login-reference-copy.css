@@ -1,22 +1,6 @@
-/* Visual copy alignment for the supplied sign-in reference. */
+/* Final sign-in wording. */
 .login-page .login-card-heading h1 {
-  font-size: 0 !important;
-}
-
-.login-page .login-card-heading h1::after {
-  content: "Welcome back";
-  display: block;
   font-size: clamp(32px, 3.1vw, 45px);
-}
-
-.login-page .login-card-heading p {
-  font-size: 0 !important;
-}
-
-.login-page .login-card-heading p::after {
-  content: "Sign in once — we’ll open the right workspace automatically";
-  display: block;
-  font-size: 15px;
 }
 
 .login-page .login-button {
