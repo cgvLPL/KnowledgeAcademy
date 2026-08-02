@@ -1426,12 +1426,45 @@ function AdminOverview({
   participantsData: ParticipantRow[];
 }) {
   const liveCourses = evaluations.filter((item) => item.status === "Live").length;
-  const averageScore = leaderboardData.length
-    ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
-    : 0;
+  const scheduledCourses = evaluations.filter((item) => item.status === "Scheduled").length;
+  const completedCourses = evaluations.filter((item) => item.status === "Completed").length;
+  const draftCourses = evaluations.filter((item) => item.status === "Draft").length;
+  const activeParticipants = participantsData.filter((item) => item.status === "Active").length;
+  const inactiveParticipants = participantsData.length - activeParticipants;
+  const participantsWithAttempts = participantsData.filter((item) => item.attempts > 0);
+  const totalAttempts = participantsData.reduce((sum, item) => sum + item.attempts, 0);
+  const averageScore = totalAttempts
+    ? Math.round(participantsData.reduce((sum, item) => sum + item.average * item.attempts, 0) / totalAttempts)
+    : leaderboardData.length
+      ? Math.round(leaderboardData.reduce((sum, item) => sum + item.score, 0) / leaderboardData.length)
+      : 0;
   const topScore = leaderboardData.length
     ? Math.max(...leaderboardData.map((item) => item.score))
+    : participantsWithAttempts.length
+      ? Math.max(...participantsWithAttempts.map((item) => item.average))
+      : 0;
+  const participationRate = activeParticipants
+    ? Math.min(100, Math.round(participantsWithAttempts.length / activeParticipants * 100))
     : 0;
+  const lowPerformingCourses = evaluations.filter((item) => item.average > 0 && item.average < item.passingScore);
+  const unattendedLiveCourses = evaluations.filter((item) => item.status === "Live" && item.participants === 0);
+  const scoredParticipants = participantsData.filter((item) => item.attempts > 0);
+  const scoreBands = [
+    { label: "85–100%", detail: "High performers", count: scoredParticipants.filter((item) => item.average >= 85).length, tone: "high" },
+    { label: "70–84%", detail: "Developing", count: scoredParticipants.filter((item) => item.average >= 70 && item.average < 85).length, tone: "medium" },
+    { label: "Below 70%", detail: "Needs support", count: scoredParticipants.filter((item) => item.average < 70).length, tone: "low" },
+  ];
+  const attentionItems = [
+    inactiveParticipants > 0 ? `${inactiveParticipants} inactive participant account${inactiveParticipants === 1 ? "" : "s"}` : "",
+    lowPerformingCourses.length > 0 ? `${lowPerformingCourses.length} course${lowPerformingCourses.length === 1 ? " is" : "s are"} below the passing target` : "",
+    unattendedLiveCourses.length > 0 ? `${unattendedLiveCourses.length} live evaluation${unattendedLiveCourses.length === 1 ? " has" : "s have"} no participants yet` : "",
+  ].filter(Boolean);
+  const evaluationInsights = [...evaluations]
+    .sort((a, b) => {
+      const priority = { Live: 0, Scheduled: 1, Completed: 2, Draft: 3 };
+      return priority[a.status] - priority[b.status] || b.average - a.average;
+    })
+    .slice(0, 5);
   return (
     <div className="content admin-overview">
       <section className="welcome-row admin-section-header">
@@ -1445,30 +1478,80 @@ function AdminOverview({
         </div>
       </section>
       <section className="admin-metrics">
-        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Active participants</p><strong>{participantsData.filter((item) => item.status === "Active").length}</strong><small>{participantsData.length} total accounts</small></div></article>
-        <article><span className="metric-icon orange"><BookOpen size={20} /></span><div><p>Live evaluations</p><strong>{liveCourses}</strong><small>{evaluations.length} courses total</small></div></article>
-        <article><span className="metric-icon blue"><BarChart3 size={20} /></span><div><p>Average score</p><strong>{averageScore}<em>%</em></strong><small>{leaderboardData.length} submitted attempts</small></div></article>
-        <article><span className="metric-icon violet"><Trophy size={20} /></span><div><p>Top score</p><strong>{topScore}<em>%</em></strong><small>Current scoreboard</small></div></article>
+        <article><span className="metric-icon green"><Users size={20} /></span><div><p>Active participants</p><strong>{activeParticipants}</strong><small>{participantsData.length} total accounts</small></div></article>
+        <article><span className="metric-icon orange"><Gauge size={20} /></span><div><p>Participation rate</p><strong>{participationRate}<em>%</em></strong><small>{participantsWithAttempts.length} participants submitted</small></div></article>
+        <article><span className="metric-icon blue"><BarChart3 size={20} /></span><div><p>Average score</p><strong>{averageScore}<em>%</em></strong><small>{totalAttempts} submitted attempts</small></div></article>
+        <article><span className="metric-icon violet"><BookOpen size={20} /></span><div><p>Live evaluations</p><strong>{liveCourses}</strong><small>{scheduledCourses} scheduled next</small></div></article>
       </section>
-      <div className="admin-dashboard-grid">
-        <section className="analytics-card">
+      <div className="admin-dashboard-grid admin-information-grid">
+        <section className="analytics-card admin-evaluation-insights">
           <div className="section-heading">
-            <div><h3>Set up your workspace</h3><p>Create content first, then invite participants when you are ready.</p></div>
+            <div><h3>Evaluation performance</h3><p>Average score compared with each course&apos;s passing target.</p></div>
+            <button className="text-link" onClick={() => setView("courses")}>Manage courses <ArrowRight size={15} /></button>
           </div>
-          <div className="setup-actions">
-            <button onClick={onCreate}><span>01</span><div><strong>Create a quiz course</strong><small>Add questions, scoring, and access rules.</small></div><ArrowRight size={18} /></button>
-            <button onClick={() => setView("participants")}><span>02</span><div><strong>Add participants</strong><small>Create accounts only when the workspace is ready.</small></div><ArrowRight size={18} /></button>
-            <button onClick={() => setView("scoreboard")}><span>03</span><div><strong>Review submitted scores</strong><small>Results appear automatically after submissions.</small></div><ArrowRight size={18} /></button>
+          <div className="admin-performance-list">
+            {evaluationInsights.map((course) => (
+              <article className="admin-performance-row" key={course.id}>
+                <div className="admin-performance-copy">
+                  <span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span>
+                  <div><strong>{course.title}</strong><small>{course.participants} participants · Target {course.passingScore}%</small></div>
+                </div>
+                <div className="admin-performance-score">
+                  <strong>{course.average ? `${course.average}%` : "—"}</strong>
+                  <span>{course.average ? "Average" : "No results"}</span>
+                </div>
+                <div className="admin-performance-track" aria-label={`${course.title} average ${course.average || 0}%`}>
+                  <span style={{ "--admin-fill": `${Math.max(0, Math.min(100, course.average || 0))}%` } as CSSProperties} />
+                  <i style={{ "--admin-target": `${Math.max(0, Math.min(100, course.passingScore))}%` } as CSSProperties} />
+                </div>
+              </article>
+            ))}
+            {!evaluationInsights.length && (
+              <EmptyState icon={BookOpen} title="No evaluation data" description="Create a quiz course to begin tracking performance." />
+            )}
           </div>
         </section>
-        <section className="completion-card">
-          <div className="section-heading"><div><h3>Workspace status</h3><p>Live data from Google Sheets.</p></div></div>
-          <div className="workspace-summary">
-            <div><span>Courses</span><strong>{evaluations.length}</strong></div>
-            <div><span>Participants</span><strong>{participantsData.length}</strong></div>
-            <div><span>Submissions</span><strong>{leaderboardData.length}</strong></div>
+        <section className="completion-card admin-operations-card">
+          <div className="section-heading"><div><h3>Course pipeline</h3><p>Current evaluation availability.</p></div></div>
+          <div className="admin-course-states">
+            <div><span className="admin-state-dot live" /><p>Live</p><strong>{liveCourses}</strong></div>
+            <div><span className="admin-state-dot scheduled" /><p>Scheduled</p><strong>{scheduledCourses}</strong></div>
+            <div><span className="admin-state-dot completed" /><p>Completed</p><strong>{completedCourses}</strong></div>
+            <div><span className="admin-state-dot draft" /><p>Draft</p><strong>{draftCourses}</strong></div>
           </div>
-          <button className="secondary-button full" onClick={() => setView("scoreboard")}>View live scoreboard <ArrowRight size={17} /></button>
+          <div className="admin-pulse-summary">
+            <div><span>Total attempts</span><strong>{totalAttempts}</strong></div>
+            <div><span>Top score</span><strong>{topScore}%</strong></div>
+          </div>
+          <button className="secondary-button full" onClick={() => setView("scoreboard")}>Open live scoreboard <ArrowRight size={17} /></button>
+        </section>
+      </div>
+      <div className="admin-insight-grid">
+        <section className="analytics-card admin-score-distribution">
+          <div className="section-heading"><div><h3>Participant score bands</h3><p>Distribution based on each participant&apos;s current average.</p></div></div>
+          <div className="admin-score-band-list">
+            {scoreBands.map((band) => (
+              <div className={`admin-score-band band-${band.tone}`} key={band.label}>
+                <div><strong>{band.label}</strong><span>{band.detail}</span></div>
+                <div className="admin-band-track"><span style={{ "--admin-band-fill": `${scoredParticipants.length ? Math.round(band.count / scoredParticipants.length * 100) : 0}%` } as CSSProperties} /></div>
+                <b>{band.count}</b>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="completion-card admin-attention-card">
+          <div className="section-heading"><div><h3>Needs attention</h3><p>Items worth reviewing now.</p></div></div>
+          <div className="admin-attention-list">
+            {attentionItems.length ? attentionItems.map((item) => (
+              <div key={item}><CircleHelp size={17} /><span>{item}</span></div>
+            )) : (
+              <div className="admin-all-clear"><ShieldCheck size={19} /><span>Everything is on track.</span></div>
+            )}
+          </div>
+          <div className="admin-quick-actions">
+            <button onClick={onCreate}><Plus size={16} /> New course</button>
+            <button onClick={() => setView("participants")}><Users size={16} /> Participants</button>
+          </div>
         </section>
       </div>
       <section className="table-card leaderboard-card">

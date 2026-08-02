@@ -51,6 +51,7 @@ import "./glassmorphism-release.css";
 import "./mobile-containment-release.css";
 import "./brand-atmosphere-release.css";
 import "./participant-outcome-release.css";
+import "./admin-dashboard-information-release.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
