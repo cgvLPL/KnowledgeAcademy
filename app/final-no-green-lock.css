@@ -129,6 +129,79 @@ input[type="radio"]:checked,
   box-shadow: 0 0 12px rgba(255, 106, 34, 0.5) !important;
 }
 
+/* Course preview: explicitly neutralize the old lime / dark-green preview skin. */
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) {
+  background:
+    radial-gradient(circle at 92% 4%, rgba(255, 105, 34, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(31, 26, 24, 0.99), rgba(12, 13, 13, 0.99)) !important;
+  border-color: rgba(255, 126, 52, 0.22) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48) !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .card-kicker {
+  color: #ff914f !important;
+  text-shadow: 0 0 20px rgba(255, 106, 34, 0.12) !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .modal-close {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: rgba(255, 126, 52, 0.2) !important;
+  color: #fff !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .modal-close:hover {
+  background: rgba(255, 106, 34, 0.13) !important;
+  border-color: rgba(255, 126, 52, 0.4) !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .cgv-account-summary > div,
+[data-admin-functionality-enhancer] .cgv-preview-questions article {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.048), rgba(255, 106, 34, 0.025)) !important;
+  border-color: rgba(255, 126, 52, 0.16) !important;
+  box-shadow: none !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .cgv-account-summary span {
+  color: rgba(255, 255, 255, 0.58) !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .cgv-account-summary strong,
+[data-admin-functionality-enhancer] .cgv-preview-questions article > strong,
+[data-admin-functionality-enhancer] .cgv-preview-questions li {
+  color: #f7f4f1 !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-preview-questions li.correct {
+  background: linear-gradient(100deg, rgba(255, 177, 31, 0.13), rgba(255, 106, 34, 0.16), rgba(230, 50, 47, 0.12)) !important;
+  border: 1px solid rgba(255, 126, 52, 0.36) !important;
+  border-radius: 10px !important;
+  color: #ffb174 !important;
+  font-weight: 800 !important;
+  margin-left: -8px !important;
+  padding: 7px 10px !important;
+}
+
+[data-admin-functionality-enhancer] .cgv-function-modal:has(.cgv-preview-questions) .primary-button {
+  background: linear-gradient(100deg, #ffb11f, #ff6a22 54%, #e6322f) !important;
+  border-color: rgba(255, 126, 52, 0.42) !important;
+  color: #fff !important;
+}
+
+/* Legacy enhancer colours outside the preview should also follow the warm system. */
+.user-chip[role="button"]:focus-visible {
+  outline-color: #ff8b42 !important;
+}
+
+.cgv-action-grid button:hover {
+  border-color: rgba(255, 126, 52, 0.5) !important;
+}
+
+.cgv-function-toast {
+  background: #21130d !important;
+  border-color: rgba(255, 126, 52, 0.38) !important;
+  color: #fff0e6 !important;
+}
+
 /* Focus and selection must stay within the CGV warm palette. */
 :focus-visible {
   outline-color: #ff8b42 !important;
