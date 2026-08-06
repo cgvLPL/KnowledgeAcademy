@@ -1,0 +1,140 @@
+/* Ultimate colour lock — loaded last so later release layers cannot restore green accents. */
+:root {
+  --green: #ff7a32 !important;
+  --green-strong: #e6322f !important;
+  --green-soft: rgba(255, 106, 34, 0.14) !important;
+  --emerald: #ff7a32 !important;
+  --lime: #ff6a22 !important;
+  --success: #ff8b42 !important;
+  --success-color: #ff8b42 !important;
+  --success-bg: rgba(255, 106, 34, 0.14) !important;
+  --success-border: rgba(255, 126, 52, 0.32) !important;
+  accent-color: #ff6a22 !important;
+}
+
+/* Legacy utility classes and semantic states. */
+.green,
+.icon-green,
+.text-green,
+.bg-green,
+.border-green,
+.emerald,
+.lime,
+.success,
+.status-success,
+.status-active,
+.status-live,
+.status-complete,
+.status-completed,
+.badge-success,
+.badge-active,
+.badge-live,
+.badge-complete,
+.badge-completed,
+.pill-success,
+.pill-active,
+.pill-live,
+.is-success,
+.is-active,
+.is-complete,
+.is-completed,
+[data-status="success"],
+[data-status="active"],
+[data-status="live"],
+[data-status="complete"],
+[data-status="completed"],
+[data-state="success"],
+[data-state="active"],
+[data-state="complete"],
+[data-state="completed"] {
+  background-color: rgba(255, 106, 34, 0.14) !important;
+  border-color: rgba(255, 126, 52, 0.32) !important;
+  color: #ffad73 !important;
+}
+
+/* Tailwind-style green utilities that may remain in rendered markup. */
+[class*="text-green-"],
+[class*="text-emerald-"],
+[class*="text-lime-"] {
+  color: #ff9a5c !important;
+}
+
+[class*="bg-green-"],
+[class*="bg-emerald-"],
+[class*="bg-lime-"] {
+  background-color: rgba(255, 106, 34, 0.16) !important;
+}
+
+[class*="border-green-"],
+[class*="border-emerald-"],
+[class*="border-lime-"] {
+  border-color: rgba(255, 126, 52, 0.38) !important;
+}
+
+[class*="ring-green-"],
+[class*="ring-emerald-"],
+[class*="ring-lime-"] {
+  --tw-ring-color: rgba(255, 106, 34, 0.34) !important;
+}
+
+/* Inline legacy colours from older components. */
+[style*="#22c55e" i],
+[style*="#16a34a" i],
+[style*="#15803d" i],
+[style*="#10b981" i],
+[style*="#059669" i],
+[style*="#047857" i],
+[style*="#4ade80" i],
+[style*="#86efac" i],
+[style*="#84cc16" i],
+[style*="#65a30d" i],
+[style*="rgb(34, 197, 94)" i],
+[style*="rgb(16, 185, 129)" i] {
+  color: #ff9a5c !important;
+  border-color: rgba(255, 126, 52, 0.38) !important;
+  box-shadow: none !important;
+}
+
+/* Checked, selected, progress and completion indicators. */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked,
+[role="switch"][aria-checked="true"],
+[aria-selected="true"],
+[aria-current="page"],
+.progress-check,
+.completed-marker,
+.answer-complete,
+.question-progress-bars button.answered,
+.quiz-key .done,
+.quiz-key i.done {
+  background-color: #ff6a22 !important;
+  border-color: #ff914f !important;
+  color: #fff !important;
+}
+
+/* Dots and pseudo-elements used by live/active indicators. */
+.status-success::before,
+.status-active::before,
+.status-live::before,
+.status-complete::before,
+.status-completed::before,
+.badge-success::before,
+.badge-active::before,
+.badge-live::before,
+.live-pill > span,
+.success-dot,
+.active-dot,
+.live-dot {
+  background: #ff7a32 !important;
+  box-shadow: 0 0 12px rgba(255, 106, 34, 0.5) !important;
+}
+
+/* Focus and selection must stay within the CGV warm palette. */
+:focus-visible {
+  outline-color: #ff8b42 !important;
+}
+
+::selection {
+  background: #ff6a22 !important;
+  color: #fff !important;
+}
