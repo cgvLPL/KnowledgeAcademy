@@ -1,7 +1,7 @@
-/* Hard viewport containment for the admin Courses view.
- * Some legacy responsive-table rules give tables/min-content descendants a
- * desktop minimum width. This layer neutralizes those rules on phones so the
- * course cards can never make the page wider than the viewport.
+/* Responsive viewport lock for the admin Courses view.
+ * Every important mobile dimension scales with the screen instead of relying
+ * on one fixed phone size. The layout stays inside the visual viewport and
+ * remains dense on larger phones while retaining usable touch targets.
  */
 
 @media (max-width: 760px) {
@@ -11,32 +11,38 @@
     overflow-x: hidden;
   }
 
+  .content:has(.course-management-table) {
+    --courses-page-gutter: clamp(10px, 3.2vw, 18px);
+    --courses-shell-pad: clamp(5px, 1.8vw, 10px);
+    --courses-card-pad: clamp(10px, 3vw, 15px);
+    --courses-card-gap: clamp(8px, 2.4vw, 13px);
+    --courses-card-radius: clamp(14px, 4.1vw, 20px);
+    --courses-icon-size: clamp(36px, 10.4vw, 46px);
+    --courses-icon-glyph: clamp(17px, 4.9vw, 21px);
+    --courses-title-size: clamp(12px, 3.55vw, 15px);
+    --courses-meta-size: clamp(9px, 2.65vw, 11px);
+    --courses-label-size: clamp(9px, 2.55vw, 10.5px);
+    --courses-value-size: clamp(11px, 3.15vw, 13px);
+    --courses-row-pad: clamp(8px, 2.45vw, 11px);
+    --courses-action-height: clamp(40px, 10.8vw, 46px);
+    --courses-action-gap: clamp(6px, 2vw, 9px);
+    --courses-title-gap: clamp(8px, 2.5vw, 12px);
+
+    box-sizing: border-box !important;
+    inline-size: min(100%, 100dvw) !important;
+    max-inline-size: 100dvw !important;
+    min-inline-size: 0 !important;
+    margin-inline: auto !important;
+    overflow-x: clip !important;
+    padding-left: max(var(--courses-page-gutter), env(safe-area-inset-left)) !important;
+    padding-right: max(var(--courses-page-gutter), env(safe-area-inset-right)) !important;
+    padding-bottom: max(116px, calc(env(safe-area-inset-bottom) + 98px)) !important;
+  }
+
   .content:has(.course-management-table),
   .content:has(.course-management-table) > *,
   .content:has(.course-management-table) .table-card,
-  .content:has(.course-management-table) .responsive-table {
-    box-sizing: border-box !important;
-    inline-size: 100% !important;
-    max-inline-size: 100% !important;
-    min-inline-size: 0 !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-
-  .content:has(.course-management-table) {
-    overflow-x: clip !important;
-  }
-
-  .content:has(.course-management-table) .table-card {
-    overflow: hidden !important;
-  }
-
-  .content:has(.course-management-table) .responsive-table {
-    overflow-x: hidden !important;
-    padding: 0 !important;
-  }
-
+  .content:has(.course-management-table) .responsive-table,
   .course-management-table,
   .course-management-table tbody,
   .course-management-table tr,
@@ -53,22 +59,115 @@
     min-width: 0 !important;
   }
 
+  .content:has(.course-management-table) .page-intro.admin-section-header {
+    gap: clamp(12px, 3.5vw, 18px) !important;
+  }
+
+  .content:has(.course-management-table) .admin-header-actions,
+  .content:has(.course-management-table) .admin-header-actions .primary-button {
+    width: 100% !important;
+  }
+
+  .content:has(.course-management-table) .toolbar {
+    gap: clamp(7px, 2.3vw, 11px) !important;
+  }
+
+  .content:has(.course-management-table) .toolbar-buttons {
+    gap: clamp(7px, 2vw, 10px) !important;
+  }
+
+  .content:has(.course-management-table) .toolbar-buttons .secondary-button,
+  .content:has(.course-management-table) .admin-header-actions .primary-button {
+    min-height: clamp(42px, 11.5vw, 48px) !important;
+    padding-inline: clamp(11px, 3.4vw, 16px) !important;
+  }
+
+  .content:has(.course-management-table) .table-card {
+    overflow: hidden !important;
+    width: 100% !important;
+  }
+
+  .content:has(.course-management-table) .responsive-table {
+    overflow-x: hidden !important;
+    padding: 0 !important;
+  }
+
   .course-management-table {
+    border-collapse: separate !important;
     margin: 0 !important;
     table-layout: auto !important;
   }
 
+  .course-management-table thead {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
   .course-management-table tbody {
-    padding: 10px !important;
+    display: grid !important;
+    gap: var(--courses-card-gap) !important;
+    padding: var(--courses-shell-pad) !important;
   }
 
   .course-management-table tbody tr {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--courses-card-radius) !important;
+    box-shadow: 0 clamp(8px, 2.7vw, 13px) clamp(20px, 6vw, 30px) rgba(0, 0, 0, 0.16);
+    display: block !important;
     margin: 0 !important;
-    padding: 14px !important;
+    overflow: hidden !important;
+    padding: var(--courses-card-pad) !important;
+    transform: none !important;
+  }
+
+  .course-management-table tbody tr:hover {
+    transform: none !important;
+  }
+
+  .course-management-table td {
+    border: 0 !important;
+    display: block;
+    min-height: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  .course-management-table td:nth-child(1) {
+    padding-bottom: clamp(10px, 2.8vw, 14px) !important;
   }
 
   .course-management-table td:nth-child(1) .table-title-cell {
-    grid-template-columns: 42px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 0 var(--courses-title-gap) !important;
+    grid-template-columns: var(--courses-icon-size) minmax(0, 1fr) !important;
+  }
+
+  .course-management-table td:nth-child(1) .evaluation-icon {
+    block-size: var(--courses-icon-size) !important;
+    flex-basis: var(--courses-icon-size) !important;
+    inline-size: var(--courses-icon-size) !important;
+    max-block-size: var(--courses-icon-size) !important;
+    max-inline-size: var(--courses-icon-size) !important;
+    min-block-size: var(--courses-icon-size) !important;
+    min-inline-size: var(--courses-icon-size) !important;
+    border-radius: clamp(11px, 3.1vw, 15px) !important;
+  }
+
+  .course-management-table td:nth-child(1) .evaluation-icon > svg {
+    block-size: var(--courses-icon-glyph) !important;
+    inline-size: var(--courses-icon-glyph) !important;
+    max-block-size: var(--courses-icon-glyph) !important;
+    max-inline-size: var(--courses-icon-glyph) !important;
+    min-block-size: var(--courses-icon-glyph) !important;
+    min-inline-size: var(--courses-icon-glyph) !important;
   }
 
   .course-management-table .table-title-cell strong,
@@ -84,17 +183,46 @@
 
   .course-management-table .table-title-cell strong {
     display: -webkit-box !important;
+    font-size: var(--courses-title-size) !important;
+    line-height: 1.28 !important;
     white-space: normal !important;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+  }
+
+  .course-management-table .table-title-cell span {
+    font-size: var(--courses-meta-size) !important;
+    line-height: 1.3 !important;
   }
 
   .course-management-table td:nth-child(2),
   .course-management-table td:nth-child(3),
   .course-management-table td:nth-child(4),
   .course-management-table td:nth-child(5) {
-    grid-template-columns: minmax(74px, 0.78fr) minmax(0, 1.22fr) !important;
+    align-items: center !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    display: grid !important;
+    gap: clamp(7px, 2.1vw, 11px) !important;
+    grid-template-columns: minmax(clamp(70px, 21vw, 92px), 0.72fr) minmax(0, 1.28fr) !important;
+    padding: var(--courses-row-pad) 0 !important;
   }
+
+  .course-management-table td:nth-child(2)::before,
+  .course-management-table td:nth-child(3)::before,
+  .course-management-table td:nth-child(4)::before,
+  .course-management-table td:nth-child(5)::before {
+    color: rgba(255, 255, 255, 0.52) !important;
+    font-size: var(--courses-label-size) !important;
+    font-weight: 700 !important;
+    letter-spacing: clamp(0.05em, 0.2vw, 0.08em) !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+  }
+
+  .course-management-table td:nth-child(2)::before { content: "Status"; }
+  .course-management-table td:nth-child(3)::before { content: "Schedule"; }
+  .course-management-table td:nth-child(4)::before { content: "Participants"; }
+  .course-management-table td:nth-child(5)::before { content: "Average"; }
 
   .course-management-table td:nth-child(2) > *,
   .course-management-table td:nth-child(3) > *,
@@ -104,49 +232,95 @@
     max-width: 100% !important;
   }
 
+  .course-management-table td:nth-child(2) .status-pill,
+  .course-management-table td:nth-child(3) .date-cell,
+  .course-management-table td:nth-child(4) > strong,
+  .course-management-table td:nth-child(5) > strong {
+    justify-self: end !important;
+    max-width: 100% !important;
+    text-align: right !important;
+  }
+
+  .course-management-table td:nth-child(4) > strong,
+  .course-management-table td:nth-child(5) > strong,
+  .course-management-table .date-cell strong {
+    font-size: var(--courses-value-size) !important;
+    line-height: 1.25 !important;
+  }
+
+  .course-management-table .date-cell span {
+    font-size: var(--courses-meta-size) !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+  }
+
+  .course-management-table .status-pill {
+    font-size: clamp(9px, 2.65vw, 11px) !important;
+    min-height: clamp(30px, 8vw, 36px) !important;
+    padding: clamp(6px, 1.7vw, 8px) clamp(9px, 2.7vw, 13px) !important;
+  }
+
+  .course-management-table td:nth-child(6) {
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    margin-top: clamp(1px, 0.5vw, 3px) !important;
+    padding-top: clamp(9px, 2.6vw, 13px) !important;
+  }
+
   .course-management-table .inline-actions {
+    display: grid !important;
+    gap: var(--courses-action-gap) !important;
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
   .course-management-table .inline-actions button {
+    border-radius: clamp(10px, 3vw, 13px) !important;
+    height: var(--courses-action-height) !important;
+    min-height: var(--courses-action-height) !important;
     min-width: 0 !important;
     width: 100% !important;
   }
+
+  .course-management-table .inline-actions button svg {
+    height: clamp(16px, 4.6vw, 19px) !important;
+    width: clamp(16px, 4.6vw, 19px) !important;
+  }
+
+  .course-management-table .empty-table-row {
+    padding: 0 !important;
+  }
+
+  .course-management-table .empty-table-row td {
+    display: block !important;
+    padding: clamp(14px, 4vw, 20px) !important;
+  }
 }
 
-@media (max-width: 430px) {
+/* Extra-narrow devices: preserve touchability but prioritize content width. */
+@media (max-width: 360px) {
   .content:has(.course-management-table) {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-  }
-
-  .course-management-table tbody {
-    padding: 8px !important;
-  }
-
-  .course-management-table tbody tr {
-    padding: 12px !important;
-  }
-
-  .course-management-table td:nth-child(1) .table-title-cell {
-    gap: 10px !important;
-    grid-template-columns: 40px minmax(0, 1fr) !important;
-  }
-
-  .course-management-table td:nth-child(1) .evaluation-icon {
-    block-size: 40px !important;
-    inline-size: 40px !important;
-    max-block-size: 40px !important;
-    max-inline-size: 40px !important;
-    min-block-size: 40px !important;
-    min-inline-size: 40px !important;
+    --courses-page-gutter: 8px;
+    --courses-shell-pad: 4px;
+    --courses-card-pad: 9px;
+    --courses-title-size: 12px;
   }
 
   .course-management-table td:nth-child(2),
   .course-management-table td:nth-child(3),
   .course-management-table td:nth-child(4),
   .course-management-table td:nth-child(5) {
-    gap: 8px !important;
-    grid-template-columns: 78px minmax(0, 1fr) !important;
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+  }
+}
+
+/* Larger phones can breathe a little without reverting to desktop proportions. */
+@media (min-width: 520px) and (max-width: 760px) {
+  .content:has(.course-management-table) {
+    --courses-page-gutter: clamp(16px, 3.4vw, 24px);
+    --courses-card-pad: clamp(14px, 2.8vw, 18px);
+    --courses-card-gap: clamp(11px, 2vw, 15px);
+  }
+
+  .course-management-table tbody {
+    padding: clamp(8px, 1.8vw, 12px) !important;
   }
 }
