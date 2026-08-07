@@ -3,27 +3,54 @@
 }
 
 .login-button:disabled {
+  animation: none !important;
   cursor: wait;
+  transform: none !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+  white-space: nowrap;
+}
+
+.login-button:disabled:hover,
+.login-button:disabled:active {
+  transform: none !important;
 }
 
 .login-button:disabled::before {
-  width: 17px;
-  height: 17px;
-  flex: 0 0 17px;
-  content: "";
-  display: inline-block;
-  border: 2px solid rgba(255, 255, 255, 0.38);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: cgv-signin-spin 0.7s linear infinite;
+  animation: cgv-signin-spinner 0.72s linear infinite !important;
+  background: transparent !important;
+  border: 2px solid rgba(255, 255, 255, 0.34) !important;
+  border-radius: 50% !important;
+  border-top-color: #fff !important;
+  box-shadow: none !important;
+  content: "" !important;
+  display: block !important;
+  flex: none !important;
+  height: 17px !important;
+  inset: auto !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  right: calc(50% + 43px) !important;
+  top: 50% !important;
+  transform-origin: 50% 50% !important;
+  width: 17px !important;
 }
 
-@keyframes cgv-signin-spin {
-  to { transform: rotate(360deg); }
+@keyframes cgv-signin-spinner {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+@media (max-width: 430px) {
+  .login-button:disabled::before {
+    right: calc(50% + 41px) !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .login-button:disabled::before {
-    animation-duration: 1.4s;
+    animation-duration: 1.4s !important;
   }
 }
