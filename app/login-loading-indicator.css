@@ -2,13 +2,24 @@
   position: relative;
 }
 
+/* Keep the button itself completely static while authentication is running. */
 .login-button:disabled {
+  align-items: center !important;
   animation: none !important;
+  color: #fff !important;
   cursor: wait;
-  transform: none !important;
-  writing-mode: horizontal-tb !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  font-size: clamp(14px, 3.8vw, 16px) !important;
+  font-weight: 700 !important;
+  gap: clamp(9px, 2.6vw, 12px) !important;
+  justify-content: center !important;
+  opacity: 1 !important;
+  text-indent: 0 !important;
   text-orientation: mixed !important;
-  white-space: nowrap;
+  transform: none !important;
+  white-space: nowrap !important;
+  writing-mode: horizontal-tb !important;
 }
 
 .login-button:disabled:hover,
@@ -16,6 +27,7 @@
   transform: none !important;
 }
 
+/* Only this small ring rotates. It stays in normal flex flow beside “Signing in…”. */
 .login-button:disabled::before {
   animation: cgv-signin-spinner 0.72s linear infinite !important;
   background: transparent !important;
@@ -24,29 +36,21 @@
   border-top-color: #fff !important;
   box-shadow: none !important;
   content: "" !important;
-  display: block !important;
-  flex: none !important;
-  height: 17px !important;
+  display: inline-block !important;
+  flex: 0 0 clamp(16px, 4.4vw, 19px) !important;
+  height: clamp(16px, 4.4vw, 19px) !important;
   inset: auto !important;
   margin: 0 !important;
   opacity: 1 !important;
   padding: 0 !important;
-  position: absolute !important;
-  right: calc(50% + 43px) !important;
-  top: 50% !important;
+  position: static !important;
   transform-origin: 50% 50% !important;
-  width: 17px !important;
+  width: clamp(16px, 4.4vw, 19px) !important;
 }
 
 @keyframes cgv-signin-spinner {
-  from { transform: translateY(-50%) rotate(0deg); }
-  to { transform: translateY(-50%) rotate(360deg); }
-}
-
-@media (max-width: 430px) {
-  .login-button:disabled::before {
-    right: calc(50% + 41px) !important;
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
