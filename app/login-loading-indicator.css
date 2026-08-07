@@ -1,0 +1,29 @@
+.login-button {
+  position: relative;
+}
+
+.login-button:disabled {
+  cursor: wait;
+}
+
+.login-button:disabled::before {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  content: "";
+  display: inline-block;
+  border: 2px solid rgba(255, 255, 255, 0.38);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cgv-signin-spin 0.7s linear infinite;
+}
+
+@keyframes cgv-signin-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-button:disabled::before {
+    animation-duration: 1.4s;
+  }
+}
