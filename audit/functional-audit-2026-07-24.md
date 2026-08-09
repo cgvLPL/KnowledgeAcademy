@@ -1,5 +1,8 @@
 # CGV Exams functional audit — 24 July 2026
 
+> The concurrency target in this historical audit is superseded by the
+> [30-participant capacity audit](concurrency-audit-2026-08-09.md).
+
 ## Verified automatically
 
 The application was checked in GitHub Actions using Node.js 22 and a clean

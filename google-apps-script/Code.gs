@@ -1,8 +1,13 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.01-question-audit",
+  version: "2026.08.09-30-participant-capacity",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
+  capacity: Object.freeze({
+    targetSimultaneousParticipants: 30,
+    writeLockTimeoutMs: 90000,
+    sessionPruneIntervalSeconds: 21600,
+  }),
   sheets: Object.freeze({
     settings: "Settings",
     users: "Users",
@@ -178,26 +183,33 @@ function login_(body) {
   const username = normalizeUsername_(body.username || body.email);
   const password = String(body.password || "");
   if (!username || !password) throw new Error("Username and password are required.");
-  return withScriptLock_(10000, function () {
-    pruneSessions_();
-    let user = findUserByUsername_(username);
-    if (!user && username.indexOf("@") !== -1) user = findUserByEmail_(username);
-    if (!user || user.status !== "active") throw new Error("Invalid username or password.");
-    if (hashPassword_(password, user.salt) !== user.password_hash) {
+  let user = findUserByUsername_(username);
+  if (!user && username.indexOf("@") !== -1) user = findUserByEmail_(username);
+  if (!user || user.status !== "active") throw new Error("Invalid username or password.");
+  if (hashPassword_(password, user.salt) !== user.password_hash) {
+    throw new Error("Invalid username or password.");
+  }
+  const token = Utilities.getUuid() + Utilities.getUuid();
+  const expiresAt = new Date(Date.now() + APP.sessionHours * 3600000);
+
+  return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
+    const currentUser = findById_(APP.sheets.users, "user_id", user.user_id);
+    if (!currentUser || currentUser.status !== "active") {
       throw new Error("Invalid username or password.");
     }
-    updateObjectRow_(getSheet_(APP.sheets.users), user.__row, { last_login: new Date() });
-    const token = Utilities.getUuid() + Utilities.getUuid();
-    const expiresAt = new Date(Date.now() + APP.sessionHours * 3600000);
+    if (hashPassword_(password, currentUser.salt) !== currentUser.password_hash) {
+      throw new Error("Invalid username or password.");
+    }
+    updateObjectRow_(getSheet_(APP.sheets.users), currentUser.__row, { last_login: new Date() });
     appendRow_(getSheet_(APP.sheets.sessions), [
-      hashToken_(token), user.user_id, user.role, expiresAt, new Date(),
+      hashToken_(token), currentUser.user_id, currentUser.role, expiresAt, new Date(),
     ]);
     SpreadsheetApp.flush();
     return {
       ok: true,
       token: token,
       expiresAt: expiresAt.toISOString(),
-      user: publicUser_(user),
+      user: publicUser_(currentUser),
     };
   });
 }
@@ -207,6 +219,7 @@ function logout_(body) {
   const tokenHash = hashToken_(String(body.token));
   return withScriptLock_(10000, function () {
     deleteRowsMatching_(getSheet_(APP.sheets.sessions), "token_hash", tokenHash);
+    pruneSessionsIfDue_();
     SpreadsheetApp.flush();
     return { ok: true };
   });
@@ -250,7 +263,7 @@ function startAttempt_(body) {
   const questions = questionsForCourse_(courseId);
   if (!questions.length) throw new Error("This evaluation has no published questions.");
 
-  const attemptId = withScriptLock_(10000, function () {
+  const attemptId = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
     const existing = rowsAsObjects_(getSheet_(APP.sheets.attempts)).find(function (attempt) {
       return String(attempt.course_id) === courseId &&
         String(attempt.user_id) === String(context.user.user_id) &&
@@ -347,7 +360,7 @@ function submitAttempt_(body) {
     Math.round((now.getTime() - new Date(initialAttempt.started_at).getTime()) / 1000),
   );
 
-  return withScriptLock_(20000, function () {
+  return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
     const current = findById_(APP.sheets.attempts, "attempt_id", attemptId);
     if (!current || String(current.user_id) !== String(context.user.user_id)) {
       throw new Error("Attempt not found.");
@@ -941,9 +954,14 @@ function createUserInternal_(input) {
 function requireSession_(token, requiredRole) {
   if (!token) throw new Error("Authentication required.");
   const tokenHash = hashToken_(String(token));
-  const session = rowsAsObjects_(getSheet_(APP.sheets.sessions)).find(function (item) {
-    return item.token_hash === tokenHash && new Date(item.expires_at) > new Date();
-  });
+  const session = findObjectByExactValue_(
+    getSheet_(APP.sheets.sessions),
+    "token_hash",
+    tokenHash,
+  );
+  if (session && new Date(session.expires_at) <= new Date()) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
   if (!session) throw new Error("Your session has expired. Please sign in again.");
   if (requiredRole && session.role !== requiredRole) {
     throw new Error("You do not have access to this action.");
@@ -955,10 +973,19 @@ function requireSession_(token, requiredRole) {
 
 function pruneSessions_() {
   const now = new Date();
-  rowsAsObjects_(getSheet_(APP.sheets.sessions))
+  const expired = rowsAsObjects_(getSheet_(APP.sheets.sessions))
     .filter(function (session) { return new Date(session.expires_at) <= now; })
-    .sort(function (a, b) { return b.__row - a.__row; })
-    .forEach(function (session) { getSheet_(APP.sheets.sessions).deleteRow(session.__row); });
+    .sort(function (a, b) { return b.__row - a.__row; });
+  expired.forEach(function (session) { getSheet_(APP.sheets.sessions).deleteRow(session.__row); });
+  return expired.length;
+}
+
+function pruneSessionsIfDue_() {
+  const cache = CacheService.getScriptCache();
+  const key = "sessions-pruned";
+  if (cache.get(key)) return 0;
+  cache.put(key, "1", APP.capacity.sessionPruneIntervalSeconds);
+  return pruneSessions_();
 }
 
 function buildDashboard_() {
@@ -1074,7 +1101,9 @@ function json_(value) {
 
 function withScriptLock_(timeoutMs, callback) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(timeoutMs);
+  if (!lock.tryLock(timeoutMs)) {
+    throw new Error("The exam service is temporarily busy. Please try again.");
+  }
   try {
     return callback();
   } finally {
@@ -1090,7 +1119,7 @@ function getSheet_(name) {
 
 function rowsAsObjects_(sheet) {
   if (sheet.getLastRow() < 2) return [];
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = headersForSheet_(sheet);
   return sheet
     .getRange(2, 1, sheet.getLastRow() - 1, headers.length)
     .getValues()
@@ -1099,6 +1128,33 @@ function rowsAsObjects_(sheet) {
       headers.forEach(function (header, column) { object[header] = values[column]; });
       return object;
     });
+}
+
+function headersForSheet_(sheet) {
+  return HEADERS[sheet.getName()] ||
+    sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+}
+
+function objectFromRow_(sheet, rowNumber) {
+  const headers = headersForSheet_(sheet);
+  const values = sheet.getRange(rowNumber, 1, 1, headers.length).getValues()[0];
+  const object = { __row: rowNumber };
+  headers.forEach(function (header, column) { object[header] = values[column]; });
+  return object;
+}
+
+function findObjectByExactValue_(sheet, key, value) {
+  if (sheet.getLastRow() < 2) return null;
+  const headers = headersForSheet_(sheet);
+  const columnIndex = headers.indexOf(key);
+  if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
+  const match = sheet
+    .getRange(2, columnIndex + 1, sheet.getLastRow() - 1, 1)
+    .createTextFinder(String(value))
+    .matchEntireCell(true)
+    .useRegularExpression(false)
+    .findNext();
+  return match ? objectFromRow_(sheet, match.getRow()) : null;
 }
 
 function appendRow_(sheet, values) {
@@ -1135,23 +1191,17 @@ function clearDataRows_(sheet) {
 }
 
 function findById_(sheetName, key, value) {
-  return rowsAsObjects_(getSheet_(sheetName)).find(function (row) {
-    return String(row[key]) === String(value);
-  }) || null;
+  return findObjectByExactValue_(getSheet_(sheetName), key, value);
 }
 
 function findUserByEmail_(email) {
   const normalized = normalizeEmail_(email);
-  return rowsAsObjects_(getSheet_(APP.sheets.users)).find(function (user) {
-    return normalizeEmail_(user.email) === normalized;
-  }) || null;
+  return findObjectByExactValue_(getSheet_(APP.sheets.users), "email", normalized);
 }
 
 function findUserByUsername_(username) {
   const normalized = normalizeUsername_(username);
-  return rowsAsObjects_(getSheet_(APP.sheets.users)).find(function (user) {
-    return normalizeUsername_(user.username) === normalized;
-  }) || null;
+  return findObjectByExactValue_(getSheet_(APP.sheets.users), "username", normalized);
 }
 
 function questionsForCourse_(courseId) {

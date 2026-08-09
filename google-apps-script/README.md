@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.01-question-audit"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.09-30-participant-capacity"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -75,9 +75,12 @@ Administrator functions:
   course.
 - Preserve submitted results by archiving courses that already have attempts.
 
-The backend confirms writes only after `SpreadsheetApp.flush()`. Short script
-locks protect attempt, answer, course, account, and session writes when multiple
-participants submit at nearly the same time.
+The backend confirms writes only after `SpreadsheetApp.flush()`. Script locks
+protect attempt, answer, course, account, and session writes when multiple
+participants submit at nearly the same time. Capacity-sensitive participant
+writes use a 90-second queue sized for a 30-person burst. Session and ID lookups
+target exact rows instead of scanning whole tabs, and start/submission retries
+remain idempotent.
 
 ## Reset administrator credentials
 

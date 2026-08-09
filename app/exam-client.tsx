@@ -46,6 +46,7 @@ import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { ExecutiveReportData } from "./executive-report";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
+import { fetchSheetsWithRetry } from "./sheets-request-policy.mjs";
 
 type Role = "participant" | "admin";
 type ParticipantView = "home" | "evaluations" | "history" | "profile";
@@ -137,15 +138,19 @@ const BUILDER_STEPS = [
 
 function sheetsFetch(payload: Record<string, unknown>) {
   const directToAppsScript = Boolean(publicSheetsEndpoint);
-  return fetch(publicSheetsEndpoint || "/api/sheets", {
-    method: "POST",
-    headers: {
-      "content-type": directToAppsScript
-        ? "text/plain;charset=utf-8"
-        : "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  const action = String(payload.action || "");
+  return fetchSheetsWithRetry(action, (signal: AbortSignal) => (
+    fetch(publicSheetsEndpoint || "/api/sheets", {
+      method: "POST",
+      headers: {
+        "content-type": directToAppsScript
+          ? "text/plain;charset=utf-8"
+          : "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal,
+    })
+  ));
 }
 
 async function sheetsRequest<T = Record<string, unknown>>(
