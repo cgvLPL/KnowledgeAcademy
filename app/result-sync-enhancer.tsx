@@ -132,54 +132,47 @@ export default function ResultSyncEnhancer() {
       const endpoint = requestUrl(input);
 
       if (action === "submitAttempt") {
-        let lastError: unknown;
-        let lastResponse: Response | null = null;
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-          try {
-            const candidate = await originalFetch(input, init);
-            lastResponse = candidate;
-            const data = await candidate.clone().json() as {
-              ok?: boolean;
-              error?: string;
-              result?: Record<string, unknown>;
-            };
-            if (candidate.ok && data.ok !== false && data.result) {
-              sessionStorage.setItem(ENDPOINT_KEY, endpoint);
-              channel?.postMessage({ type: "result-synced" });
-              window.dispatchEvent(new CustomEvent("cgv:result-synced"));
-              return candidate;
-            }
-            if (/already.*submitted/i.test(String(data.error || "")) && payload?.token && payload?.attemptId) {
-              const homeResponse = await originalFetch(endpoint, {
-                method: "POST",
-                headers: init?.headers,
-                body: JSON.stringify({ action: "getParticipantHome", token: payload.token }),
-              });
-              const homeData = await homeResponse.json() as { history?: Array<Record<string, unknown>> };
-              const saved = homeData.history?.find((item) => String(item.id) === String(payload.attemptId));
-              if (saved) {
-                channel?.postMessage({ type: "result-synced" });
-                return responseWithJson(candidate, {
-                  ok: true,
-                  alreadySubmitted: true,
-                  result: {
-                    attemptId: payload.attemptId,
-                    score: Number(saved.score || 0),
-                    correctCount: Number(saved.correctCount || 0),
-                    totalQuestions: Number(saved.totalQuestions || 0),
-                    durationSeconds: Number(saved.durationSeconds || 0),
-                  },
-                });
-              }
-            }
-            lastError = new Error(data.error || "The result was not saved.");
-          } catch (error) {
-            lastError = error;
-          }
-          if (attempt < 2) await new Promise((resolve) => window.setTimeout(resolve, 650 * (attempt + 1)));
+        const candidate = await originalFetch(input, init);
+        let data: {
+          ok?: boolean;
+          error?: string;
+          result?: Record<string, unknown>;
+        };
+        try {
+          data = await candidate.clone().json() as typeof data;
+        } catch {
+          return candidate;
         }
-        if (lastResponse) return lastResponse;
-        throw lastError instanceof Error ? lastError : new Error("The result could not be synchronized.");
+        if (candidate.ok && data.ok !== false && data.result) {
+          sessionStorage.setItem(ENDPOINT_KEY, endpoint);
+          channel?.postMessage({ type: "result-synced" });
+          window.dispatchEvent(new CustomEvent("cgv:result-synced"));
+          return candidate;
+        }
+        if (/already.*submitted/i.test(String(data.error || "")) && payload?.token && payload?.attemptId) {
+          const homeResponse = await originalFetch(endpoint, {
+            method: "POST",
+            headers: init?.headers,
+            body: JSON.stringify({ action: "getParticipantHome", token: payload.token }),
+          });
+          const homeData = await homeResponse.json() as { history?: Array<Record<string, unknown>> };
+          const saved = homeData.history?.find((item) => String(item.id) === String(payload.attemptId));
+          if (saved) {
+            channel?.postMessage({ type: "result-synced" });
+            return responseWithJson(candidate, {
+              ok: true,
+              alreadySubmitted: true,
+              result: {
+                attemptId: payload.attemptId,
+                score: Number(saved.score || 0),
+                correctCount: Number(saved.correctCount || 0),
+                totalQuestions: Number(saved.totalQuestions || 0),
+                durationSeconds: Number(saved.durationSeconds || 0),
+              },
+            });
+          }
+        }
+        return candidate;
       }
 
       const response = await originalFetch(input, init);

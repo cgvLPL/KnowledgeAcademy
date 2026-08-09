@@ -26,6 +26,7 @@ administrator-managed content.
 - Per-evaluation executive PDF reports with score distribution, participant
   results, and question-by-question answer analysis
 - Google Sheets / Apps Script backend with server-side scoring
+- Capacity safeguards and automated coverage for 30 simultaneous participants
 - Automatically generated spreadsheet dashboard, KPIs, leaderboard, and chart
 - Responsive desktop and mobile layouts
 
@@ -70,5 +71,16 @@ The workbook uses separate tabs for settings, users, courses, questions,
 attempts, answers, sessions, and the dashboard. Passwords are salted and
 hashed, session tokens are stored as hashes, correct answers are never sent to
 participants, and scores are calculated server-side.
+
+## Participant capacity
+
+The exam write path is designed and regression-tested for 30 participants
+signing in, starting, and submitting in the same burst. Capacity-sensitive
+requests are spread slightly and retried with bounded backoff, while the Apps
+Script backend serializes spreadsheet writes with a 90-second lock queue and
+keeps start and submission retries idempotent.
+
+See [the 30-participant capacity audit](audit/concurrency-audit-2026-08-09.md)
+for the verification boundary and the required Apps Script deployment step.
 
 No worksheet cells are merged.

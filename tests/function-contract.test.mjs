@@ -16,6 +16,7 @@ const builder = read("app/course-builder-enhancer.tsx");
 const safetyNet = read("app/button-safety-net.tsx");
 const settings = read("app/settings-enhancer.tsx");
 const performance = read("app/interaction-performance-enhancer.tsx");
+const requestPolicy = read("app/sheets-request-policy.mjs");
 const sheetsProxy = read("app/api/sheets/route.ts");
 const settingsCss = read("app/settings-enhancer.css");
 const topbarCss = read("app/topbar-polish.css");
@@ -71,11 +72,15 @@ test("Apps Script registers every participant and administrator action", () => {
 
 test("quiz submissions are durable and safe for concurrent retries", () => {
   assert.match(backend, /function submitAttempt_\(body\)/);
-  assert.match(backend, /withScriptLock_\(20000/);
+  assert.match(backend, /targetSimultaneousParticipants:\s*30/);
+  assert.match(backend, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs/);
   assert.match(backend, /SpreadsheetApp\.flush\(\)/);
   assert.match(backend, /alreadySubmitted:\s*true/);
   assert.match(backend, /existing.*status === "started"/s);
-  assert.match(resultSync, /for \(let attempt = 0; attempt < 3;/);
+  assert.match(client, /fetchSheetsWithRetry/);
+  assert.match(requestPolicy, /RETRY_DELAYS_MS/);
+  assert.match(requestPolicy, /"login", "startAttempt", "submitAttempt"/);
+  assert.doesNotMatch(resultSync, /for \(let attempt = 0; attempt < 3;/);
 });
 
 test("scoreboard stays scoped to the selected evaluation and refreshes live results", () => {
@@ -282,6 +287,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.01-question-audit"/);
-  assert.match(runtime, /2026\.08\.01-question-audit/);
+  assert.match(backend, /version:\s*"2026\.08\.09-30-participant-capacity"/);
+  assert.match(runtime, /2026\.08\.09-30-participant-capacity/);
 });
