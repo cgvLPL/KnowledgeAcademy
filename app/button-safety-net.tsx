@@ -196,6 +196,7 @@ export default function ButtonSafetyNet() {
       if (!(target instanceof Element)) return;
       const button = target.closest<HTMLButtonElement>("button");
       if (!button || button.disabled || button.closest("[data-button-safety-net]")) return;
+      if (button.dataset.participantActions === "true") return;
 
       if (button.closest(".sidebar-nav")) {
         setMobileMenuOpen(false);

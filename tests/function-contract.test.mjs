@@ -288,6 +288,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.10-latest-scoreboard"/);
-  assert.match(runtime, /2026\.08\.10-latest-scoreboard/);
+  assert.match(backend, /version:\s*"2026\.08\.10-archived-report-results"/);
+  assert.match(runtime, /2026\.08\.10-archived-report-results/);
 });

@@ -22,7 +22,6 @@ import {
   GraduationCap,
   History,
   Home,
-  Layers3,
   LayoutDashboard,
   LockKeyhole,
   LogOut,
@@ -76,6 +75,7 @@ type Evaluation = {
   passingScore: number;
   attemptLimit: number;
   attemptsUsed: number;
+  randomizeAnswers: boolean;
   color: "green" | "orange" | "blue" | "violet";
 };
 
@@ -93,6 +93,7 @@ type Question = {
   id: string;
   prompt: string;
   options: string[];
+  optionKeys?: string[];
   correct?: number;
 };
 
@@ -120,7 +121,12 @@ type CourseChangeDetail = {
   deletedId?: string;
 };
 
+type ParticipantChangeDetail = {
+  user?: Record<string, unknown>;
+};
+
 type ParticipantRow = {
+  id: string;
   name: string;
   username: string;
   branch: string;
@@ -244,6 +250,7 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     passingScore: Number(course.passingScore || 75),
     attemptLimit: normalizedAttemptLimit(course.attemptLimit),
     attemptsUsed: Math.max(0, Math.floor(Number(course.attemptsUsed || 0))),
+    randomizeAnswers: course.randomizeAnswers === true,
     color: colors[index % colors.length],
   };
 }
@@ -261,6 +268,23 @@ function attemptPolicyLabel(evaluation: Pick<Evaluation, "attemptLimit" | "attem
   if (!evaluation.attemptLimit) return "Unlimited attempts";
   if (includeUsage) return `${evaluation.attemptsUsed}/${evaluation.attemptLimit} attempts used`;
   return `${evaluation.attemptLimit} attempt${evaluation.attemptLimit === 1 ? "" : "s"} max`;
+}
+
+function seededShuffle<T>(items: T[], seed: string) {
+  const shuffled = [...items];
+  let state = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    state ^= seed.charCodeAt(index);
+    state = Math.imul(state, 16777619);
+  }
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    const swapIndex = (state >>> 0) % (index + 1);
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
 function Logo({
@@ -455,7 +479,7 @@ function Sidebar({
   ];
   const adminItems: { id: AdminView; label: string; icon: typeof Home }[] = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "courses", label: "Quiz courses", icon: Layers3 },
+    { id: "courses", label: "Quiz courses", icon: BookOpen },
     { id: "participants", label: "Participants", icon: Users },
     { id: "scoreboard", label: "Scoreboard", icon: Trophy },
   ];
@@ -548,10 +572,10 @@ function Topbar({
   );
 }
 
-function EvaluationIcon({ color, icon = "book" }: { color: Evaluation["color"]; icon?: "book" | "shield" | "spark" }) {
+function EvaluationIcon({ color }: { color: Evaluation["color"] }) {
   return (
     <span className={`evaluation-icon icon-${color}`}>
-      {icon === "shield" ? <ShieldCheck size={22} /> : icon === "spark" ? <Sparkles size={22} /> : <BookOpen size={22} />}
+      <BookOpen size={22} />
     </span>
   );
 }
@@ -882,9 +906,9 @@ function ParticipantHome({
           </button>
         </div>
         <div className="evaluation-list">
-          {visibleEvaluations.slice(0, 4).map((evaluation, index) => (
+          {visibleEvaluations.slice(0, 4).map((evaluation) => (
             <article className={`evaluation-row${evaluation.status === "Scheduled" ? " is-scheduled" : ""}`} key={evaluation.id}>
-              <EvaluationIcon color={evaluation.color} icon={index === 1 ? "shield" : "book"} />
+              <EvaluationIcon color={evaluation.color} />
               <div className="evaluation-main">
                 <span>{evaluation.category}</span>
                 <h4>{evaluation.title}</h4>
@@ -998,7 +1022,7 @@ function EvaluationsView({
           return (
           <article className={`course-card accent-${item.color}${isScheduled ? " is-scheduled" : ""}${isClosed ? " is-completed" : ""}`} key={item.id}>
             <div className="course-card-top">
-              <EvaluationIcon color={item.color} icon={item.category === "Safety" ? "shield" : item.category === "Service" ? "spark" : "book"} />
+              <EvaluationIcon color={item.color} />
               <span className={`status-pill status-${item.status.toLowerCase()}`}>{item.status}</span>
             </div>
             <span className="course-category">{item.category}</span>
@@ -1631,7 +1655,7 @@ function CoursesView({
   return (
     <div className="content admin-section admin-courses">
       <section className="page-intro admin-section-header">
-        <div><span className="eyebrow dark-eyebrow"><Layers3 size={15} /> CONTENT MANAGEMENT</span><h2>Quiz courses</h2><p>Create, schedule, and manage every evaluation in one place.</p></div>
+        <div><span className="eyebrow dark-eyebrow"><BookOpen size={15} /> CONTENT MANAGEMENT</span><h2>Quiz courses</h2><p>Create, schedule, and manage every evaluation in one place.</p></div>
         <div className="admin-header-actions">
           <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
         </div>
@@ -1649,9 +1673,9 @@ function CoursesView({
           <table className="course-management-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
-              {activeCourses.map((course, index) => (
+              {activeCourses.map((course) => (
               <tr key={course.id}>
-                <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
+                <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
                 <td><div className="date-cell"><strong>{course.opens && course.opens !== "Scheduled" ? course.opens : course.due}</strong><span>{course.opens && course.opens !== "Scheduled" ? "Opening date" : "Closing date"} · {course.duration} min</span></div></td>
                 <td><strong>{course.participants || "—"}</strong></td>
@@ -1663,7 +1687,7 @@ function CoursesView({
                 <tr className="empty-table-row">
                   <td colSpan={6}>
                     <EmptyState
-                      icon={Layers3}
+                      icon={BookOpen}
                       title="No quiz courses"
                       description="Create your first course to start building the evaluation workspace."
                       action={<button className="primary-button" onClick={onCreate}><Plus size={17} /> Create course</button>}
@@ -1687,9 +1711,9 @@ function CoursesView({
           <table className="course-management-table archived-course-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
-              {archivedCourses.map((course, index) => (
+              {archivedCourses.map((course) => (
                 <tr key={course.id}>
-                  <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
+                  <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                   <td><span className="status-pill status-archived">Archived</span></td>
                   <td><div className="date-cell"><strong>{course.due}</strong><span>Last closing date · {course.duration} min</span></div></td>
                   <td><strong>{course.participants || "—"}</strong></td>
@@ -1771,7 +1795,7 @@ function ParticipantsView({
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
                 <td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
                 <td data-label="Status"><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
-                <td><button className="icon-button" aria-label={`Manage ${person.name}`}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
+                <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
               </tr>
               ))}
               {!participantsData.length && (
@@ -1939,7 +1963,9 @@ function ScoreboardView({
   async function downloadReport() {
     if (!selectedEvaluation || downloadingReport) return;
     setDownloadingReport(true);
-    setReportMessage("Preparing question and participant analytics...");
+    setReportMessage(selectedEvaluation.status === "Archived"
+      ? "Preparing preserved results for this archived quiz..."
+      : "Preparing question and participant analytics...");
     const error = await onDownloadReport(selectedEvaluation.id);
     setDownloadingReport(false);
     setReportMessage(error || "Executive PDF downloaded.");
@@ -1976,7 +2002,7 @@ function ScoreboardView({
             disabled={!evaluations.length}
           >
             {!evaluations.length && <option value="">No evaluations available</option>}
-            {evaluations.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+            {evaluations.map((item) => <option key={item.id} value={item.id}>{item.title}{item.status === "Archived" ? " — Archived" : ""}</option>)}
           </select>
           <p>{loading ? "Loading this scoreboard…" : "Live results synced from Google Sheets."}</p>
           {loadError && <p className="scoreboard-error" role="alert">{loadError}</p>}
@@ -2044,6 +2070,7 @@ function CourseBuilder({
   const [duration, setDuration] = useState(20);
   const [passingScore, setPassingScore] = useState(75);
   const [attemptLimit, setAttemptLimit] = useState(1);
+  const [randomizeAnswers, setRandomizeAnswers] = useState(false);
   const [builderError, setBuilderError] = useState("");
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([
@@ -2101,6 +2128,7 @@ function CourseBuilder({
       passingScore,
       attemptLimit: normalizedAttemptLimit(attemptLimit),
       attemptsUsed: 0,
+      randomizeAnswers,
       color: "green",
     }, draftQuestions);
   }
@@ -2130,6 +2158,7 @@ function CourseBuilder({
               <label className="field-label">Time limit (minutes)<input type="number" min={1} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
               <label className="field-label">Passing score (%)<input type="number" min={1} max={100} value={passingScore} onChange={(event) => setPassingScore(Number(event.target.value))} /></label>
               <label className="field-label">Maximum attempts (0 = unlimited)<input type="number" min={0} max={100} value={attemptLimit} onChange={(event) => setAttemptLimit(normalizedAttemptLimit(event.target.value))} /></label>
+              <label className="toggle-row full"><div><strong>Randomize answer order</strong><span>Give each attempt a stable, shuffled order while keeping scoring accurate.</span></div><input type="checkbox" checked={randomizeAnswers} onChange={(event) => setRandomizeAnswers(event.target.checked)} /></label>
             </div>
             <div className="builder-footer"><span /><button className="primary-button" onClick={() => setStep(2)}>Continue to questions <ArrowRight size={18} /></button></div>
           </section>
@@ -2174,7 +2203,7 @@ function CourseBuilder({
               <label className="toggle-row full"><div><strong>Publish immediately</strong><span>Make the course visible when saved.</span></div><input type="checkbox" /></label>
               <label className="toggle-row full"><div><strong>Email notification</strong><span>Notify assigned participants after publishing.</span></div><input type="checkbox" defaultChecked /></label>
             </div>
-            <div className="publish-summary"><span className="metric-icon green"><Send size={20} /></span><div><strong>Ready to publish</strong><p>{draftQuestions.length} questions · {duration} minutes · {passingScore}% passing score · {attemptLimit ? `${attemptLimit} attempt${attemptLimit === 1 ? "" : "s"} max` : "unlimited attempts"}</p></div></div>
+            <div className="publish-summary"><span className="metric-icon green"><Send size={20} /></span><div><strong>Ready to publish</strong><p>{draftQuestions.length} questions · {duration} minutes · {passingScore}% passing score · {attemptLimit ? `${attemptLimit} attempt${attemptLimit === 1 ? "" : "s"} max` : "unlimited attempts"} · {randomizeAnswers ? "answers shuffled" : "fixed answer order"}</p></div></div>
             <div className="builder-footer"><button className="back-button" onClick={() => setStep(2)}><ChevronLeft size={18} /> Questions</button><button className="primary-button" onClick={saveCourse}><Save size={18} /> Save quiz course</button></div>
           </section>
         )}
@@ -2185,7 +2214,7 @@ function CourseBuilder({
 
 function MobileNav({ role, view, setView }: { role: Role; view: View; setView: (view: View) => void }) {
   const items = role === "admin"
-    ? [{ id: "overview", icon: LayoutDashboard, label: "Home" }, { id: "courses", icon: Layers3, label: "Courses" }, { id: "participants", icon: Users, label: "People" }, { id: "scoreboard", icon: Trophy, label: "Scores" }]
+    ? [{ id: "overview", icon: LayoutDashboard, label: "Home" }, { id: "courses", icon: BookOpen, label: "Courses" }, { id: "participants", icon: Users, label: "People" }, { id: "scoreboard", icon: Trophy, label: "Scores" }]
     : [{ id: "home", icon: Home, label: "Home" }, { id: "evaluations", icon: BookOpen, label: "Courses" }, { id: "history", icon: History, label: "History" }, { id: "profile", icon: UserRound, label: "Profile" }];
   return (
     <nav className="mobile-nav" aria-label="Primary navigation">
@@ -2280,8 +2309,28 @@ export default function ExamClient() {
         } : item);
       });
     };
+    const onParticipantChange = (event: Event) => {
+      const detail = (event as CustomEvent<ParticipantChangeDetail>).detail || {};
+      if (!detail.user?.username) return;
+      const username = String(detail.user.username).trim().toLowerCase();
+      setParticipantsData((items) => items.map((item) => (
+        item.username.trim().toLowerCase() === username
+          ? {
+              ...item,
+              id: String(detail.user?.id || item.id),
+              name: String(detail.user?.fullName || item.name),
+              branch: String(detail.user?.branch ?? item.branch),
+              status: String(detail.user?.status || "active").toLowerCase() === "active" ? "Active" : "Inactive",
+            }
+          : item
+      )));
+    };
     window.addEventListener("cgv:course-change", onCourseChange);
-    return () => window.removeEventListener("cgv:course-change", onCourseChange);
+    window.addEventListener("cgv:participant-change", onParticipantChange);
+    return () => {
+      window.removeEventListener("cgv:course-change", onCourseChange);
+      window.removeEventListener("cgv:participant-change", onParticipantChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -2386,6 +2435,7 @@ export default function ExamClient() {
         setLeaderboardData(liveLeaderboard);
         setParticipantsData(dashboardData.participants.map((item) => {
           return {
+            id: String(item.id || ""),
             name: String(item.fullName || "Participant"),
             username: String(item.username || item.email || ""),
             branch: String(item.branch || ""),
@@ -2460,11 +2510,17 @@ export default function ExamClient() {
             options: { key: string; text: string }[];
           }[];
         }>("startAttempt", { token: sessionToken, courseId: evaluation.id });
-        const liveQuestions = data.questions.map((question) => ({
-          id: question.id,
-          prompt: question.prompt,
-          options: question.options.map((option) => option.text),
-        }));
+        const liveQuestions = data.questions.map((question) => {
+          const options = evaluation.randomizeAnswers
+            ? seededShuffle(question.options, `${data.attemptId}:${question.id}`)
+            : question.options;
+          return {
+            id: question.id,
+            prompt: question.prompt,
+            options: options.map((option) => option.text),
+            optionKeys: options.map((option) => option.key),
+          };
+        });
         setQuizQuestions(liveQuestions);
         setActiveAttemptId(data.attemptId);
         setActiveQuiz({ ...evaluation, questionCount: liveQuestions.length });
@@ -2486,8 +2542,8 @@ export default function ExamClient() {
       try {
         const answerPayload = quizQuestions.reduce<Record<string, string>>((resultMap, question, index) => {
           const selectedIndex = answers[index];
-          resultMap[question.id] = Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex <= 3
-            ? String.fromCharCode(65 + selectedIndex)
+          resultMap[question.id] = Number.isInteger(selectedIndex) && selectedIndex >= 0 && selectedIndex < question.options.length
+            ? (question.optionKeys?.[selectedIndex] || String.fromCharCode(65 + selectedIndex))
             : "";
           return resultMap;
         }, {});
@@ -2553,6 +2609,7 @@ export default function ExamClient() {
           passingScore: evaluation.passingScore,
           duration: evaluation.duration,
           attemptLimit: evaluation.attemptLimit,
+          randomizeAnswers: evaluation.randomizeAnswers,
           status: evaluation.status.toLowerCase(),
           questions: draftQuestions.map((question) => ({
             prompt: question.prompt,
@@ -2591,6 +2648,7 @@ export default function ExamClient() {
         },
       });
       setParticipantsData((items) => [{
+        id: String(data.user.id || ""),
         name: String(data.user.fullName || input.name),
         username: String(data.user.username || input.username),
         branch: String(data.user.branch || input.branch),

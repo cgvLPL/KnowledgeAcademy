@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.10-latest-scoreboard",
+  version: "2026.08.10-archived-report-results",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -29,7 +29,7 @@ const HEADERS = Object.freeze({
   Courses: [
     "course_id", "title", "description", "category", "passing_score",
     "time_limit_min", "start_at", "end_at", "status", "created_by",
-    "created_at", "updated_at", "attempt_limit",
+    "created_at", "updated_at", "attempt_limit", "randomize_answers",
   ],
   Questions: [
     "question_id", "course_id", "order_no", "question_text", "option_a",
@@ -249,7 +249,7 @@ function getParticipantHome_(body) {
 function participantHomeForUser_(user) {
   const questionCounts = questionCountsByCourse_();
   const attempts = attemptsForUser_(user.user_id);
-  const submittedAttempts = attempts.filter(function (attempt) { return attempt.status === "submitted"; });
+  const submittedAttempts = attempts.filter(isSubmittedAttempt_);
   const attemptsByCourse = submittedAttempts.reduce(function (counts, attempt) {
     const courseId = String(attempt.course_id || "");
     counts[courseId] = (counts[courseId] || 0) + 1;
@@ -466,9 +466,15 @@ function submitAttempt_(body) {
 function submittedAttemptCountForCourse_(attempts, courseId, excludedAttemptId) {
   return attempts.filter(function (attempt) {
     return String(attempt.course_id) === String(courseId) &&
-      attempt.status === "submitted" &&
+      isSubmittedAttempt_(attempt) &&
       String(attempt.attempt_id) !== String(excludedAttemptId || "");
   }).length;
+}
+
+function isSubmittedAttempt_(attempt) {
+  const status = String(attempt && attempt.status || "").trim().toLowerCase();
+  if (status === "submitted") return true;
+  return status !== "started" && Boolean(toIso_(attempt && attempt.submitted_at));
 }
 
 function assertAttemptLimitAvailable_(course, attempts, excludedAttemptId) {
@@ -490,7 +496,7 @@ function adminDashboardForUser_(user, courseId) {
   const users = rowsAsObjects_(getSheet_(APP.sheets.users));
   const participants = users.filter(function (user) { return user.role === "participant"; });
   const allSubmitted = rowsAsObjects_(getSheet_(APP.sheets.attempts))
-    .filter(function (attempt) { return attempt.status === "submitted"; });
+    .filter(isSubmittedAttempt_);
   const attempts = courseId
     ? allSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
     : allSubmitted;
@@ -578,7 +584,7 @@ function adminGetExecutiveReport_(body) {
   const userMap = indexBy_(users, "user_id");
   const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
     .filter(function (attempt) {
-      return String(attempt.course_id) === courseId && attempt.status === "submitted";
+      return String(attempt.course_id) === courseId && isSubmittedAttempt_(attempt);
     });
   const answersByQuestion = {};
   const attemptsNeedingAnswerRows = {};
@@ -835,6 +841,9 @@ function adminSaveCourse_(body) {
       attempt_limit: input.attemptLimit === undefined && existing
         ? courseAttemptLimit_(existing)
         : clamp_(Math.floor(Number(input.attemptLimit || 0)), 0, 100),
+      randomize_answers: input.randomizeAnswers === undefined && existing
+        ? courseRandomizesAnswers_(existing)
+        : booleanSetting_(input.randomizeAnswers),
     };
     if (existing) {
       updateObjectRow_(coursesSheet, existing.__row, record);
@@ -878,6 +887,7 @@ function adminDuplicateCourse_(body) {
       passingScore: Number(source.passing_score || 75),
       duration: Number(source.time_limit_min || 20),
       attemptLimit: courseAttemptLimit_(source),
+      randomizeAnswers: courseRandomizesAnswers_(source),
       startAt: "",
       endAt: "",
       status: "draft",
@@ -1466,6 +1476,7 @@ function publicCourse_(course, questionCounts) {
     passingScore: Number(course.passing_score || 0),
     duration: Number(course.time_limit_min || 0),
     attemptLimit: courseAttemptLimit_(course),
+    randomizeAnswers: courseRandomizesAnswers_(course),
     createdAt: toIso_(course.created_at),
     startAt: toIso_(course.start_at),
     endAt: toIso_(course.end_at),
@@ -1479,6 +1490,15 @@ function publicCourse_(course, questionCounts) {
 function courseAttemptLimit_(course) {
   const value = Math.floor(Number(course && course.attempt_limit || 0));
   return isFinite(value) ? clamp_(value, 0, 100) : 0;
+}
+
+function booleanSetting_(value) {
+  if (value === true) return true;
+  return ["true", "1", "yes", "on"].indexOf(String(value || "").trim().toLowerCase()) >= 0;
+}
+
+function courseRandomizesAnswers_(course) {
+  return booleanSetting_(course && course.randomize_answers);
 }
 
 function coursePublishingStatus_(value) {

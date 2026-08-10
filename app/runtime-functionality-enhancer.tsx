@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const EXPECTED_BACKEND_VERSION = "2026.08.10-latest-scoreboard";
+const EXPECTED_BACKEND_VERSION = "2026.08.10-archived-report-results";
 const ENDPOINT = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 
 function normalized(value: string | null | undefined) {
