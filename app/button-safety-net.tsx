@@ -302,6 +302,7 @@ export default function ButtonSafetyNet() {
       }
 
       if (label === "duplicate question") {
+        if (button.hasAttribute("data-native-question-action")) return;
         event.preventDefault();
         if (duplicateQuestion(button)) notify("Question duplicated.");
         else notify("The question could not be duplicated.");

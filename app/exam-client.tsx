@@ -1974,6 +1974,7 @@ function CourseBuilder({
   const [duration, setDuration] = useState(20);
   const [passingScore, setPassingScore] = useState(75);
   const [builderError, setBuilderError] = useState("");
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([
     { prompt: "", options: ["", "", "", ""], correct: 0 },
   ]);
@@ -1984,14 +1985,33 @@ function CourseBuilder({
   function updateOption(questionIndex: number, optionIndex: number, value: string) {
     setDraftQuestions((items) => items.map((item, itemIndex) => itemIndex === questionIndex ? { ...item, options: item.options.map((option, index) => index === optionIndex ? value : option) } : item));
   }
+  function addQuestion() {
+    setActiveQuestionIndex(draftQuestions.length);
+    setDraftQuestions((items) => [...items, { prompt: "", options: ["", "", "", ""], correct: 0 }]);
+  }
+  function duplicateQuestion(questionIndex: number) {
+    const question = draftQuestions[questionIndex];
+    if (!question) return;
+    setActiveQuestionIndex(draftQuestions.length);
+    setDraftQuestions((items) => [...items, { ...question, options: [...question.options] }]);
+  }
+  function deleteQuestion(questionIndex: number) {
+    setDraftQuestions((items) => items.filter((_, index) => index !== questionIndex));
+    setActiveQuestionIndex((current) => {
+      if (current > questionIndex) return current - 1;
+      return Math.min(current, draftQuestions.length - 2);
+    });
+  }
   function saveCourse() {
     if (!title.trim()) {
       setBuilderError("Enter a course title.");
       setStep(1);
       return;
     }
-    if (draftQuestions.some((question) => !question.prompt.trim() || question.options.some((option) => !option.trim()))) {
+    const incompleteQuestionIndex = draftQuestions.findIndex((question) => !question.prompt.trim() || question.options.some((option) => !option.trim()));
+    if (incompleteQuestionIndex >= 0) {
       setBuilderError("Complete every question and answer choice before saving.");
+      setActiveQuestionIndex(incompleteQuestionIndex);
       setStep(2);
       return;
     }
@@ -2017,11 +2037,11 @@ function CourseBuilder({
       <BrandAtmosphere variant="builder" />
       <header className="builder-header">
         <div className="builder-brand"><Logo /><span>New quiz course</span></div>
-        <div className="builder-actions"><button className="secondary-button" onClick={onClose}>Close</button><button className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
+        <div className="builder-actions"><button type="button" className="secondary-button" onClick={onClose}>Close</button><button type="button" className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
       </header>
       <div className="builder-progress">
         {BUILDER_STEPS.map(([label, number]) => (
-          <button className={step === number ? "active" : step > number ? "done" : ""} key={number} onClick={() => setStep(number)}>
+          <button type="button" className={step === number ? "active" : step > number ? "done" : ""} key={number} onClick={() => setStep(number)} aria-current={step === number ? "step" : undefined}>
             <span>{step > number ? <Check size={14} /> : number}</span>{label}
           </button>
         ))}
@@ -2044,15 +2064,15 @@ function CourseBuilder({
         )}
         {step === 2 && (
           <section className="builder-question-layout">
-            <aside className="question-outline">
+            <aside className="question-outline" aria-label="Quiz questions">
               <div><span className="card-kicker">COURSE OUTLINE</span><h3>{draftQuestions.length} question{draftQuestions.length !== 1 ? "s" : ""}</h3></div>
-              {draftQuestions.map((question, index) => <button key={index} className={index === 0 ? "active" : ""}><span>{String(index + 1).padStart(2, "0")}</span><strong>{question.prompt || "Untitled question"}</strong></button>)}
-              <button className="add-outline" onClick={() => setDraftQuestions((items) => [...items, { prompt: "", options: ["", "", "", ""], correct: 0 }])}><Plus size={17} /> Add question</button>
+              {draftQuestions.map((question, index) => <button type="button" key={index} className={index === activeQuestionIndex ? "active cgv-active-question-button" : ""} onClick={() => setActiveQuestionIndex(index)} aria-controls={`builder-question-${index}`} aria-current={index === activeQuestionIndex ? "step" : undefined}><span>{String(index + 1).padStart(2, "0")}</span><strong>{question.prompt || "Untitled question"}</strong></button>)}
+              <button type="button" className="add-outline" onClick={addQuestion}><Plus size={17} /> Add question</button>
             </aside>
             <div className="question-edit-column">
               {draftQuestions.map((question, questionIndex) => (
-                <article className="question-editor" key={questionIndex}>
-                  <div className="question-editor-head"><span>QUESTION {String(questionIndex + 1).padStart(2, "0")}</span><div><button aria-label="Duplicate question"><Copy size={17} /></button>{draftQuestions.length > 1 && <button aria-label="Delete question" onClick={() => setDraftQuestions((items) => items.filter((_, index) => index !== questionIndex))}><Trash2 size={17} /></button>}</div></div>
+                <article id={`builder-question-${questionIndex}`} className={`question-editor ${questionIndex === activeQuestionIndex ? "cgv-active-question" : ""}`} aria-hidden={questionIndex !== activeQuestionIndex} key={questionIndex}>
+                  <div className="question-editor-head"><span>QUESTION {String(questionIndex + 1).padStart(2, "0")}</span><div><button type="button" data-native-question-action aria-label="Duplicate question" onClick={() => duplicateQuestion(questionIndex)}><Copy size={17} /></button>{draftQuestions.length > 1 && <button type="button" aria-label="Delete question" onClick={() => deleteQuestion(questionIndex)}><Trash2 size={17} /></button>}</div></div>
                   <label className="field-label">Question prompt<textarea rows={3} value={question.prompt} onChange={(event) => updateQuestion(questionIndex, { prompt: event.target.value })} placeholder="Type the question here…" /></label>
                   <div className="option-editor">
                     <span className="field-label">Answer choices <small>Select the correct answer</small></span>
@@ -2067,7 +2087,7 @@ function CourseBuilder({
                   </div>
                 </article>
               ))}
-              <button className="add-question-card" onClick={() => setDraftQuestions((items) => [...items, { prompt: "", options: ["", "", "", ""], correct: 0 }])}><Plus size={20} /><span><strong>Add another question</strong><small>Build the next item in this evaluation</small></span></button>
+              <button type="button" className="add-question-card" onClick={addQuestion}><Plus size={20} /><span><strong>Add another question</strong><small>Build the next item in this evaluation</small></span></button>
               <div className="builder-footer"><button className="back-button" onClick={() => setStep(1)}><ChevronLeft size={18} /> Course details</button><button className="primary-button" onClick={() => setStep(3)}>Schedule & access <ArrowRight size={18} /></button></div>
             </div>
           </section>
