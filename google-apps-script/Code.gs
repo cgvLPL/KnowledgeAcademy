@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.09-30-participant-capacity",
+  version: "2026.08.09-fast-response",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -67,11 +67,15 @@ const API_ACTIONS = Object.freeze({
   adminResetPassword: adminResetPassword_,
 });
 
+let REQUEST_STATE_ = null;
+
 function doGet() {
+  beginRequest_();
   return json_(health_());
 }
 
 function doPost(event) {
+  beginRequest_();
   try {
     const body = parseBody_(event);
     const action = String(body.action || "");
@@ -93,14 +97,15 @@ function health_() {
     ok: true,
     service: APP.name,
     version: APP.version,
-    spreadsheetId: SpreadsheetApp.getActiveSpreadsheet().getId(),
+    spreadsheetId: activeSpreadsheet_().getId(),
     now: new Date().toISOString(),
   };
 }
 
 function setupEvaluationPlatform() {
+  beginRequest_();
   return withScriptLock_(30000, function () {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = activeSpreadsheet_();
     spreadsheet.setSpreadsheetTimeZone(APP.timezone);
     Object.keys(HEADERS).forEach(function (name) {
       ensureDataSheet_(spreadsheet, name, HEADERS[name]);
@@ -121,8 +126,9 @@ function setupEvaluationPlatform() {
 }
 
 function resetEvaluationPlatformToAdminOnly() {
+  beginRequest_();
   return withScriptLock_(30000, function () {
-    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const spreadsheet = activeSpreadsheet_();
     Object.keys(HEADERS).forEach(function (name) {
       ensureDataSheet_(spreadsheet, name, HEADERS[name]);
     });
@@ -149,6 +155,7 @@ function resetEvaluationPlatformToAdminOnly() {
 }
 
 function resetAdminCredentials() {
+  beginRequest_();
   return withScriptLock_(30000, function () {
     ensurePepper_();
     const properties = PropertiesService.getScriptProperties();
@@ -174,6 +181,7 @@ function resetAdminCredentials() {
 }
 
 function rebuildDashboard() {
+  beginRequest_();
   buildDashboard_();
   SpreadsheetApp.flush();
   return { ok: true };
@@ -191,27 +199,35 @@ function login_(body) {
   }
   const token = Utilities.getUuid() + Utilities.getUuid();
   const expiresAt = new Date(Date.now() + APP.sessionHours * 3600000);
+  let authenticatedUser = null;
 
-  return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
+  const loginResult = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
     const currentUser = findById_(APP.sheets.users, "user_id", user.user_id);
     if (!currentUser || currentUser.status !== "active") {
       throw new Error("Invalid username or password.");
     }
-    if (hashPassword_(password, currentUser.salt) !== currentUser.password_hash) {
+    if (currentUser.salt !== user.salt || currentUser.password_hash !== user.password_hash) {
       throw new Error("Invalid username or password.");
     }
-    updateObjectRow_(getSheet_(APP.sheets.users), currentUser.__row, { last_login: new Date() });
+    const loggedInAt = new Date();
+    updateObjectRow_(getSheet_(APP.sheets.users), currentUser.__row, { last_login: loggedInAt });
     appendRow_(getSheet_(APP.sheets.sessions), [
       hashToken_(token), currentUser.user_id, currentUser.role, expiresAt, new Date(),
     ]);
     SpreadsheetApp.flush();
+    authenticatedUser = Object.assign({}, currentUser, { last_login: loggedInAt });
     return {
       ok: true,
       token: token,
       expiresAt: expiresAt.toISOString(),
-      user: publicUser_(currentUser),
+      user: publicUser_(authenticatedUser),
     };
   });
+
+  loginResult.workspace = authenticatedUser.role === "admin"
+    ? adminDashboardForUser_(authenticatedUser, "")
+    : participantHomeForUser_(authenticatedUser);
+  return loginResult;
 }
 
 function logout_(body) {
@@ -227,23 +243,28 @@ function logout_(body) {
 
 function getParticipantHome_(body) {
   const context = requireSession_(body.token, "participant");
+  return participantHomeForUser_(context.user);
+}
+
+function participantHomeForUser_(user) {
+  const questionCounts = questionCountsByCourse_();
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses))
     .filter(function (course) {
       return courseLifecycleStatus_(course) !== "draft";
     })
-    .map(publicCourse_)
+    .map(function (course) { return publicCourse_(course, questionCounts); })
     .sort(function (first, second) {
       const priority = { live: 0, scheduled: 1, completed: 2, draft: 3 };
       return priority[first.status] - priority[second.status] ||
         new Date(first.startAt || first.endAt || 0) - new Date(second.startAt || second.endAt || 0);
     });
-  const history = attemptsForUser_(context.user.user_id)
+  const history = attemptsForUser_(user.user_id)
     .filter(function (attempt) { return attempt.status === "submitted"; })
     .sort(function (a, b) { return new Date(b.submitted_at) - new Date(a.submitted_at); })
     .map(publicAttempt_);
   return {
     ok: true,
-    user: publicUser_(context.user),
+    user: publicUser_(user),
     courses: courses,
     history: history,
     summary: summarizeAttempts_(history),
@@ -264,9 +285,12 @@ function startAttempt_(body) {
   if (!questions.length) throw new Error("This evaluation has no published questions.");
 
   const attemptId = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
-    const existing = rowsAsObjects_(getSheet_(APP.sheets.attempts)).find(function (attempt) {
+    const existing = findObjectsByExactValue_(
+      getSheet_(APP.sheets.attempts),
+      "user_id",
+      context.user.user_id,
+    ).find(function (attempt) {
       return String(attempt.course_id) === courseId &&
-        String(attempt.user_id) === String(context.user.user_id) &&
         attempt.status === "started";
     });
     if (existing) return existing.attempt_id;
@@ -277,12 +301,14 @@ function startAttempt_(body) {
     SpreadsheetApp.flush();
     return id;
   });
+  const questionCounts = {};
+  questionCounts[courseId] = questions.length;
 
   return {
     ok: true,
     attemptId: attemptId,
     startedAt: now.toISOString(),
-    course: publicCourse_(course),
+    course: publicCourse_(course, questionCounts),
     questions: questions.map(function (question) {
       return {
         id: question.question_id,
@@ -361,7 +387,7 @@ function submitAttempt_(body) {
   );
 
   return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
-    const current = findById_(APP.sheets.attempts, "attempt_id", attemptId);
+    const current = findById_(APP.sheets.attempts, "attempt_id", attemptId, true);
     if (!current || String(current.user_id) !== String(context.user.user_id)) {
       throw new Error("Attempt not found.");
     }
@@ -399,17 +425,21 @@ function submitAttempt_(body) {
 
 function adminGetDashboard_(body) {
   const context = requireSession_(body.token, "admin");
+  return adminDashboardForUser_(context.user, String(body.courseId || "").trim());
+}
+
+function adminDashboardForUser_(user, courseId) {
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses));
   const users = rowsAsObjects_(getSheet_(APP.sheets.users));
   const participants = users.filter(function (user) { return user.role === "participant"; });
   const allSubmitted = rowsAsObjects_(getSheet_(APP.sheets.attempts))
     .filter(function (attempt) { return attempt.status === "submitted"; });
-  const courseId = String(body.courseId || "").trim();
   const attempts = courseId
     ? allSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
     : allSubmitted;
   const userMap = indexBy_(users, "user_id");
   const courseMap = indexBy_(courses, "course_id");
+  const questionCounts = questionCountsByCourse_();
   const participantStats = allSubmitted.reduce(function (stats, attempt) {
     if (!stats[attempt.user_id]) stats[attempt.user_id] = { attempts: 0, scoreTotal: 0 };
     stats[attempt.user_id].attempts += 1;
@@ -449,9 +479,9 @@ function adminGetDashboard_(body) {
   });
   return {
     ok: true,
-    user: publicUser_(context.user),
+    user: publicUser_(user),
     courses: courses.map(function (course) {
-      const result = publicCourse_(course);
+      const result = publicCourse_(course, questionCounts);
       const stats = courseStats[course.course_id] || { participants: {}, total: 0, count: 0 };
       result.participants = Object.keys(stats.participants).length;
       result.average = stats.count ? Math.round(stats.total / stats.count) : 0;
@@ -485,24 +515,44 @@ function adminGetExecutiveReport_(body) {
   if (!course) throw new Error("Course not found.");
 
   const questions = questionsForCourse_(courseId);
+  const questionCounts = {};
+  questionCounts[courseId] = questions.length;
   const users = rowsAsObjects_(getSheet_(APP.sheets.users));
   const userMap = indexBy_(users, "user_id");
   const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
     .filter(function (attempt) {
       return String(attempt.course_id) === courseId && attempt.status === "submitted";
     });
-  const attemptIds = attempts.reduce(function (result, attempt) {
-    result[String(attempt.attempt_id)] = true;
-    return result;
-  }, {});
-  const answers = rowsAsObjects_(getSheet_(APP.sheets.answers))
-    .filter(function (answer) { return Boolean(attemptIds[String(answer.attempt_id)]); });
-  const answersByQuestion = answers.reduce(function (result, answer) {
-    const questionId = String(answer.question_id);
-    if (!result[questionId]) result[questionId] = [];
-    result[questionId].push(answer);
-    return result;
-  }, {});
+  const answersByQuestion = {};
+  const attemptsNeedingAnswerRows = {};
+  attempts.forEach(function (attempt) {
+    let recordedAnswers = null;
+    try {
+      recordedAnswers = JSON.parse(String(attempt.answers_json || ""));
+    } catch (error) {
+      recordedAnswers = null;
+    }
+    if (!recordedAnswers || typeof recordedAnswers !== "object" || !Object.keys(recordedAnswers).length) {
+      attemptsNeedingAnswerRows[String(attempt.attempt_id)] = true;
+      return;
+    }
+    Object.keys(recordedAnswers).forEach(function (questionId) {
+      if (!answersByQuestion[questionId]) answersByQuestion[questionId] = [];
+      answersByQuestion[questionId].push({
+        attempt_id: attempt.attempt_id,
+        question_id: questionId,
+        selected_option: recordedAnswers[questionId],
+      });
+    });
+  });
+  if (Object.keys(attemptsNeedingAnswerRows).length) {
+    rowsAsObjects_(getSheet_(APP.sheets.answers)).forEach(function (answer) {
+      if (!attemptsNeedingAnswerRows[String(answer.attempt_id)]) return;
+      const questionId = String(answer.question_id);
+      if (!answersByQuestion[questionId]) answersByQuestion[questionId] = [];
+      answersByQuestion[questionId].push(answer);
+    });
+  }
 
   const participantResults = attempts.map(function (attempt) {
     const user = userMap[attempt.user_id] || {};
@@ -637,7 +687,7 @@ function adminGetExecutiveReport_(body) {
     ok: true,
     report: {
       generatedAt: new Date().toISOString(),
-      course: publicCourse_(course),
+      course: publicCourse_(course, questionCounts),
       summary: {
         submissions: participantResults.length,
         uniqueParticipants: Object.keys(uniqueParticipants).length,
@@ -660,10 +710,13 @@ function adminGetCourse_(body) {
   const courseId = String(body.courseId || "").trim();
   const course = findById_(APP.sheets.courses, "course_id", courseId);
   if (!course) throw new Error("Course not found.");
+  const questions = questionsForCourse_(courseId);
+  const questionCounts = {};
+  questionCounts[courseId] = questions.length;
   return {
     ok: true,
-    course: publicCourse_(course),
-    questions: questionsForCourse_(courseId).map(function (question) {
+    course: publicCourse_(course, questionCounts),
+    questions: questions.map(function (question) {
       return {
         id: question.question_id,
         prompt: question.question_text,
@@ -734,11 +787,16 @@ function adminSaveCourse_(body) {
     questionsSheet
       .getRange(questionsSheet.getLastRow() + 1, 1, preparedQuestions.length, HEADERS.Questions.length)
       .setValues(preparedQuestions);
-    buildDashboard_();
+    invalidateSheetCache_(questionsSheet);
+    if (existing && String(existing.title) !== title) {
+      updateDashboardCourseSelection_(existing.title, title);
+    }
     SpreadsheetApp.flush();
+    const questionCounts = {};
+    questionCounts[courseId] = preparedQuestions.length;
     return {
       ok: true,
-      course: publicCourse_(findById_(APP.sheets.courses, "course_id", courseId)),
+      course: publicCourse_(record, questionCounts),
     };
   });
 }
@@ -793,7 +851,7 @@ function adminSetCourseStatus_(body) {
     SpreadsheetApp.flush();
     return {
       ok: true,
-      course: publicCourse_(findById_(APP.sheets.courses, "course_id", courseId)),
+      course: publicCourse_(Object.assign({}, course, { status: status, updated_at: new Date() })),
     };
   });
 }
@@ -804,9 +862,11 @@ function adminDeleteCourse_(body) {
   return withScriptLock_(15000, function () {
     const course = findById_(APP.sheets.courses, "course_id", courseId);
     if (!course) throw new Error("Course not found.");
-    const hasAttempts = rowsAsObjects_(getSheet_(APP.sheets.attempts)).some(function (attempt) {
-      return String(attempt.course_id) === courseId;
-    });
+    const hasAttempts = Boolean(findObjectByExactValue_(
+      getSheet_(APP.sheets.attempts),
+      "course_id",
+      courseId,
+    ));
     if (hasAttempts) {
       updateObjectRow_(getSheet_(APP.sheets.courses), course.__row, {
         status: "completed",
@@ -821,7 +881,8 @@ function adminDeleteCourse_(body) {
     }
     deleteRowsMatching_(getSheet_(APP.sheets.questions), "course_id", courseId);
     getSheet_(APP.sheets.courses).deleteRow(course.__row);
-    buildDashboard_();
+    invalidateSheetCache_(getSheet_(APP.sheets.courses));
+    updateDashboardCourseSelection_(course.title, "");
     SpreadsheetApp.flush();
     return { ok: true, deleted: true };
   });
@@ -877,7 +938,7 @@ function adminSetUserStatus_(body) {
     SpreadsheetApp.flush();
     return {
       ok: true,
-      user: publicUser_(findById_(APP.sheets.users, "user_id", userId)),
+      user: publicUser_(Object.assign({}, user, { status: status })),
     };
   });
 }
@@ -948,7 +1009,7 @@ function createUserInternal_(input) {
     username: username,
   };
   appendObject_(getSheet_(APP.sheets.users), record);
-  return findUserByUsername_(username);
+  return record;
 }
 
 function requireSession_(token, requiredRole) {
@@ -989,7 +1050,7 @@ function pruneSessionsIfDue_() {
 }
 
 function buildDashboard_() {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = activeSpreadsheet_();
   let sheet = spreadsheet.getSheetByName(APP.sheets.dashboard);
   if (!sheet) sheet = spreadsheet.insertSheet(APP.sheets.dashboard, 0);
   sheet.clear();
@@ -1033,6 +1094,17 @@ function buildDashboard_() {
   [72, 190, 130, 88, 90, 88, 145, 24, 30, 105, 90, 90, 90, 90]
     .forEach(function (width, index) { sheet.setColumnWidth(index + 1, width); });
   sheet.getRange("A1:N40").setFontFamily("Arial").setVerticalAlignment("middle");
+}
+
+function updateDashboardCourseSelection_(previousTitle, nextTitle) {
+  const selection = getSheet_(APP.sheets.dashboard).getRange("B3");
+  if (String(selection.getValue() || "") !== String(previousTitle || "")) return;
+  if (nextTitle) {
+    selection.setValue(nextTitle);
+    return;
+  }
+  const coursesSheet = getSheet_(APP.sheets.courses);
+  selection.setValue(coursesSheet.getLastRow() > 1 ? coursesSheet.getRange("B2").getValue() : "");
 }
 
 function ensureDataSheet_(spreadsheet, name, headers) {
@@ -1111,23 +1183,54 @@ function withScriptLock_(timeoutMs, callback) {
   }
 }
 
+function beginRequest_() {
+  REQUEST_STATE_ = {
+    spreadsheet: null,
+    sheets: {},
+    rows: {},
+    lookups: {},
+  };
+}
+
+function requestState_() {
+  if (!REQUEST_STATE_) beginRequest_();
+  return REQUEST_STATE_;
+}
+
+function activeSpreadsheet_() {
+  const state = requestState_();
+  if (!state.spreadsheet) state.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  return state.spreadsheet;
+}
+
 function getSheet_(name) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  const state = requestState_();
+  if (state.sheets[name]) return state.sheets[name];
+  const sheet = activeSpreadsheet_().getSheetByName(name);
   if (!sheet) throw new Error('Missing sheet "' + name + '". Run setupEvaluationPlatform() first.');
+  state.sheets[name] = sheet;
   return sheet;
 }
 
 function rowsAsObjects_(sheet) {
-  if (sheet.getLastRow() < 2) return [];
+  const state = requestState_();
+  const name = sheet.getName();
+  if (Object.prototype.hasOwnProperty.call(state.rows, name)) return state.rows[name];
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    state.rows[name] = [];
+    return state.rows[name];
+  }
   const headers = headersForSheet_(sheet);
-  return sheet
-    .getRange(2, 1, sheet.getLastRow() - 1, headers.length)
+  state.rows[name] = sheet
+    .getRange(2, 1, lastRow - 1, headers.length)
     .getValues()
     .map(function (values, index) {
       const object = { __row: index + 2 };
       headers.forEach(function (header, column) { object[header] = values[column]; });
       return object;
     });
+  return state.rows[name];
 }
 
 function headersForSheet_(sheet) {
@@ -1143,55 +1246,100 @@ function objectFromRow_(sheet, rowNumber) {
   return object;
 }
 
-function findObjectByExactValue_(sheet, key, value) {
-  if (sheet.getLastRow() < 2) return null;
+function findObjectByExactValue_(sheet, key, value, fresh) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+  const state = requestState_();
+  const lookupKey = JSON.stringify([sheet.getName(), key, String(value)]);
+  if (!fresh && Object.prototype.hasOwnProperty.call(state.lookups, lookupKey)) {
+    return state.lookups[lookupKey];
+  }
   const headers = headersForSheet_(sheet);
   const columnIndex = headers.indexOf(key);
   if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
   const match = sheet
-    .getRange(2, columnIndex + 1, sheet.getLastRow() - 1, 1)
+    .getRange(2, columnIndex + 1, lastRow - 1, 1)
     .createTextFinder(String(value))
     .matchEntireCell(true)
     .useRegularExpression(false)
     .findNext();
-  return match ? objectFromRow_(sheet, match.getRow()) : null;
+  state.lookups[lookupKey] = match ? objectFromRow_(sheet, match.getRow()) : null;
+  return state.lookups[lookupKey];
+}
+
+function findObjectsByExactValue_(sheet, key, value) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const headers = headersForSheet_(sheet);
+  const columnIndex = headers.indexOf(key);
+  if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
+  return sheet
+    .getRange(2, columnIndex + 1, lastRow - 1, 1)
+    .createTextFinder(String(value))
+    .matchEntireCell(true)
+    .useRegularExpression(false)
+    .findAll()
+    .map(function (match) { return objectFromRow_(sheet, match.getRow()); });
+}
+
+function invalidateSheetCache_(sheet) {
+  const state = requestState_();
+  const name = sheet.getName();
+  delete state.rows[name];
+  Object.keys(state.lookups).forEach(function (lookupKey) {
+    if (lookupKey.indexOf('["' + name + '",') === 0) delete state.lookups[lookupKey];
+  });
 }
 
 function appendRow_(sheet, values) {
   sheet.getRange(sheet.getLastRow() + 1, 1, 1, values.length).setValues([values]);
+  invalidateSheetCache_(sheet);
 }
 
 function appendObject_(sheet, object) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = headersForSheet_(sheet);
   appendRow_(sheet, headers.map(function (header) {
     return Object.prototype.hasOwnProperty.call(object, header) ? object[header] : "";
   }));
 }
 
 function updateObjectRow_(sheet, rowNumber, patch) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const headers = headersForSheet_(sheet);
   const range = sheet.getRange(rowNumber, 1, 1, headers.length);
   const values = range.getValues()[0];
   headers.forEach(function (header, index) {
     if (Object.prototype.hasOwnProperty.call(patch, header)) values[index] = patch[header];
   });
   range.setValues([values]);
+  invalidateSheetCache_(sheet);
 }
 
 function deleteRowsMatching_(sheet, key, value) {
-  rowsAsObjects_(sheet)
-    .filter(function (row) { return String(row[key]) === String(value); })
-    .sort(function (a, b) { return b.__row - a.__row; })
-    .forEach(function (row) { sheet.deleteRow(row.__row); });
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  const headers = headersForSheet_(sheet);
+  const columnIndex = headers.indexOf(key);
+  if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
+  sheet
+    .getRange(2, columnIndex + 1, lastRow - 1, 1)
+    .createTextFinder(String(value))
+    .matchEntireCell(true)
+    .useRegularExpression(false)
+    .findAll()
+    .map(function (match) { return match.getRow(); })
+    .sort(function (a, b) { return b - a; })
+    .forEach(function (rowNumber) { sheet.deleteRow(rowNumber); });
+  invalidateSheetCache_(sheet);
 }
 
 function clearDataRows_(sheet) {
   const count = sheet.getLastRow() - 1;
   if (count > 0) sheet.deleteRows(2, count);
+  invalidateSheetCache_(sheet);
 }
 
-function findById_(sheetName, key, value) {
-  return findObjectByExactValue_(getSheet_(sheetName), key, value);
+function findById_(sheetName, key, value, fresh) {
+  return findObjectByExactValue_(getSheet_(sheetName), key, value, fresh);
 }
 
 function findUserByEmail_(email) {
@@ -1210,13 +1358,19 @@ function questionsForCourse_(courseId) {
     .sort(function (a, b) { return Number(a.order_no) - Number(b.order_no); });
 }
 
+function questionCountsByCourse_() {
+  return rowsAsObjects_(getSheet_(APP.sheets.questions)).reduce(function (counts, question) {
+    const courseId = String(question.course_id || "");
+    counts[courseId] = (counts[courseId] || 0) + 1;
+    return counts;
+  }, {});
+}
+
 function attemptsForUser_(userId) {
   const courseMap = indexBy_(rowsAsObjects_(getSheet_(APP.sheets.courses)), "course_id");
-  return rowsAsObjects_(getSheet_(APP.sheets.attempts))
-    .filter(function (attempt) { return String(attempt.user_id) === String(userId); })
+  return findObjectsByExactValue_(getSheet_(APP.sheets.attempts), "user_id", userId)
     .map(function (attempt) {
-      attempt.__course = courseMap[attempt.course_id] || {};
-      return attempt;
+      return Object.assign({}, attempt, { __course: courseMap[attempt.course_id] || {} });
     });
 }
 
@@ -1241,7 +1395,7 @@ function publicUser_(user) {
   };
 }
 
-function publicCourse_(course) {
+function publicCourse_(course, questionCounts) {
   return {
     id: course.course_id,
     title: course.title,
@@ -1252,7 +1406,9 @@ function publicCourse_(course) {
     startAt: toIso_(course.start_at),
     endAt: toIso_(course.end_at),
     status: courseLifecycleStatus_(course),
-    questionCount: questionsForCourse_(course.course_id).length,
+    questionCount: questionCounts
+      ? Number(questionCounts[course.course_id] || 0)
+      : questionsForCourse_(course.course_id).length,
   };
 }
 

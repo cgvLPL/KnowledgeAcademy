@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const EXPECTED_BACKEND_VERSION = "2026.08.09-30-participant-capacity";
+const EXPECTED_BACKEND_VERSION = "2026.08.09-fast-response";
 const ENDPOINT = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 
 function normalized(value: string | null | undefined) {

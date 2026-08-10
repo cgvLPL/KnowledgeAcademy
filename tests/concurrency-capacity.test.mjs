@@ -21,6 +21,7 @@ test("backend reserves a safe write queue for 30 simultaneous participants", () 
   assert.match(backend, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs/);
   assert.match(backend, /lock\.tryLock\(timeoutMs\)/);
   assert.match(backend, /findObjectByExactValue_\([\s\S]*?createTextFinder/);
+  assert.match(backend, /findById_\(APP\.sheets\.attempts, "attempt_id", attemptId, true\)/);
   assert.match(backend, /SpreadsheetApp\.flush\(\)/);
 });
 

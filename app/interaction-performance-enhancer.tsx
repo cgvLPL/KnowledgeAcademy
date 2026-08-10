@@ -43,6 +43,7 @@ type CacheEntry = {
 type LoginResponse = {
   ok?: boolean;
   token?: string;
+  workspace?: unknown;
   user?: {
     id?: string;
     role?: string;
@@ -124,7 +125,6 @@ export default function InteractionPerformanceEnhancer() {
     const cache = new Map<string, CacheEntry>();
     const inFlight = new Map<string, Promise<CacheEntry>>();
     let latestDashboard: DashboardResponse | null = null;
-    let warmupTimer = 0;
 
     const clearReadCache = () => {
       cache.clear();
@@ -212,7 +212,7 @@ export default function InteractionPerformanceEnhancer() {
       if (action === "login") {
         try {
           const data = await response.clone().json() as LoginResponse;
-          if (response.ok && data.ok !== false && data.token) {
+          if (response.ok && data.ok !== false && data.token && !data.workspace) {
             const endpoint = requestUrl(input);
             const role = String(data.user?.role || "");
             prefetch(endpoint, {
@@ -233,18 +233,6 @@ export default function InteractionPerformanceEnhancer() {
     };
 
     window.fetch = enhancedFetch;
-
-    // Warm the Apps Script execution and TLS connection while the loading screen is visible.
-    const warmEndpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
-    if (warmEndpoint && !dataSaver && !lowPowerMode) {
-      warmupTimer = window.setTimeout(() => {
-        void underlyingFetch(warmEndpoint, {
-          method: "GET",
-          cache: "no-store",
-          credentials: "omit",
-        }).catch(() => undefined);
-      }, 450);
-    }
 
     const prefetchCourseFromControl = (event: Event) => {
       const target = event.target;
@@ -272,7 +260,6 @@ export default function InteractionPerformanceEnhancer() {
     document.addEventListener("focusin", prefetchCourseFromControl);
 
     return () => {
-      window.clearTimeout(warmupTimer);
       document.removeEventListener("pointerover", prefetchCourseFromControl);
       document.removeEventListener("focusin", prefetchCourseFromControl);
       if (window.fetch === enhancedFetch) window.fetch = previousFetch;

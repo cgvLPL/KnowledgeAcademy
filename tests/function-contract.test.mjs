@@ -166,7 +166,7 @@ test("administrator, course, and account management controls are loaded", () => 
   assert.doesNotMatch(adminTools, /window\.location\.reload/);
 });
 
-test("sign-in and administrator actions use warm-up, caching, and request deduplication", () => {
+test("sign-in and administrator actions use one warm-up, caching, and request deduplication", () => {
   assert.match(layout, /InteractionPerformanceEnhancer/);
   assert.match(performance, /adminGetDashboard:\s*20_000/);
   assert.match(performance, /adminGetCourse:\s*90_000/);
@@ -174,7 +174,8 @@ test("sign-in and administrator actions use warm-up, caching, and request dedupl
   assert.match(performance, /const inFlight = new Map/);
   assert.match(performance, /action === "login"/);
   assert.match(performance, /prefetch\(endpoint/);
-  assert.match(performance, /method:\s*"GET"/);
+  assert.match(runtime, /void fetch\(ENDPOINT\)/);
+  assert.doesNotMatch(performance, /method:\s*"GET"/);
   assert.match(performance, /pointerover/);
   assert.match(performance, /focusin/);
   assert.match(performance, /INVALIDATING_ACTIONS/);
@@ -287,6 +288,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.09-30-participant-capacity"/);
-  assert.match(runtime, /2026\.08\.09-30-participant-capacity/);
+  assert.match(backend, /version:\s*"2026\.08\.09-fast-response"/);
+  assert.match(runtime, /2026\.08\.09-fast-response/);
 });
