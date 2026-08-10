@@ -70,10 +70,11 @@
 }
 
 .button-safety-menu-overlay {
-  background: rgba(0, 0, 0, 0.58);
+  background: transparent;
   border: 0;
   inset: 0;
   position: fixed;
+  -webkit-tap-highlight-color: transparent;
   z-index: 79;
 }
 

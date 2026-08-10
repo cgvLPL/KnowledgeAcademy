@@ -1,0 +1,49 @@
+/* Shared dashboard rhythm for participant and admin pages. */
+
+:root {
+  --dashboard-section-gap: clamp(18px, 1.45vw, 22px);
+  --dashboard-card-gap: 16px;
+}
+
+.participant-section,
+.admin-section {
+  display: grid !important;
+  gap: var(--dashboard-section-gap) !important;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.participant-section > *,
+.admin-section > * {
+  margin-block: 0 !important;
+  min-width: 0;
+}
+
+.participant-home .metric-grid,
+.participant-home .history-preview-grid,
+.admin-section .admin-metrics,
+.admin-overview .admin-dashboard-grid,
+.admin-overview .admin-insight-grid {
+  gap: var(--dashboard-card-gap) !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --dashboard-section-gap: 16px;
+    --dashboard-card-gap: 14px;
+  }
+
+  .admin-section {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    padding-bottom: calc(128px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .admin-section > * {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+}

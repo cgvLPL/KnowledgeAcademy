@@ -1100,7 +1100,7 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
     : 0;
   const passed = history.filter((item) => item.status === "Passed").length;
   return (
-    <div className="content">
+    <div className="content participant-section participant-profile">
       <section className="profile-hero">
         <div className="profile-aurora" />
         <Initials name={displayName} size="lg" />
@@ -1469,7 +1469,7 @@ function AdminOverview({
     })
     .slice(0, 5);
   return (
-    <div className="content admin-overview">
+    <div className="content admin-section admin-overview">
       <section className="welcome-row admin-section-header">
         <div>
           <span className="eyebrow dark-eyebrow"><Sparkles size={15} /> ADMIN WORKSPACE</span>
@@ -1599,7 +1599,7 @@ function CoursesView({
   onCreate: () => void;
 }) {
   return (
-    <div className="content">
+    <div className="content admin-section admin-courses">
       <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Layers3 size={15} /> CONTENT MANAGEMENT</span><h2>Quiz courses</h2><p>Create, schedule, and manage every evaluation in one place.</p></div>
         <div className="admin-header-actions">
@@ -1681,7 +1681,7 @@ function ParticipantsView({
   const inactive = participantsData.length - active;
 
   return (
-    <div className="content">
+    <div className="content admin-section admin-participants">
       <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Users size={15} /> PEOPLE</span><h2>Participants</h2><p>Manage accounts, locations, and evaluation access.</p></div>
         <div className="admin-header-actions">
@@ -1876,7 +1876,7 @@ function ScoreboardView({
   }
 
   return (
-    <div className="content">
+    <div className="content admin-section admin-scoreboard">
       <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Trophy size={15} /> LIVE RESULTS</span><h2>Evaluation scoreboard</h2><p>Compare results for every participant in the selected evaluation.</p></div>
         <div className="admin-header-actions">
