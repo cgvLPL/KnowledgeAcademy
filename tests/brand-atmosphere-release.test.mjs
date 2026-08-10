@@ -16,13 +16,9 @@ test("the branded atmosphere is installed as the final visual layer", () => {
   assert.ok(layout.indexOf(atmosphere) > layout.indexOf(containment));
 });
 
-test("decorative atmosphere covers every primary application surface", () => {
-  assert.match(client, /function BrandAtmosphere/);
-  for (const variant of ["app", "builder", "login", "quiz", "result"]) {
-    assert.ok(client.includes(`<BrandAtmosphere variant="${variant}" />`), `Missing atmosphere variant: ${variant}`);
-  }
-  assert.ok(!client.includes('<BrandAtmosphere variant="boot" />'));
-  assert.ok(client.includes('aria-hidden="true"'));
+test("animated decorative atmosphere is removed from application surfaces", () => {
+  assert.doesNotMatch(client, /function BrandAtmosphere/);
+  assert.doesNotMatch(client, /<BrandAtmosphere variant=/);
 });
 
 test("warm ribbons, glass grain, light fields, and editorial frames stay accessible", () => {
