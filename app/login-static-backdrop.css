@@ -1,0 +1,93 @@
+/* Keep the supplied artwork still while preserving the branded login panel. */
+.login-page {
+  background: #030405 !important;
+}
+
+.login-page .login-layout {
+  background: #07090a !important;
+}
+
+.login-page .login-layout::before {
+  background:
+    linear-gradient(90deg, rgba(3, 4, 5, 0.45), transparent 16%, transparent 82%, rgba(3, 4, 5, 0.45)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 180, 96, 0.08) 0,
+      rgba(255, 180, 96, 0.08) 2px,
+      rgba(0, 0, 0, 0.11) 3px,
+      transparent 14px
+    ),
+    radial-gradient(ellipse at 45% 58%, rgba(255, 183, 40, 0.98) 0, rgba(255, 121, 21, 0.78) 24%, transparent 55%),
+    radial-gradient(ellipse at 18% 25%, rgba(239, 67, 34, 0.92), transparent 42%),
+    radial-gradient(ellipse at 82% 92%, rgba(214, 43, 25, 0.78), transparent 46%),
+    linear-gradient(145deg, #140b08 0%, #4a1710 31%, #d23d1d 61%, #130b09 100%) !important;
+}
+
+.login-page .login-card {
+  background:
+    linear-gradient(145deg, rgba(8, 10, 11, 0.86), rgba(5, 7, 8, 0.9)),
+    url("./login-backdrop.jpg") center / cover no-repeat !important;
+}
+
+/* The same supplied still replaces animated scenery throughout the signed-in UI. */
+.app-shell,
+.builder-page,
+.quiz-page,
+.result-page {
+  background-color: #050606 !important;
+  background-attachment: fixed !important;
+  background-image:
+    linear-gradient(145deg, rgba(5, 6, 6, 0.76), rgba(5, 6, 6, 0.58) 48%, rgba(5, 6, 6, 0.82)),
+    url("./login-backdrop.jpg") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+.main-shell {
+  background: transparent !important;
+}
+
+.quiz-page > .quiz-aurora,
+.result-page > .result-aurora {
+  display: none !important;
+}
+
+.app-shell::before,
+.app-shell::after,
+.builder-page::before,
+.builder-page::after,
+.quiz-page::before,
+.quiz-page::after,
+.result-page::before,
+.result-page::after {
+  display: none !important;
+}
+
+@media (max-width: 860px) {
+  .login-page .login-layout::before {
+    opacity: 0.72 !important;
+  }
+
+  .login-page .login-card {
+    background:
+      linear-gradient(180deg, rgba(5, 7, 8, 0.76), rgba(5, 7, 8, 0.9)),
+      url("./login-backdrop.jpg") center / cover no-repeat !important;
+  }
+
+  .app-shell,
+  .builder-page,
+  .quiz-page,
+  .result-page {
+    background-attachment: scroll !important;
+    background-position: 50% center !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .login-page .login-card {
+    background:
+      linear-gradient(rgba(5, 7, 8, 0.94), rgba(5, 7, 8, 0.94)),
+      url("./login-backdrop.jpg") center / cover no-repeat !important;
+  }
+}

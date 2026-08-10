@@ -318,29 +318,6 @@ function Initials({ name, size = "md" }: { name: string; size?: "sm" | "md" | "l
   );
 }
 
-function BrandAtmosphere({ variant }: { variant: "app" | "builder" | "login" | "quiz" | "result" }) {
-  return (
-    <div className={`brand-atmosphere brand-atmosphere-${variant}`} aria-hidden="true">
-      <span className="brand-atmosphere-bloom" />
-      <span className="brand-atmosphere-ribbon brand-atmosphere-ribbon-primary" />
-      <span className="brand-atmosphere-ribbon brand-atmosphere-ribbon-secondary" />
-      <span className="brand-atmosphere-orbit" />
-      <span className="brand-atmosphere-capsules">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
-      <span className="brand-atmosphere-halo" />
-      <span className="brand-atmosphere-slices" />
-      <span className="brand-atmosphere-lightfield" />
-      <span className="brand-atmosphere-grain" />
-    </div>
-  );
-}
-
 function Login({
   onLogin,
 }: {
@@ -364,7 +341,6 @@ function Login({
 
   return (
     <main className="login-page">
-      <BrandAtmosphere variant="login" />
       <section className="login-layout">
         <form className="login-card" onSubmit={submit}>
           <div className="login-brand-row">
@@ -1269,7 +1245,6 @@ function Quiz({
   if (!current) {
     return (
       <main className="quiz-page">
-        <BrandAtmosphere variant="quiz" />
         <EmptyState
           icon={BookOpen}
           title="No questions available"
@@ -1282,7 +1257,6 @@ function Quiz({
 
   return (
     <main className="quiz-page">
-      <BrandAtmosphere variant="quiz" />
       <div className="quiz-aurora quiz-aurora-left" />
       <div className="quiz-aurora quiz-aurora-right" />
       <header className="quiz-header">
@@ -1426,7 +1400,6 @@ function Result({
   const passed = score >= evaluation.passingScore;
   return (
     <main className="result-page">
-      <BrandAtmosphere variant="result" />
       <div className="result-aurora" />
       <header className="result-header"><Logo /><span>Evaluation complete</span></header>
       <section className="result-card">
@@ -2134,7 +2107,6 @@ function CourseBuilder({
 
   return (
     <div className="builder-page">
-      <BrandAtmosphere variant="builder" />
       <header className="builder-header">
         <div className="builder-brand"><Logo /><span>New quiz course</span></div>
         <div className="builder-actions"><button type="button" className="secondary-button" onClick={onClose}>Close</button><button type="button" className="primary-button" onClick={saveCourse}><Save size={17} /> Save course</button></div>
@@ -2702,7 +2674,6 @@ export default function ExamClient() {
   const [title, subtitle] = titleMap[view];
   return (
     <div className="app-shell">
-      <BrandAtmosphere variant="app" />
       <Sidebar role={role} view={view} setView={setView} onLogout={logout} evaluationCount={evaluations.filter((item) => item.status === "Live").length} />
       <div className="main-shell">
         <Topbar role={role} title={title} subtitle={subtitle} user={currentUser} />
