@@ -14,6 +14,13 @@ test("one login form authenticates without a user-selected role", () => {
   assert.doesNotMatch(login, /setRole|switchRole|role-switch|aria-label="Account type"/);
 });
 
+test("password visibility control shows the action it will perform", () => {
+  assert.match(login, /id="login-password"/);
+  assert.match(login, /aria-controls="login-password"/);
+  assert.match(login, /aria-pressed=\{showPassword\}/);
+  assert.match(login, /showPassword \? <EyeOff size=\{18\} \/> : <Eye size=\{18\} \/>/);
+});
+
 test("the authenticated account role selects the correct workspace", () => {
   assert.match(auth, /roleValue !== "admin" && roleValue !== "participant"/);
   assert.match(auth, /const authenticatedRole = roleValue as Role/);
