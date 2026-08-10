@@ -1693,18 +1693,18 @@ function ParticipantsView({
         <article><span className="metric-icon blue"><Check size={20} /></span><div><p>Active accounts</p><strong>{active}</strong><small>{participantsData.length ? `${Math.round(active / participantsData.length * 100)}% active rate` : "No participants added"}</small></div></article>
         <article><span className="metric-icon orange"><ShieldCheck size={20} /></span><div><p>Inactive accounts</p><strong>{inactive}</strong><small>Access currently disabled</small></div></article>
       </section>
-      <div className="toolbar"><div className="admin-search"><Search size={17} /><input placeholder="Search name, username, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
-      <section className="table-card">
+      <div className="toolbar participants-toolbar"><div className="admin-search"><Search size={17} /><input aria-label="Search participants" placeholder="Search name, username, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
+      <section className="table-card participants-table-card">
         <div className="responsive-table">
-          <table>
+          <table className="participants-management-table">
             <thead><tr><th>Participant</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
             <tbody>
               {participantsData.map((person) => (
               <tr key={person.username}>
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
-                <td>{person.branch}</td><td>{person.attempts}</td><td><strong className="table-score">{person.average}%</strong></td>
-                <td><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
-                <td><button className="icon-button"><MoreHorizontal size={18} /></button></td>
+                <td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
+                <td data-label="Status"><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
+                <td><button className="icon-button" aria-label={`Manage ${person.name}`}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
               </tr>
               ))}
               {!participantsData.length && (
@@ -1725,11 +1725,11 @@ function ParticipantsView({
       </section>
       {adding && (
         <div className="modal-backdrop">
-          <form className="confirm-modal add-participant-modal" onSubmit={submitParticipant}>
+          <form className="confirm-modal add-participant-modal" onSubmit={submitParticipant} role="dialog" aria-modal="true" aria-labelledby="add-participant-title">
             <button className="modal-close" type="button" onClick={() => setAdding(false)} aria-label="Close add participant"><X size={18} /></button>
             <span className="modal-icon"><UserPlus size={24} /></span>
             <span className="card-kicker">NEW ACCOUNT</span>
-            <h2>Add participant</h2>
+            <h2 id="add-participant-title">Add participant</h2>
             <p>Create an account that can sign in and keep its own evaluation history.</p>
             <label className="field-label">Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Participant name" required /></label>
             <label className="field-label">Username<input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Lowercase letters, numbers, dots, _ or -" minLength={3} maxLength={40} pattern="[A-Za-z0-9._-]+" autoComplete="username" required /></label>

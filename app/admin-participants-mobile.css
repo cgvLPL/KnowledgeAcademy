@@ -1,0 +1,363 @@
+/* Mobile People workspace: compact summaries, touch-friendly participant cards,
+ * and an account form that stays inside the visual viewport. */
+
+.participants-action-label {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .admin-participants {
+    --people-card-gap: clamp(9px, 2.6vw, 13px);
+    --people-card-pad: clamp(13px, 3.8vw, 17px);
+    --people-page-gutter: clamp(10px, 3.2vw, 16px);
+
+    box-sizing: border-box !important;
+    inline-size: min(100%, 100dvw) !important;
+    max-inline-size: 100dvw !important;
+    min-inline-size: 0 !important;
+    overflow-x: clip !important;
+    padding-left: max(var(--people-page-gutter), env(safe-area-inset-left)) !important;
+    padding-right: max(var(--people-page-gutter), env(safe-area-inset-right)) !important;
+  }
+
+  .admin-participants,
+  .admin-participants > *,
+  .admin-participants .participants-table-card,
+  .admin-participants .responsive-table,
+  .participants-management-table,
+  .participants-management-table tbody,
+  .participants-management-table tr,
+  .participants-management-table td,
+  .participants-management-table .participant-cell,
+  .participants-management-table .participant-cell > div {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .admin-participants .page-intro.admin-section-header {
+    gap: clamp(14px, 4vw, 19px) !important;
+    overflow: hidden;
+  }
+
+  .admin-participants .admin-header-actions,
+  .admin-participants .admin-header-actions .primary-button {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .admin-participants .admin-header-actions .primary-button {
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .admin-participants .admin-metrics.compact {
+    display: grid !important;
+    gap: clamp(7px, 2vw, 10px) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .admin-participants .admin-metrics.compact article {
+    align-items: flex-start !important;
+    border-radius: clamp(14px, 4vw, 18px) !important;
+    flex-direction: column !important;
+    gap: clamp(9px, 2.5vw, 12px) !important;
+    justify-content: flex-start !important;
+    min-height: clamp(116px, 31vw, 138px) !important;
+    padding: clamp(11px, 3.2vw, 15px) !important;
+  }
+
+  .admin-participants .admin-metrics.compact .metric-icon {
+    block-size: clamp(34px, 9.5vw, 40px) !important;
+    inline-size: clamp(34px, 9.5vw, 40px) !important;
+  }
+
+  .admin-participants .admin-metrics.compact article > div {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .admin-participants .admin-metrics.compact p {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.25 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-participants .admin-metrics.compact strong {
+    font-size: clamp(23px, 6.8vw, 31px) !important;
+    line-height: 1 !important;
+  }
+
+  .admin-participants .admin-metrics.compact small {
+    display: none !important;
+  }
+
+  .admin-participants .participants-toolbar {
+    align-items: stretch !important;
+    display: grid !important;
+    gap: clamp(8px, 2.4vw, 11px) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .admin-participants .participants-toolbar .admin-search,
+  .admin-participants .participants-toolbar .admin-search input,
+  .admin-participants .participants-toolbar .toolbar-buttons {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .admin-participants .participants-toolbar .admin-search {
+    min-height: 48px;
+  }
+
+  .admin-participants .participants-toolbar .toolbar-buttons {
+    display: grid !important;
+    gap: clamp(7px, 2vw, 10px) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .admin-participants .participants-toolbar .secondary-button {
+    justify-content: center;
+    min-height: 44px;
+    min-width: 0 !important;
+    padding-inline: clamp(10px, 3vw, 15px) !important;
+    width: 100% !important;
+  }
+
+  .admin-participants .participants-table-card {
+    overflow: hidden !important;
+    padding: clamp(5px, 1.7vw, 9px) !important;
+  }
+
+  .admin-participants .participants-table-card .responsive-table {
+    margin: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+  }
+
+  .participants-management-table,
+  .participants-management-table tbody {
+    display: block !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+    width: 100% !important;
+  }
+
+  .participants-management-table thead {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .participants-management-table tbody {
+    display: grid !important;
+    gap: var(--people-card-gap) !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.09) !important;
+    border-radius: clamp(16px, 4.5vw, 20px) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+    display: grid !important;
+    gap: 0 clamp(12px, 3.5vw, 18px) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    padding: var(--people-card-pad) !important;
+    transform: none !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row):hover {
+    transform: none !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td {
+    border: 0 !important;
+    display: grid !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+    overflow-wrap: anywhere;
+    padding: clamp(10px, 2.8vw, 13px) 0 !important;
+    text-align: left !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td::before {
+    color: rgba(255, 255, 255, 0.5);
+    content: attr(data-label);
+    font-size: clamp(8px, 2.35vw, 10px);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td:first-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    grid-column: 1 / -1 !important;
+    padding-bottom: clamp(13px, 3.7vw, 17px) !important;
+    padding-top: 0 !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td:first-child::before,
+  .participants-management-table tbody tr:not(.empty-table-row) td:last-child::before {
+    display: none;
+  }
+
+  .participants-management-table .participant-cell {
+    gap: clamp(10px, 3vw, 14px) !important;
+    overflow: hidden;
+  }
+
+  .participants-management-table .participant-cell .avatar {
+    flex: 0 0 42px;
+    height: 42px !important;
+    width: 42px !important;
+  }
+
+  .participants-management-table .participant-cell strong,
+  .participants-management-table .participant-cell span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .participants-management-table .participant-cell strong {
+    font-size: clamp(13px, 3.8vw, 16px) !important;
+  }
+
+  .participants-management-table .participant-cell span {
+    font-size: clamp(9px, 2.6vw, 11px) !important;
+  }
+
+  .participants-management-table .table-score {
+    font-size: clamp(20px, 5.7vw, 26px) !important;
+    line-height: 1 !important;
+  }
+
+  .participants-management-table .outcome-pill {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    justify-self: start;
+    min-height: 30px;
+    white-space: nowrap;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td:last-child {
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    grid-column: 1 / -1 !important;
+    padding-bottom: 0 !important;
+    padding-top: clamp(12px, 3.4vw, 16px) !important;
+  }
+
+  .participants-management-table td:last-child .icon-button {
+    border-radius: 13px !important;
+    gap: 8px;
+    height: 44px !important;
+    justify-content: center;
+    width: 100% !important;
+  }
+
+  .participants-management-table .participants-action-label {
+    display: inline !important;
+    font-size: 11px;
+    font-weight: 750;
+  }
+
+  .participants-management-table .empty-table-row,
+  .participants-management-table .empty-table-row td {
+    display: block !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+  }
+
+  .participants-management-table .empty-table-row td {
+    padding: clamp(18px, 5vw, 26px) !important;
+  }
+
+  .admin-participants .modal-backdrop {
+    align-items: flex-end !important;
+    padding: max(12px, env(safe-area-inset-top)) 10px 0 !important;
+  }
+
+  .admin-participants .add-participant-modal {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-radius: clamp(22px, 6vw, 28px) clamp(22px, 6vw, 28px) 0 0 !important;
+    box-sizing: border-box;
+    max-height: calc(var(--cgv-mobile-viewport-height, 100svh) - max(12px, env(safe-area-inset-top))) !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: clamp(24px, 6.5vw, 32px) clamp(18px, 5vw, 26px) max(20px, env(safe-area-inset-bottom)) !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  .admin-participants .add-participant-modal .modal-icon {
+    margin-top: 0 !important;
+  }
+
+  .admin-participants .add-participant-modal h2 {
+    font-size: clamp(27px, 7.8vw, 34px) !important;
+    margin-right: 42px;
+  }
+
+  .admin-participants .add-participant-modal > p {
+    font-size: clamp(11px, 3vw, 13px) !important;
+    line-height: 1.5;
+  }
+
+  .admin-participants .add-participant-modal .field-label {
+    gap: 8px;
+    margin-bottom: 13px;
+  }
+
+  .admin-participants .add-participant-modal .field-label input {
+    min-height: 48px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .admin-participants .add-participant-modal .modal-actions {
+    display: grid !important;
+    gap: 9px !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+    width: 100%;
+  }
+
+  .admin-participants .add-participant-modal .modal-actions button {
+    justify-content: center;
+    min-height: 48px;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-participants {
+    --people-page-gutter: 8px;
+  }
+
+  .admin-participants .admin-metrics.compact article {
+    padding: 10px !important;
+  }
+
+  .admin-participants .admin-metrics.compact p {
+    font-size: 8.5px !important;
+  }
+
+  .admin-participants .add-participant-modal .modal-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
