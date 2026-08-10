@@ -1,4 +1,4 @@
-export type QuizLifecycleStatus = "Live" | "Scheduled" | "Completed" | "Draft";
+export type QuizLifecycleStatus = "Live" | "Scheduled" | "Completed" | "Draft" | "Archived";
 
 type QuizLifecycleInput = {
   status?: unknown;
@@ -26,6 +26,7 @@ export function deriveQuizLifecycle(
   now = Date.now(),
 ): QuizLifecycleStatus {
   const storedStatus = normalizedStatus(course.status);
+  if (storedStatus === "archived") return "Archived";
   if (storedStatus === "draft") return "Draft";
   if (storedStatus === "completed") return "Completed";
 

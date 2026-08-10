@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.09-fast-response"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.10-quiz-archive"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -61,6 +61,7 @@ Participant functions:
 - Sign in and sign out.
 - Load currently available evaluations and score history.
 - Start or resume one unfinished attempt for the same course.
+- Respect each course's administrator-defined attempt limit, including unlimited attempts.
 - Submit answers with server-side scoring.
 - Retry a submission safely without creating duplicate rows.
 
@@ -71,8 +72,8 @@ Administrator functions:
   results, and answer patterns for every question.
 - Create participant and administrator accounts.
 - Reset passwords and activate or deactivate accounts.
-- Create, inspect, edit, duplicate, publish, complete, archive, or delete a
-  course.
+- Create, inspect, edit, duplicate, publish, complete, archive, restore, or
+  delete a course.
 - Preserve submitted results by archiving courses that already have attempts.
 
 The backend confirms writes only after `SpreadsheetApp.flush()`. Script locks
@@ -111,7 +112,7 @@ server-side, and administrator actions require an administrator session.
 - `Dashboard` — evaluation selector, KPIs, participant leaderboard, and score
   distribution.
 - `Users` — participant and administrator accounts.
-- `Courses` — course metadata, schedule, status, time limit, and passing score.
+- `Courses` — course metadata, schedule, status, time limit, passing score, and attempt limit.
 - `Questions` — four-option question bank and correct-answer keys.
 - `Attempts` — one row per started or submitted evaluation.
 - `Answers` — participant answer audit trail.

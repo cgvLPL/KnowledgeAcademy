@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.09-fast-response",
+  version: "2026.08.10-quiz-archive",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -29,7 +29,7 @@ const HEADERS = Object.freeze({
   Courses: [
     "course_id", "title", "description", "category", "passing_score",
     "time_limit_min", "start_at", "end_at", "status", "created_by",
-    "created_at", "updated_at",
+    "created_at", "updated_at", "attempt_limit",
   ],
   Questions: [
     "question_id", "course_id", "order_no", "question_text", "option_a",
@@ -248,18 +248,34 @@ function getParticipantHome_(body) {
 
 function participantHomeForUser_(user) {
   const questionCounts = questionCountsByCourse_();
+  const attempts = attemptsForUser_(user.user_id);
+  const submittedAttempts = attempts.filter(function (attempt) { return attempt.status === "submitted"; });
+  const attemptsByCourse = submittedAttempts.reduce(function (counts, attempt) {
+    const courseId = String(attempt.course_id || "");
+    counts[courseId] = (counts[courseId] || 0) + 1;
+    return counts;
+  }, {});
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses))
     .filter(function (course) {
-      return courseLifecycleStatus_(course) !== "draft";
+      const lifecycle = courseLifecycleStatus_(course);
+      return lifecycle !== "draft" && lifecycle !== "archived";
     })
-    .map(function (course) { return publicCourse_(course, questionCounts); })
+    .map(function (course) {
+      const publicCourse = publicCourse_(course, questionCounts);
+      const attemptsUsed = Number(attemptsByCourse[course.course_id] || 0);
+      const attemptLimit = courseAttemptLimit_(course);
+      return Object.assign(publicCourse, {
+        attemptsUsed: attemptsUsed,
+        attemptsRemaining: attemptLimit ? Math.max(0, attemptLimit - attemptsUsed) : null,
+        canAttempt: !attemptLimit || attemptsUsed < attemptLimit,
+      });
+    })
     .sort(function (first, second) {
-      const priority = { live: 0, scheduled: 1, completed: 2, draft: 3 };
+      const priority = { live: 0, scheduled: 1, completed: 2, draft: 3, archived: 4 };
       return priority[first.status] - priority[second.status] ||
         new Date(first.startAt || first.endAt || 0) - new Date(second.startAt || second.endAt || 0);
     });
-  const history = attemptsForUser_(user.user_id)
-    .filter(function (attempt) { return attempt.status === "submitted"; })
+  const history = submittedAttempts
     .sort(function (a, b) { return new Date(b.submitted_at) - new Date(a.submitted_at); })
     .map(publicAttempt_);
   return {
@@ -285,15 +301,19 @@ function startAttempt_(body) {
   if (!questions.length) throw new Error("This evaluation has no published questions.");
 
   const attemptId = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
-    const existing = findObjectsByExactValue_(
+    const currentCourse = findById_(APP.sheets.courses, "course_id", courseId, true);
+    if (!currentCourse) throw new Error("This evaluation is not available.");
+    const userAttempts = findObjectsByExactValue_(
       getSheet_(APP.sheets.attempts),
       "user_id",
       context.user.user_id,
-    ).find(function (attempt) {
+    );
+    const existing = userAttempts.find(function (attempt) {
       return String(attempt.course_id) === courseId &&
         attempt.status === "started";
     });
     if (existing) return existing.attempt_id;
+    assertAttemptLimitAvailable_(currentCourse, userAttempts);
     const id = Utilities.getUuid();
     appendRow_(getSheet_(APP.sheets.attempts), [
       id, courseId, context.user.user_id, now, "", "started", "", "", "", "", "",
@@ -328,6 +348,11 @@ function startAttempt_(body) {
 function existingAttemptResult_(attempt, course) {
   const score = Number(attempt.score || 0);
   const passingScore = Number((course && course.passing_score) || 0);
+  const attemptsUsed = submittedAttemptCountForCourse_(findObjectsByExactValue_(
+    getSheet_(APP.sheets.attempts),
+    "user_id",
+    attempt.user_id,
+  ), attempt.course_id);
   return {
     ok: true,
     alreadySubmitted: true,
@@ -337,6 +362,7 @@ function existingAttemptResult_(attempt, course) {
       correctCount: Number(attempt.correct_count || 0),
       totalQuestions: Number(attempt.total_questions || 0),
       durationSeconds: Number(attempt.duration_seconds || 0),
+      attemptsUsed: attemptsUsed,
       passed: score >= passingScore,
       passingScore: passingScore,
     },
@@ -391,8 +417,21 @@ function submitAttempt_(body) {
     if (!current || String(current.user_id) !== String(context.user.user_id)) {
       throw new Error("Attempt not found.");
     }
-    if (current.status === "submitted") return existingAttemptResult_(current, course);
+    const currentCourse = findById_(APP.sheets.courses, "course_id", current.course_id, true);
+    if (!currentCourse) throw new Error("The course for this attempt no longer exists.");
+    if (current.status === "submitted") return existingAttemptResult_(current, currentCourse);
     if (current.status !== "started") throw new Error("This attempt cannot be submitted.");
+    const userAttempts = findObjectsByExactValue_(
+      getSheet_(APP.sheets.attempts),
+      "user_id",
+      context.user.user_id,
+    );
+    assertAttemptLimitAvailable_(currentCourse, userAttempts, current.attempt_id);
+    const attemptsUsed = submittedAttemptCountForCourse_(
+      userAttempts,
+      currentCourse.course_id,
+      current.attempt_id,
+    ) + 1;
     const answersSheet = getSheet_(APP.sheets.answers);
     answersSheet
       .getRange(answersSheet.getLastRow() + 1, 1, answerRows.length, HEADERS.Answers.length)
@@ -416,11 +455,29 @@ function submitAttempt_(body) {
         correctCount: correctCount,
         totalQuestions: questions.length,
         durationSeconds: durationSeconds,
-        passed: score >= Number(course.passing_score || 0),
-        passingScore: Number(course.passing_score || 0),
+        attemptsUsed: attemptsUsed,
+        passed: score >= Number(currentCourse.passing_score || 0),
+        passingScore: Number(currentCourse.passing_score || 0),
       },
     };
   });
+}
+
+function submittedAttemptCountForCourse_(attempts, courseId, excludedAttemptId) {
+  return attempts.filter(function (attempt) {
+    return String(attempt.course_id) === String(courseId) &&
+      attempt.status === "submitted" &&
+      String(attempt.attempt_id) !== String(excludedAttemptId || "");
+  }).length;
+}
+
+function assertAttemptLimitAvailable_(course, attempts, excludedAttemptId) {
+  const attemptLimit = courseAttemptLimit_(course);
+  if (!attemptLimit) return;
+  const attemptsUsed = submittedAttemptCountForCourse_(attempts, course.course_id, excludedAttemptId);
+  if (attemptsUsed >= attemptLimit) {
+    throw new Error("You have reached the " + attemptLimit + "-attempt limit for this evaluation.");
+  }
 }
 
 function adminGetDashboard_(body) {
@@ -751,7 +808,7 @@ function adminSaveCourse_(body) {
     ];
   });
   return withScriptLock_(30000, function () {
-    const coursesSheet = getSheet_(APP.sheets.courses);
+    const coursesSheet = ensureDataSheet_(activeSpreadsheet_(), APP.sheets.courses, HEADERS.Courses);
     const courseId = String(input.id || Utilities.getUuid());
     const existing = findById_(APP.sheets.courses, "course_id", courseId);
     const now = new Date();
@@ -775,6 +832,9 @@ function adminSaveCourse_(body) {
       created_by: existing ? existing.created_by : context.user.user_id,
       created_at: existing ? existing.created_at : now,
       updated_at: now,
+      attempt_limit: input.attemptLimit === undefined && existing
+        ? courseAttemptLimit_(existing)
+        : clamp_(Math.floor(Number(input.attemptLimit || 0)), 0, 100),
     };
     if (existing) {
       updateObjectRow_(coursesSheet, existing.__row, record);
@@ -817,6 +877,7 @@ function adminDuplicateCourse_(body) {
       category: source.category,
       passingScore: Number(source.passing_score || 75),
       duration: Number(source.time_limit_min || 20),
+      attemptLimit: courseAttemptLimit_(source),
       startAt: "",
       endAt: "",
       status: "draft",
@@ -837,7 +898,7 @@ function adminSetCourseStatus_(body) {
   requireSession_(body.token, "admin");
   const courseId = String(body.courseId || "").trim();
   const requestedStatus = String(body.status || "").trim().toLowerCase();
-  if (["draft", "upcoming", "scheduled", "live", "completed"].indexOf(requestedStatus) < 0) {
+  if (["draft", "upcoming", "scheduled", "live", "completed", "archived"].indexOf(requestedStatus) < 0) {
     throw new Error("Invalid course status.");
   }
   const status = coursePublishingStatus_(requestedStatus);
@@ -869,7 +930,7 @@ function adminDeleteCourse_(body) {
     ));
     if (hasAttempts) {
       updateObjectRow_(getSheet_(APP.sheets.courses), course.__row, {
-        status: "completed",
+        status: "archived",
         updated_at: new Date(),
       });
       SpreadsheetApp.flush();
@@ -877,6 +938,7 @@ function adminDeleteCourse_(body) {
         ok: true,
         archived: true,
         message: "Course has results and was archived instead of deleted.",
+        course: publicCourse_(Object.assign({}, course, { status: "archived", updated_at: new Date() })),
       };
     }
     deleteRowsMatching_(getSheet_(APP.sheets.questions), "course_id", courseId);
@@ -1403,6 +1465,7 @@ function publicCourse_(course, questionCounts) {
     category: course.category,
     passingScore: Number(course.passing_score || 0),
     duration: Number(course.time_limit_min || 0),
+    attemptLimit: courseAttemptLimit_(course),
     startAt: toIso_(course.start_at),
     endAt: toIso_(course.end_at),
     status: courseLifecycleStatus_(course),
@@ -1412,8 +1475,14 @@ function publicCourse_(course, questionCounts) {
   };
 }
 
+function courseAttemptLimit_(course) {
+  const value = Math.floor(Number(course && course.attempt_limit || 0));
+  return isFinite(value) ? clamp_(value, 0, 100) : 0;
+}
+
 function coursePublishingStatus_(value) {
   const status = String(value || "").trim().toLowerCase();
+  if (status === "archived") return "archived";
   if (status === "completed") return "completed";
   if (["live", "upcoming", "scheduled"].indexOf(status) >= 0) return "live";
   return "draft";
@@ -1421,6 +1490,7 @@ function coursePublishingStatus_(value) {
 
 function courseLifecycleStatus_(course, now) {
   const storedStatus = String(course.status || "").trim().toLowerCase();
+  if (storedStatus === "archived") return "archived";
   if (storedStatus === "draft") return "draft";
   if (storedStatus === "completed") return "completed";
 

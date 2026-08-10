@@ -512,57 +512,104 @@
     size: A4 portrait;
   }
 
-  html,
-  body {
+  html.cgv-certificate-printing,
+  html.cgv-certificate-printing body {
     background: #fff !important;
-    height: auto !important;
+    block-size: 297mm !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
     margin: 0 !important;
-    overflow: visible !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
     padding: 0 !important;
+    width: 210mm !important;
   }
 
-  body * {
-    visibility: hidden !important;
+  html.cgv-certificate-printing body > :not(.certificate-backdrop) {
+    display: none !important;
   }
 
-  .certificate-backdrop,
-  .certificate-backdrop * {
+  html.cgv-certificate-printing .certificate-backdrop,
+  html.cgv-certificate-printing .certificate-backdrop * {
+    box-sizing: border-box !important;
     visibility: visible !important;
   }
 
-  .certificate-backdrop {
+  html.cgv-certificate-printing .certificate-backdrop {
+    block-size: 297mm !important;
     background: #fff !important;
     display: block !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
     inset: 0 !important;
-    overflow: visible !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
     padding: 0 !important;
     position: absolute !important;
+    width: 210mm !important;
   }
 
-  .certificate-dialog,
-  .certificate-scroll {
+  html.cgv-certificate-printing .certificate-dialog,
+  html.cgv-certificate-printing .certificate-scroll {
+    block-size: 297mm !important;
     background: #fff !important;
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     display: block !important;
-    max-height: none !important;
-    max-width: none !important;
-    overflow: visible !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
     padding: 0 !important;
-    width: auto !important;
+    width: 210mm !important;
   }
 
-  .certificate-toolbar {
+  html.cgv-certificate-printing .certificate-toolbar {
     display: none !important;
   }
 
-  .completion-certificate {
+  html.cgv-certificate-printing .completion-certificate {
+    aspect-ratio: auto !important;
+    block-size: 297mm !important;
     break-inside: avoid !important;
     box-shadow: none !important;
+    contain: layout paint style !important;
     height: 297mm !important;
+    inline-size: 210mm !important;
     margin: 0 !important;
-    max-width: none !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
     page-break-inside: avoid !important;
@@ -572,22 +619,59 @@
     -webkit-print-color-adjust: exact;
   }
 
-  /* Mobile preview rules must never leak into the A4 print layout. */
-  .certificate-copy {
-    margin-top: 36mm !important;
-    max-width: 70% !important;
+  html.cgv-certificate-printing .completion-certificate,
+  html.cgv-certificate-printing .completion-certificate > * {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
-  .certificate-reference {
+  /* Fixed print measurements prevent viewport and mobile preview rules from
+     changing the physical A4 composition. */
+  html.cgv-certificate-printing .certificate-copy {
+    margin-top: 36mm !important;
+    max-width: 70% !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy h3 {
+    font-size: var(--certificate-name-print-size, 12mm) !important;
+    line-height: 1.04 !important;
+    max-block-size: 27mm !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy h4 {
+    font-size: var(--certificate-course-print-size, 7.5mm) !important;
+    line-height: 1.12 !important;
+    max-block-size: 22mm !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-reference {
     max-width: 44% !important;
   }
 
-  .certificate-footer {
-    gap: 8mm !important;
-    grid-template-columns: 1.3fr 1.1fr auto !important;
+  html.cgv-certificate-printing .certificate-details {
+    flex: 0 0 auto !important;
   }
 
-  .certificate-signature > span {
+  html.cgv-certificate-printing .certificate-footer {
+    flex: 0 0 auto !important;
+    gap: 8mm !important;
+    grid-template-columns: 1.3fr 1.1fr auto !important;
+    max-block-size: 32mm !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-signature > span {
     margin-bottom: 2.5mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-signature strong,
+  html.cgv-certificate-printing .certificate-branch strong,
+  html.cgv-certificate-printing .certificate-signature small,
+  html.cgv-certificate-printing .certificate-branch small {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 }

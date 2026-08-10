@@ -1,4 +1,4 @@
-const fallbackVersion = "1.0.0+development";
+const fallbackVersion = "1.1.0+development";
 
 export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION?.trim() || fallbackVersion;
 

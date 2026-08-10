@@ -35,8 +35,8 @@ test("participant dashboard displays scheduled and completed tests safely", () =
   assert.ok(client.includes("const scheduledEvaluations"));
   assert.ok(client.includes("const visibleEvaluations"));
   assert.ok(client.includes('evaluation.status === "Scheduled" ? " is-scheduled"'));
-  assert.ok(client.includes('disabled={evaluation.status === "Scheduled"}'));
-  assert.ok(client.includes('const isUnavailable = item.status !== "Live"'));
+  assert.ok(client.includes('disabled={evaluation.status === "Scheduled" || isAttemptLimitReached(evaluation)}'));
+  assert.ok(client.includes('const isUnavailable = item.status !== "Live" || limitReached'));
   assert.ok(client.includes("const refreshLifecycle"));
   assert.ok(client.includes("window.setInterval(refreshLifecycle, 30_000)"));
   assert.ok(client.includes('const lifecycle = deriveQuizLifecycle(evaluation)'));

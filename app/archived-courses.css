@@ -1,0 +1,104 @@
+/* Archived quiz library — visually distinct, fully responsive, and restorable. */
+
+.archived-section-heading {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 22px 24px;
+}
+
+.archived-section-heading h3,
+.archived-section-heading p {
+  margin: 0;
+}
+
+.archived-section-heading h3 {
+  color: #f7f4f1;
+  font-size: 18px;
+}
+
+.archived-section-heading p {
+  color: #9d9d99;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.archived-section-title {
+  align-items: center;
+  display: flex;
+  gap: 13px;
+  min-width: 0;
+}
+
+.course-section-count {
+  align-items: center;
+  background: rgba(255, 111, 43, 0.12);
+  border: 1px solid rgba(255, 126, 52, 0.24);
+  border-radius: 999px;
+  color: #ffad73;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 5px 10px;
+}
+
+.archived-course-section {
+  border-color: rgba(255, 126, 52, 0.18) !important;
+}
+
+.archived-course-table tbody tr {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.archived-course-table .evaluation-icon {
+  filter: saturate(0.55);
+  opacity: 0.82;
+}
+
+.status-archived {
+  background: rgba(255, 126, 52, 0.12) !important;
+  border: 1px solid rgba(255, 126, 52, 0.24) !important;
+  color: #ffb17d !important;
+}
+
+.archived-course-table .restore-course-button {
+  border-color: rgba(255, 126, 52, 0.28) !important;
+  color: #ffad73 !important;
+}
+
+.archived-course-table .restore-course-button:hover {
+  background: rgba(255, 106, 34, 0.15) !important;
+  border-color: rgba(255, 126, 52, 0.48) !important;
+}
+
+@media (max-width: 760px) {
+  .archived-section-heading {
+    align-items: flex-start;
+    padding: clamp(16px, 4.5vw, 21px);
+  }
+
+  .archived-section-title {
+    align-items: flex-start;
+  }
+
+  .archived-section-title .metric-icon {
+    flex: 0 0 auto;
+  }
+
+  .archived-course-table .inline-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .archived-section-heading p {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+}
