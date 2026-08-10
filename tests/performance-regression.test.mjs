@@ -16,13 +16,16 @@ test("the optimized Apps Script backend remains valid JavaScript", () => {
   assert.doesNotThrow(() => new Function(backend));
 });
 
-test("the loading screen keeps its branded intro bounded and short on low-power devices", () => {
-  const match = client.match(/BOOT_SCREEN_MINIMUM_MS\s*=\s*(\d+)/);
+test("the login waits for the branded intro while low-power devices keep a short path", () => {
+  const fallbackMatch = client.match(/BOOT_SCREEN_FALLBACK_MS\s*=\s*(\d+)/);
   const reducedMatch = client.match(/BOOT_SCREEN_REDUCED_MS\s*=\s*(\d+)/);
-  assert.ok(match, "Missing the bounded loading-screen delay");
+  assert.ok(fallbackMatch, "Missing the loading-screen safety fallback");
   assert.ok(reducedMatch, "Missing the reduced loading-screen delay");
-  assert.ok(Number(match[1]) <= 750, "The branded intro blocks access for more than 750ms");
+  assert.ok(Number(fallbackMatch[1]) >= 2300, "The safety fallback can interrupt the full intro");
+  assert.ok(Number(fallbackMatch[1]) <= 3500, "The safety fallback keeps the login hidden too long");
   assert.ok(Number(reducedMatch[1]) <= 300, "Low-power devices wait more than 300ms");
+  assert.match(client, /progress\.addEventListener\("animationend", finishIntro\)/);
+  assert.match(client, /if \(booting\) return <BootScreen onComplete=\{\(\) => setBooting\(false\)\} \/>/);
 });
 
 test("capacity retry protection adds no more than 300ms to a healthy first request", () => {

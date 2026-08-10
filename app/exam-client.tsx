@@ -16,6 +16,7 @@ import {
   Copy,
   Download,
   Eye,
+  EyeOff,
   FileText,
   Filter,
   Gauge,
@@ -147,7 +148,7 @@ type AuthUser = {
 const publicSheetsEndpoint =
   process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
-const BOOT_SCREEN_MINIMUM_MS = 650;
+const BOOT_SCREEN_FALLBACK_MS = 3200;
 const BOOT_SCREEN_REDUCED_MS = 250;
 const BUILDER_STEPS = [
   ["Course details", 1],
@@ -398,6 +399,7 @@ function Login({
             <span className="input-shell">
               <LockKeyhole size={18} />
               <input
+                id="login-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -408,9 +410,12 @@ function Login({
                 type="button"
                 className="input-action"
                 aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-controls="login-password"
+                aria-pressed={showPassword}
+                title={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword((value) => !value)}
               >
-                <Eye size={18} />
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </span>
           </label>
@@ -435,7 +440,21 @@ function Login({
   );
 }
 
-function BootScreen() {
+function BootScreen({ onComplete }: { onComplete: () => void }) {
+  const progressRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const progress = progressRef.current;
+    if (!progress) return;
+
+    const finishIntro = (event: AnimationEvent) => {
+      if (event.target === progress) onComplete();
+    };
+
+    progress.addEventListener("animationend", finishIntro);
+    return () => progress.removeEventListener("animationend", finishIntro);
+  }, [onComplete]);
+
   return (
     <main className="boot-screen" aria-label="CGV Knowledge Academy is loading">
       <div className="boot-glow boot-glow-one" />
@@ -450,7 +469,7 @@ function BootScreen() {
         </div>
         <p className="boot-tagline">Focused learning. Cinematic energy.</p>
         <div className="boot-bar" role="progressbar" aria-label="Loading application">
-          <span />
+          <span ref={progressRef} />
         </div>
         <p className="boot-status">Preparing your evaluation portal</p>
       </div>
@@ -2284,7 +2303,7 @@ export default function ExamClient() {
     const useShortIntro = prefersReducedMotion || slowUpdates || limitedMemory || limitedCpu || dataSaver;
     const timer = window.setTimeout(
       () => setBooting(false),
-      useShortIntro ? BOOT_SCREEN_REDUCED_MS : BOOT_SCREEN_MINIMUM_MS,
+      useShortIntro ? BOOT_SCREEN_REDUCED_MS : BOOT_SCREEN_FALLBACK_MS,
     );
     return () => window.clearTimeout(timer);
   }, []);
@@ -2707,7 +2726,7 @@ export default function ExamClient() {
     }
   }
 
-  if (booting) return <BootScreen />;
+  if (booting) return <BootScreen onComplete={() => setBooting(false)} />;
   if (!role) return <Login onLogin={login} />;
   if (builderOpen && role === "admin") return <CourseBuilder onClose={() => setBuilderOpen(false)} onSave={saveCourse} />;
   if (activeQuiz) return <Quiz evaluation={activeQuiz} questionsData={quizQuestions} onExit={() => setActiveQuiz(null)} onComplete={completeQuiz} />;
