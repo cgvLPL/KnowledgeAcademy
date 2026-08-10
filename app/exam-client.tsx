@@ -50,6 +50,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, ty
 import { createPortal } from "react-dom";
 import type { ExecutiveReportData } from "./executive-report";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
+import { selectLatestScoreboardEvaluation } from "./scoreboard-selection.mjs";
 import { fetchSheetsWithRetry } from "./sheets-request-policy.mjs";
 
 type Role = "participant" | "admin";
@@ -66,6 +67,7 @@ type Evaluation = {
   duration: number;
   due: string;
   opens?: string;
+  createdAt?: string;
   startAt?: string;
   endAt?: string;
   status: "Live" | "Scheduled" | "Completed" | "Draft" | "Archived";
@@ -233,6 +235,7 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     duration: Number(course.duration || 20),
     due: formatApiDate(course.endAt),
     opens: formatApiDate(course.startAt, "Scheduled"),
+    createdAt: String(course.createdAt || ""),
     startAt: String(course.startAt || ""),
     endAt: String(course.endAt || ""),
     status: deriveQuizLifecycle(course),
@@ -1861,7 +1864,10 @@ function ScoreboardView({
   const scoreboardRequestRef = useRef(0);
   const scoreboardLoadingRef = useRef(false);
   const scoreboardLoaderRef = useRef(onEvaluationChange);
-  const fallbackEvaluation = evaluations.find((item) => item.participants > 0) || evaluations[0] || null;
+  const fallbackEvaluation = useMemo(
+    () => selectLatestScoreboardEvaluation(evaluations),
+    [evaluations],
+  );
   const selectedEvaluation = evaluations.find((item) => item.id === evaluation) || fallbackEvaluation;
   const selectedEvaluationId = selectedEvaluation?.id || "";
   const scoreboardRows = useMemo(

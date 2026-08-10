@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.10-quiz-archive",
+  version: "2026.08.10-latest-scoreboard",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -1466,6 +1466,7 @@ function publicCourse_(course, questionCounts) {
     passingScore: Number(course.passing_score || 0),
     duration: Number(course.time_limit_min || 0),
     attemptLimit: courseAttemptLimit_(course),
+    createdAt: toIso_(course.created_at),
     startAt: toIso_(course.start_at),
     endAt: toIso_(course.end_at),
     status: courseLifecycleStatus_(course),

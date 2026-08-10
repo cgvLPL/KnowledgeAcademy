@@ -48,7 +48,7 @@ test("administrators can configure and review an arbitrary attempt limit", () =>
 });
 
 test("frontend and deployment guide require the matching attempt-limit backend", () => {
-  assert.match(backend, /version:\s*"2026\.08\.10-quiz-archive"/);
-  assert.match(runtime, /EXPECTED_BACKEND_VERSION = "2026\.08\.10-quiz-archive"/);
-  assert.match(backendReadme, /"version":"2026\.08\.10-quiz-archive"/);
+  assert.match(backend, /version:\s*"2026\.08\.10-latest-scoreboard"/);
+  assert.match(runtime, /EXPECTED_BACKEND_VERSION = "2026\.08\.10-latest-scoreboard"/);
+  assert.match(backendReadme, /"version":"2026\.08\.10-latest-scoreboard"/);
 });

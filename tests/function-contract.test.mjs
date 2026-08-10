@@ -85,7 +85,7 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
 
 test("scoreboard stays scoped to the selected evaluation and refreshes live results", () => {
   assert.match(client, /const \[scoreboardSnapshot, setScoreboardSnapshot\] = useState/);
-  assert.match(client, /evaluations\.find\(\(item\) => item\.participants > 0\)/);
+  assert.match(client, /selectLatestScoreboardEvaluation\(evaluations\)/);
   assert.match(client, /scoreboardLoaderRef\.current\(selectedEvaluationId\)/);
   assert.match(client, /scoreboardRequestRef\.current !== requestId/);
   assert.match(client, /setScoreboardSnapshot\(\{/);
@@ -288,6 +288,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.10-quiz-archive"/);
-  assert.match(runtime, /2026\.08\.10-quiz-archive/);
+  assert.match(backend, /version:\s*"2026\.08\.10-latest-scoreboard"/);
+  assert.match(runtime, /2026\.08\.10-latest-scoreboard/);
 });
