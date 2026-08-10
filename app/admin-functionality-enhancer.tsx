@@ -7,6 +7,7 @@ const endpointFromBuild = process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim()
 const TOKEN_KEY = "cgv-exams-session-token";
 const ROLE_KEY = "cgv-exams-session-role";
 const ENDPOINT_KEY = "cgv-exams-api-endpoint";
+const COURSE_CHANGE_EVENT = "cgv:course-change";
 
 type ApiUser = {
   id?: string;
@@ -30,6 +31,7 @@ type ApiCourse = {
   questionCount?: number;
   participants?: number;
   average?: number;
+  attemptLimit?: number;
 };
 
 type ApiQuestion = {
@@ -84,6 +86,15 @@ function dateInput(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
 
+function attemptLimitLabel(value: number | undefined) {
+  const limit = Math.max(0, Math.floor(Number(value || 0)));
+  return limit ? `${limit} attempt${limit === 1 ? "" : "s"} max` : "Unlimited attempts";
+}
+
+function announceCourseChange(detail: { course?: ApiCourse; deletedId?: string }) {
+  window.dispatchEvent(new CustomEvent(COURSE_CHANGE_EVENT, { detail }));
+}
+
 async function api<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
   const token = window.sessionStorage.getItem(TOKEN_KEY);
   const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
@@ -123,7 +134,7 @@ function updateCourseRow(originalTitle: string, course: ApiCourse) {
   const cells = row.querySelectorAll<HTMLTableCellElement>("td");
 
   if (title) title.textContent = String(course.title || originalTitle);
-  if (subtitle) subtitle.textContent = `${course.category || "General"} · ${Number(course.questionCount || 0)} questions`;
+  if (subtitle) subtitle.textContent = `${course.category || "General"} · ${Number(course.questionCount || 0)} questions · ${attemptLimitLabel(course.attemptLimit)}`;
   if (status) {
     const lifecycle = deriveQuizLifecycle(course);
     status.textContent = lifecycle;
@@ -287,13 +298,18 @@ export default function AdminFunctionalityEnhancer() {
         const course = await locateCourse(button);
         if (action === "duplicate") {
           const result = await api<{ course: ApiCourse }>("adminDuplicateCourse", { courseId: course.id });
-          const sourceRow = button.closest<HTMLTableRowElement>("tr");
-          if (sourceRow && result.course) {
-            const clone = sourceRow.cloneNode(true) as HTMLTableRowElement;
-            sourceRow.parentElement?.insertBefore(clone, sourceRow);
-            updateCourseRow(course.title || "", result.course);
-          }
+          announceCourseChange({ course: result.course });
           toast("Course duplicated as a draft.");
+          return;
+        }
+
+        if (action === "restore") {
+          const result = await api<{ course: ApiCourse }>("adminSetCourseStatus", {
+            courseId: course.id,
+            status: "draft",
+          });
+          announceCourseChange({ course: result.course });
+          toast("Quiz restored to drafts.");
           return;
         }
 
@@ -408,6 +424,7 @@ export default function AdminFunctionalityEnhancer() {
           category: editCourse.category,
           passingScore: Number(editCourse.passingScore || 75),
           duration: Number(editCourse.duration || 20),
+          attemptLimit: Math.min(100, Math.max(0, Math.floor(Number(editCourse.attemptLimit || 0)))),
           startAt: editCourse.startAt || "",
           endAt: editCourse.endAt || "",
           status: normalize(editCourse.status) || "draft",
@@ -421,6 +438,7 @@ export default function AdminFunctionalityEnhancer() {
         },
       });
       updateCourseRow(modal.originalTitle, data.course);
+      announceCourseChange({ course: data.course });
       toast("Course changes saved.");
       setModal(null);
     } catch (nextError) {
@@ -440,6 +458,7 @@ export default function AdminFunctionalityEnhancer() {
         status,
       });
       updateCourseRow(course.title || "", data.course);
+      announceCourseChange({ course: data.course });
       toast(`Course is now ${deriveQuizLifecycle(data.course).toLowerCase()}.`);
       setModal(null);
     } catch (nextError) {
@@ -457,14 +476,17 @@ export default function AdminFunctionalityEnhancer() {
     setBusy(true);
     setError("");
     try {
-      const result = await api<{ archived?: boolean; deleted?: boolean; message?: string }>(
+      const result = await api<{ archived?: boolean; deleted?: boolean; message?: string; course?: ApiCourse }>(
         "adminDeleteCourse",
         { courseId: course.id },
       );
       if (result.archived) {
-        updateCourseRow(course.title || "", { ...course, status: "completed" });
+        const archivedCourse = result.course || { ...course, status: "archived" };
+        updateCourseRow(course.title || "", archivedCourse);
+        announceCourseChange({ course: archivedCourse });
       } else {
         findCourseRow(course.title || "")?.remove();
+        announceCourseChange({ deletedId: course.id });
       }
       toast(result.message || "Course removed.");
       setModal(null);
@@ -566,6 +588,7 @@ export default function AdminFunctionalityEnhancer() {
                   <div><span>Status</span><strong>{deriveQuizLifecycle(modal.course)}</strong></div>
                   <div><span>Duration</span><strong>{modal.course.duration} min</strong></div>
                   <div><span>Passing score</span><strong>{modal.course.passingScore}%</strong></div>
+                  <div><span>Attempts</span><strong>{attemptLimitLabel(modal.course.attemptLimit)}</strong></div>
                 </div>
                 <div className="cgv-preview-questions">
                   {modal.questions.map((question, index) => (
@@ -598,6 +621,7 @@ export default function AdminFunctionalityEnhancer() {
                   <label className="field-label">Category<input value={editCourse.category || ""} onChange={(event) => setEditCourse({ ...editCourse, category: event.target.value })} /></label>
                   <label className="field-label">Duration<input type="number" min={1} value={editCourse.duration || 20} onChange={(event) => setEditCourse({ ...editCourse, duration: Number(event.target.value) })} /></label>
                   <label className="field-label">Passing score<input type="number" min={1} max={100} value={editCourse.passingScore || 75} onChange={(event) => setEditCourse({ ...editCourse, passingScore: Number(event.target.value) })} /></label>
+                  <label className="field-label">Maximum attempts (0 = unlimited)<input type="number" min={0} max={100} value={editCourse.attemptLimit ?? 0} onChange={(event) => setEditCourse({ ...editCourse, attemptLimit: Math.min(100, Math.max(0, Math.floor(Number(event.target.value)))) })} /></label>
                   <label className="field-label">Publishing<select value={courseAuthoringStatus(editCourse.status)} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="live">Published</option><option value="completed">Completed</option></select></label>
                   <label className="field-label">Opens on<input type="date" value={dateInput(editCourse.startAt)} onChange={(event) => setEditCourse({ ...editCourse, startAt: event.target.value ? new Date(`${event.target.value}T00:00:00`).toISOString() : "" })} /></label>
                   <label className="field-label">Closes on<input type="date" value={dateInput(editCourse.endAt)} onChange={(event) => setEditCourse({ ...editCourse, endAt: event.target.value ? new Date(`${event.target.value}T23:59:59`).toISOString() : "" })} /></label>
@@ -641,6 +665,7 @@ export default function AdminFunctionalityEnhancer() {
                   <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "live")}>Publish live</button>
                   <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "draft")}>Move to draft</button>
                   <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "completed")}>Mark completed</button>
+                  <button disabled={busy} onClick={() => void setCourseStatus(modal.course, "archived")}>Archive quiz</button>
                   <button disabled={busy} className="danger" onClick={() => void removeCourse(modal.course)}>Delete / archive</button>
                 </div>
               </>

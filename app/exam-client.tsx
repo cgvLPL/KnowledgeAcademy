@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Archive,
+  ArchiveRestore,
   ArrowRight,
   BarChart3,
   Bell,
@@ -29,6 +31,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
   Search,
   Send,
@@ -44,6 +47,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { ExecutiveReportData } from "./executive-report";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
 import { fetchSheetsWithRetry } from "./sheets-request-policy.mjs";
@@ -64,10 +68,12 @@ type Evaluation = {
   opens?: string;
   startAt?: string;
   endAt?: string;
-  status: "Live" | "Scheduled" | "Completed" | "Draft";
+  status: "Live" | "Scheduled" | "Completed" | "Draft" | "Archived";
   participants: number;
   average: number;
   passingScore: number;
+  attemptLimit: number;
+  attemptsUsed: number;
   color: "green" | "orange" | "blue" | "violet";
 };
 
@@ -105,6 +111,11 @@ type LeaderboardRow = {
 type ScoreboardLoadResult = {
   rows: LeaderboardRow[];
   error: string | null;
+};
+
+type CourseChangeDetail = {
+  course?: Record<string, unknown>;
+  deletedId?: string;
 };
 
 type ParticipantRow = {
@@ -228,8 +239,25 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     participants: Number(course.participants || 0),
     average: Number(course.average || 0),
     passingScore: Number(course.passingScore || 75),
+    attemptLimit: normalizedAttemptLimit(course.attemptLimit),
+    attemptsUsed: Math.max(0, Math.floor(Number(course.attemptsUsed || 0))),
     color: colors[index % colors.length],
   };
+}
+
+function normalizedAttemptLimit(value: unknown) {
+  const limit = Math.floor(Number(value || 0));
+  return Number.isFinite(limit) ? Math.min(100, Math.max(0, limit)) : 0;
+}
+
+function isAttemptLimitReached(evaluation: Evaluation) {
+  return evaluation.attemptLimit > 0 && evaluation.attemptsUsed >= evaluation.attemptLimit;
+}
+
+function attemptPolicyLabel(evaluation: Pick<Evaluation, "attemptLimit" | "attemptsUsed">, includeUsage = false) {
+  if (!evaluation.attemptLimit) return "Unlimited attempts";
+  if (includeUsage) return `${evaluation.attemptsUsed}/${evaluation.attemptLimit} attempts used`;
+  return `${evaluation.attemptLimit} attempt${evaluation.attemptLimit === 1 ? "" : "s"} max`;
 }
 
 function Logo({
@@ -614,6 +642,10 @@ function CertificateModal({
     : item.title.length > 36
       ? "certificate-course-title certificate-course-title-long"
       : "certificate-course-title";
+  const certificatePrintStyle = {
+    "--certificate-name-print-size": `${Math.max(3.8, Math.min(12, 360 / Math.max(28, Array.from(participantName).length))).toFixed(2)}mm`,
+    "--certificate-course-print-size": `${Math.max(3.4, Math.min(7.5, 300 / Math.max(36, Array.from(item.title).length))).toFixed(2)}mm`,
+  } as CSSProperties;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -623,11 +655,13 @@ function CertificateModal({
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
+    document.documentElement.classList.add("cgv-certificate-printing");
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
     const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
     return () => {
       window.cancelAnimationFrame(focusFrame);
+      document.documentElement.classList.remove("cgv-certificate-printing");
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
       if (previousFocus?.isConnected) previousFocus.focus();
@@ -656,7 +690,7 @@ function CertificateModal({
     window.requestAnimationFrame(() => window.print());
   }
 
-  return (
+  return createPortal((
     <div
       className="certificate-backdrop"
       role="presentation"
@@ -687,7 +721,7 @@ function CertificateModal({
         </header>
 
         <div className="certificate-scroll">
-          <article className="completion-certificate" aria-label={`Certificate of completion for ${participantName}`}>
+          <article className="completion-certificate" data-print-format="a4" style={certificatePrintStyle} aria-label={`Certificate of completion for ${participantName}`}>
             <div className="certificate-orbit" aria-hidden="true">
               <span />
               <span />
@@ -743,7 +777,7 @@ function CertificateModal({
         </div>
       </section>
     </div>
-  );
+  ), document.body);
 }
 
 function ParticipantHome({
@@ -765,6 +799,7 @@ function ParticipantHome({
   const scheduledEvaluations = evaluations.filter((item) => item.status === "Scheduled");
   const visibleEvaluations = [...liveEvaluations, ...scheduledEvaluations];
   const featured = liveEvaluations[0] || null;
+  const featuredLimitReached = featured ? isAttemptLimitReached(featured) : false;
   const average = history.length
     ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
     : 0;
@@ -805,10 +840,11 @@ function ParticipantHome({
             <div className="hero-meta">
               <span><FileText size={16} /> {featured.questionCount} questions</span>
               <span><Clock3 size={16} /> {featured.duration} minutes</span>
+              <span><RotateCcw size={16} /> {attemptPolicyLabel(featured, true)}</span>
               <span><CalendarDays size={16} /> Due {featured.due}</span>
             </div>
-            <button className="hero-button" onClick={() => onStart(featured)}>
-              Start evaluation <span><ArrowRight size={19} /></span>
+            <button className="hero-button" disabled={featuredLimitReached} onClick={() => onStart(featured)}>
+              {featuredLimitReached ? "Attempt limit reached" : "Start evaluation"} <span>{featuredLimitReached ? <LockKeyhole size={19} /> : <ArrowRight size={19} />}</span>
             </button>
           </div>
           <div className="hero-orbit" aria-hidden="true">
@@ -878,6 +914,7 @@ function ParticipantHome({
               <div className="evaluation-details">
                 <span><FileText size={15} /> {evaluation.questionCount} questions</span>
                 <span><Clock3 size={15} /> {evaluation.duration} min</span>
+                <span><RotateCcw size={15} /> {attemptPolicyLabel(evaluation, true)}</span>
               </div>
               <div className="due-block">
                 <span>{evaluation.status === "Scheduled" ? "Opens" : "Due date"}</span>
@@ -885,10 +922,14 @@ function ParticipantHome({
               </div>
               <button
                 className="row-button"
-                disabled={evaluation.status === "Scheduled"}
+                disabled={evaluation.status === "Scheduled" || isAttemptLimitReached(evaluation)}
                 onClick={() => evaluation.status === "Live" && onStart(evaluation)}
               >
-                {evaluation.status === "Scheduled" ? <><LockKeyhole size={15} /> Not open yet</> : <>Start <ArrowRight size={17} /></>}
+                {evaluation.status === "Scheduled"
+                  ? <><LockKeyhole size={15} /> Not open yet</>
+                  : isAttemptLimitReached(evaluation)
+                    ? <><LockKeyhole size={15} /> Limit reached</>
+                    : <>Start <ArrowRight size={17} /></>}
               </button>
             </article>
           ))}
@@ -973,7 +1014,8 @@ function EvaluationsView({
         {shown.map((item) => {
           const isScheduled = item.status === "Scheduled";
           const isClosed = item.status === "Completed";
-          const isUnavailable = item.status !== "Live";
+          const limitReached = isAttemptLimitReached(item);
+          const isUnavailable = item.status !== "Live" || limitReached;
           return (
           <article className={`course-card accent-${item.color}${isScheduled ? " is-scheduled" : ""}${isClosed ? " is-completed" : ""}`} key={item.id}>
             <div className="course-card-top">
@@ -986,6 +1028,7 @@ function EvaluationsView({
             <div className="course-meta">
               <span><FileText size={15} /> {item.questionCount} questions</span>
               <span><Clock3 size={15} /> {item.duration} min</span>
+              <span><RotateCcw size={15} /> {attemptPolicyLabel(item, true)}</span>
             </div>
             <div className="course-card-footer">
               <div>
@@ -997,8 +1040,16 @@ function EvaluationsView({
                 disabled={isUnavailable}
                 onClick={() => item.status === "Live" && onStart(item)}
               >
-                {isClosed ? <><LockKeyhole size={15} /> Closed</> : isScheduled ? <><LockKeyhole size={15} /> Not open yet</> : item.status === "Draft" ? "Draft" : "Start"}
-                {item.status === "Live" && <ArrowRight size={16} />}
+                {isClosed
+                  ? <><LockKeyhole size={15} /> Closed</>
+                  : isScheduled
+                    ? <><LockKeyhole size={15} /> Not open yet</>
+                    : item.status === "Draft"
+                      ? "Draft"
+                      : limitReached
+                        ? <><LockKeyhole size={15} /> Attempt limit reached</>
+                        : "Start"}
+                {item.status === "Live" && !limitReached && <ArrowRight size={16} />}
               </button>
             </div>
           </article>
@@ -1428,10 +1479,11 @@ function AdminOverview({
   evaluations: Evaluation[];
   participantsData: ParticipantRow[];
 }) {
-  const liveCourses = evaluations.filter((item) => item.status === "Live").length;
-  const scheduledCourses = evaluations.filter((item) => item.status === "Scheduled").length;
-  const completedCourses = evaluations.filter((item) => item.status === "Completed").length;
-  const draftCourses = evaluations.filter((item) => item.status === "Draft").length;
+  const activeEvaluations = evaluations.filter((item) => item.status !== "Archived");
+  const liveCourses = activeEvaluations.filter((item) => item.status === "Live").length;
+  const scheduledCourses = activeEvaluations.filter((item) => item.status === "Scheduled").length;
+  const completedCourses = activeEvaluations.filter((item) => item.status === "Completed").length;
+  const draftCourses = activeEvaluations.filter((item) => item.status === "Draft").length;
   const activeParticipants = participantsData.filter((item) => item.status === "Active").length;
   const inactiveParticipants = participantsData.length - activeParticipants;
   const participantsWithAttempts = participantsData.filter((item) => item.attempts > 0);
@@ -1449,8 +1501,8 @@ function AdminOverview({
   const participationRate = activeParticipants
     ? Math.min(100, Math.round(participantsWithAttempts.length / activeParticipants * 100))
     : 0;
-  const lowPerformingCourses = evaluations.filter((item) => item.average > 0 && item.average < item.passingScore);
-  const unattendedLiveCourses = evaluations.filter((item) => item.status === "Live" && item.participants === 0);
+  const lowPerformingCourses = activeEvaluations.filter((item) => item.average > 0 && item.average < item.passingScore);
+  const unattendedLiveCourses = activeEvaluations.filter((item) => item.status === "Live" && item.participants === 0);
   const scoredParticipants = participantsData.filter((item) => item.attempts > 0);
   const scoreBands = [
     { label: "85–100%", detail: "High performers", count: scoredParticipants.filter((item) => item.average >= 85).length, tone: "high" },
@@ -1462,9 +1514,9 @@ function AdminOverview({
     lowPerformingCourses.length > 0 ? `${lowPerformingCourses.length} course${lowPerformingCourses.length === 1 ? " is" : "s are"} below the passing target` : "",
     unattendedLiveCourses.length > 0 ? `${unattendedLiveCourses.length} live evaluation${unattendedLiveCourses.length === 1 ? " has" : "s have"} no participants yet` : "",
   ].filter(Boolean);
-  const evaluationInsights = [...evaluations]
+  const evaluationInsights = [...activeEvaluations]
     .sort((a, b) => {
-      const priority = { Live: 0, Scheduled: 1, Completed: 2, Draft: 3 };
+      const priority = { Live: 0, Scheduled: 1, Completed: 2, Draft: 3, Archived: 4 };
       return priority[a.status] - priority[b.status] || b.average - a.average;
     })
     .slice(0, 5);
@@ -1598,6 +1650,8 @@ function CoursesView({
   evaluations: Evaluation[];
   onCreate: () => void;
 }) {
+  const activeCourses = evaluations.filter((course) => course.status !== "Archived");
+  const archivedCourses = evaluations.filter((course) => course.status === "Archived");
   return (
     <div className="content admin-section admin-courses">
       <section className="page-intro admin-section-header">
@@ -1610,14 +1664,18 @@ function CoursesView({
         <div className="admin-search"><Search size={17} /><input placeholder="Search courses…" /></div>
         <div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Status</button><button className="secondary-button"><CalendarDays size={16} /> Schedule</button></div>
       </div>
-      <section className="table-card">
+      <section className="table-card current-course-section">
+        <div className="table-card-header archived-section-heading">
+          <div><h3>Current quizzes</h3><p>Draft, scheduled, live, and completed evaluations.</p></div>
+          <span className="course-section-count">{activeCourses.length}</span>
+        </div>
         <div className="responsive-table">
           <table className="course-management-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
-              {evaluations.map((course, index) => (
+              {activeCourses.map((course, index) => (
               <tr key={course.id}>
-                <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions</span></div></div></td>
+                <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
                 <td><div className="date-cell"><strong>{course.opens && course.opens !== "Scheduled" ? course.opens : course.due}</strong><span>{course.opens && course.opens !== "Scheduled" ? "Opening date" : "Closing date"} · {course.duration} min</span></div></td>
                 <td><strong>{course.participants || "—"}</strong></td>
@@ -1625,7 +1683,7 @@ function CoursesView({
                 <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button aria-label="Edit"><Pencil size={17} /></button><button aria-label="More"><MoreHorizontal size={17} /></button></div></td>
               </tr>
               ))}
-              {!evaluations.length && (
+              {!activeCourses.length && (
                 <tr className="empty-table-row">
                   <td colSpan={6}>
                     <EmptyState
@@ -1634,6 +1692,39 @@ function CoursesView({
                       description="Create your first course to start building the evaluation workspace."
                       action={<button className="primary-button" onClick={onCreate}><Plus size={17} /> Create course</button>}
                     />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section className="table-card archived-course-section" aria-labelledby="archived-quizzes-heading">
+        <div className="table-card-header archived-section-heading">
+          <div className="archived-section-title">
+            <span className="metric-icon orange"><Archive size={19} /></span>
+            <div><h3 id="archived-quizzes-heading">Archived quizzes</h3><p>Stored quizzes are hidden from participants but keep their questions and results.</p></div>
+          </div>
+          <span className="course-section-count">{archivedCourses.length}</span>
+        </div>
+        <div className="responsive-table">
+          <table className="course-management-table archived-course-table">
+            <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
+            <tbody>
+              {archivedCourses.map((course, index) => (
+                <tr key={course.id}>
+                  <td><div className="table-title-cell"><EvaluationIcon color={course.color} icon={index === 1 ? "shield" : "book"} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
+                  <td><span className="status-pill status-archived">Archived</span></td>
+                  <td><div className="date-cell"><strong>{course.due}</strong><span>Last closing date · {course.duration} min</span></div></td>
+                  <td><strong>{course.participants || "—"}</strong></td>
+                  <td><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
+                  <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button className="restore-course-button" aria-label="Restore"><ArchiveRestore size={17} /></button></div></td>
+                </tr>
+              ))}
+              {!archivedCourses.length && (
+                <tr className="empty-table-row">
+                  <td colSpan={6}>
+                    <EmptyState icon={Archive} title="No archived quizzes" description="Quizzes you archive will be safely stored here and can be restored later." />
                   </td>
                 </tr>
               )}
@@ -1973,6 +2064,7 @@ function CourseBuilder({
   const [category, setCategory] = useState("Operations");
   const [duration, setDuration] = useState(20);
   const [passingScore, setPassingScore] = useState(75);
+  const [attemptLimit, setAttemptLimit] = useState(1);
   const [builderError, setBuilderError] = useState("");
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [draftQuestions, setDraftQuestions] = useState<DraftQuestion[]>([
@@ -2028,6 +2120,8 @@ function CourseBuilder({
       participants: 0,
       average: 0,
       passingScore,
+      attemptLimit: normalizedAttemptLimit(attemptLimit),
+      attemptsUsed: 0,
       color: "green",
     }, draftQuestions);
   }
@@ -2057,7 +2151,7 @@ function CourseBuilder({
               <label className="field-label">Category<select value={category} onChange={(event) => setCategory(event.target.value)}><option>Operations</option><option>Safety</option><option>Service</option><option>Compliance</option></select></label>
               <label className="field-label">Time limit (minutes)<input type="number" min={1} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
               <label className="field-label">Passing score (%)<input type="number" min={1} max={100} value={passingScore} onChange={(event) => setPassingScore(Number(event.target.value))} /></label>
-              <label className="field-label">Attempt policy<select><option>One attempt</option><option>Unlimited attempts</option><option>Two attempts</option></select></label>
+              <label className="field-label">Maximum attempts (0 = unlimited)<input type="number" min={0} max={100} value={attemptLimit} onChange={(event) => setAttemptLimit(normalizedAttemptLimit(event.target.value))} /></label>
             </div>
             <div className="builder-footer"><span /><button className="primary-button" onClick={() => setStep(2)}>Continue to questions <ArrowRight size={18} /></button></div>
           </section>
@@ -2102,7 +2196,7 @@ function CourseBuilder({
               <label className="toggle-row full"><div><strong>Publish immediately</strong><span>Make the course visible when saved.</span></div><input type="checkbox" /></label>
               <label className="toggle-row full"><div><strong>Email notification</strong><span>Notify assigned participants after publishing.</span></div><input type="checkbox" defaultChecked /></label>
             </div>
-            <div className="publish-summary"><span className="metric-icon green"><Send size={20} /></span><div><strong>Ready to publish</strong><p>{draftQuestions.length} questions · {duration} minutes · {passingScore}% passing score</p></div></div>
+            <div className="publish-summary"><span className="metric-icon green"><Send size={20} /></span><div><strong>Ready to publish</strong><p>{draftQuestions.length} questions · {duration} minutes · {passingScore}% passing score · {attemptLimit ? `${attemptLimit} attempt${attemptLimit === 1 ? "" : "s"} max` : "unlimited attempts"}</p></div></div>
             <div className="builder-footer"><button className="back-button" onClick={() => setStep(2)}><ChevronLeft size={18} /> Questions</button><button className="primary-button" onClick={saveCourse}><Save size={18} /> Save quiz course</button></div>
           </section>
         )}
@@ -2186,6 +2280,30 @@ export default function ExamClient() {
       useShortIntro ? BOOT_SCREEN_REDUCED_MS : BOOT_SCREEN_MINIMUM_MS,
     );
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const onCourseChange = (event: Event) => {
+      const detail = (event as CustomEvent<CourseChangeDetail>).detail || {};
+      setEvaluations((items) => {
+        if (detail.deletedId) return items.filter((item) => item.id !== detail.deletedId);
+        if (!detail.course?.id) return items;
+        const courseId = String(detail.course.id);
+        const existingIndex = items.findIndex((item) => item.id === courseId);
+        const mapped = apiCourseToEvaluation(detail.course, Math.max(0, existingIndex));
+        if (existingIndex < 0) return [mapped, ...items];
+        return items.map((item, index) => index === existingIndex ? {
+          ...item,
+          ...mapped,
+          participants: detail.course?.participants === undefined ? item.participants : mapped.participants,
+          average: detail.course?.average === undefined ? item.average : mapped.average,
+          attemptsUsed: detail.course?.attemptsUsed === undefined ? item.attemptsUsed : mapped.attemptsUsed,
+          color: item.color,
+        } : item);
+      });
+    };
+    window.addEventListener("cgv:course-change", onCourseChange);
+    return () => window.removeEventListener("cgv:course-change", onCourseChange);
   }, []);
 
   useEffect(() => {
@@ -2349,6 +2467,10 @@ export default function ExamClient() {
           : "This evaluation is not available.");
       return;
     }
+    if (isAttemptLimitReached(evaluation)) {
+      window.alert(`You have reached the ${evaluation.attemptLimit}-attempt limit for this evaluation.`);
+      return;
+    }
     if (backendMode === "sheets" && sessionToken) {
       try {
         const data = await sheetsRequest<{
@@ -2393,7 +2515,7 @@ export default function ExamClient() {
         }, {});
         const submission = await sheetsRequest<{
           ok: boolean;
-          result: { attemptId?: string; score: number; durationSeconds: number };
+          result: { attemptId?: string; score: number; durationSeconds: number; attemptsUsed?: number };
         }>("submitAttempt", {
           token: sessionToken,
           attemptId: activeAttemptId,
@@ -2402,6 +2524,12 @@ export default function ExamClient() {
         finalScore = submission.result.score;
         completedAttemptId = String(submission.result.attemptId || activeAttemptId);
         completedDurationSeconds = Number(submission.result.durationSeconds || 0);
+        const serverAttemptsUsed = Number(submission.result.attemptsUsed || 0);
+        if (serverAttemptsUsed > 0) {
+          setEvaluations((items) => items.map((item) => (
+            item.id === activeQuiz.id ? { ...item, attemptsUsed: serverAttemptsUsed } : item
+          )));
+        }
       } catch (error) {
         return error instanceof Error ? error.message : "Unable to submit this evaluation.";
       }
@@ -2446,6 +2574,7 @@ export default function ExamClient() {
           category: evaluation.category,
           passingScore: evaluation.passingScore,
           duration: evaluation.duration,
+          attemptLimit: evaluation.attemptLimit,
           status: evaluation.status.toLowerCase(),
           questions: draftQuestions.map((question) => ({
             prompt: question.prompt,

@@ -10,8 +10,12 @@ const updaterCss = read("app/app-update-enhancer.css");
 const versionScript = read("scripts/prepare-app-version.mjs");
 const pagesBuild = read("scripts/build-github-pages.sh");
 const sitesBuild = read("scripts/build-verified.sh");
+const packageJson = JSON.parse(read("package.json"));
+const appVersion = read("app/app-version.ts");
 
 test("settings displays the exact running application version", () => {
+  assert.equal(packageJson.version, "1.1.0");
+  assert.match(appVersion, /1\.1\.0\+development/);
   assert.match(settings, /APP_VERSION_LABEL/);
   assert.match(settings, /App version/);
   assert.match(settings, /checks automatically for a newer release/);
