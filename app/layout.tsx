@@ -59,6 +59,7 @@ import "./admin-top-performers-mobile.css";
 import "./final-no-green-lock.css";
 import "./dashboard-card-spacing.css";
 import "./admin-participants-mobile.css";
+import "./admin-quiz-builder-responsive.css";
 import "./login-loading-indicator.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
