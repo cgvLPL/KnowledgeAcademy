@@ -24,7 +24,7 @@ test("attempt limits are enforced inside the concurrent start and submit locks",
   const submit = backend.slice(backend.indexOf("function submitAttempt_"), backend.indexOf("function submittedAttemptCountForCourse_"));
   assert.match(start, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs[\s\S]*assertAttemptLimitAvailable_/);
   assert.match(submit, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs[\s\S]*assertAttemptLimitAvailable_/);
-  assert.match(backend, /attempt\.status === "submitted"/);
+  assert.match(backend, /isSubmittedAttempt_\(attempt\)/);
   assert.match(backend, /You have reached the " \+ attemptLimit \+ "-attempt limit/);
 });
 
@@ -48,7 +48,7 @@ test("administrators can configure and review an arbitrary attempt limit", () =>
 });
 
 test("frontend and deployment guide require the matching attempt-limit backend", () => {
-  assert.match(backend, /version:\s*"2026\.08\.10-latest-scoreboard"/);
-  assert.match(runtime, /EXPECTED_BACKEND_VERSION = "2026\.08\.10-latest-scoreboard"/);
-  assert.match(backendReadme, /"version":"2026\.08\.10-latest-scoreboard"/);
+  assert.match(backend, /version:\s*"2026\.08\.10-archived-report-results"/);
+  assert.match(runtime, /EXPECTED_BACKEND_VERSION = "2026\.08\.10-archived-report-results"/);
+  assert.match(backendReadme, /"version":"2026\.08\.10-archived-report-results"/);
 });

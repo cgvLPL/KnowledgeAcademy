@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const client = await readFile(new URL("../app/exam-client.tsx", import.meta.url), "utf8");
+const adminTools = await readFile(new URL("../app/admin-functionality-enhancer.tsx", import.meta.url), "utf8");
+const buttonSafetyNet = await readFile(new URL("../app/button-safety-net.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/admin-participants-mobile.css", import.meta.url), "utf8");
 const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
 
@@ -15,7 +17,25 @@ test("the admin People page exposes responsive layout hooks and labelled values"
     assert.ok(client.includes(`data-label="${label}"`));
   }
   assert.match(client, /className="participants-action-label">Manage participant/);
+  assert.match(client, /data-participant-actions="true"/);
+  assert.match(client, /data-participant-id=\{person\.id\}/);
   assert.match(client, /aria-labelledby="add-participant-title"/);
+});
+
+test("participant action buttons open the real account controls", () => {
+  assert.match(adminTools, /button\.dataset\.participantActions === "true"/);
+  assert.match(adminTools, /actionButton\?\.dataset\.participantId/);
+  assert.match(adminTools, /setModal\(\{ type: "userActions", user: await locateUser\(button\) \}\)/);
+  assert.match(adminTools, /adminSetUserStatus/);
+  assert.match(adminTools, /adminResetPassword/);
+  assert.match(buttonSafetyNet, /button\.dataset\.participantActions === "true"\) return/);
+  assert.doesNotMatch(adminTools, /button\.querySelector\("\.lucide-more-horizontal"\)/);
+});
+
+test("participant status changes synchronize with the People table", () => {
+  assert.match(adminTools, /announceParticipantChange\(data\.user\)/);
+  assert.match(client, /window\.addEventListener\("cgv:participant-change", onParticipantChange\)/);
+  assert.match(client, /setParticipantsData\(\(items\) => items\.map/);
 });
 
 test("participant rows become contained touch-friendly cards on phones", () => {

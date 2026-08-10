@@ -8,6 +8,7 @@ const TOKEN_KEY = "cgv-exams-session-token";
 const ROLE_KEY = "cgv-exams-session-role";
 const ENDPOINT_KEY = "cgv-exams-api-endpoint";
 const COURSE_CHANGE_EVENT = "cgv:course-change";
+const PARTICIPANT_CHANGE_EVENT = "cgv:participant-change";
 
 type ApiUser = {
   id?: string;
@@ -32,6 +33,7 @@ type ApiCourse = {
   participants?: number;
   average?: number;
   attemptLimit?: number;
+  randomizeAnswers?: boolean;
 };
 
 type ApiQuestion = {
@@ -74,7 +76,8 @@ function courseTitleFromRow(element: Element) {
 }
 
 function usernameFromRow(element: Element) {
-  return (element.closest("tr")?.querySelector(".participant-cell span")?.textContent || "")
+  const actionButton = element.closest<HTMLButtonElement>('[data-participant-actions="true"]');
+  return (actionButton?.dataset.participantUsername || element.closest("tr")?.querySelector(".participant-cell > div span")?.textContent || "")
     .replace(/^@/, "")
     .trim()
     .toLowerCase();
@@ -93,6 +96,10 @@ function attemptLimitLabel(value: number | undefined) {
 
 function announceCourseChange(detail: { course?: ApiCourse; deletedId?: string }) {
   window.dispatchEvent(new CustomEvent(COURSE_CHANGE_EVENT, { detail }));
+}
+
+function announceParticipantChange(user: ApiUser) {
+  window.dispatchEvent(new CustomEvent(PARTICIPANT_CHANGE_EVENT, { detail: { user } }));
 }
 
 async function api<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
@@ -119,8 +126,9 @@ function findCourseRow(title: string) {
 }
 
 function findUserRow(username: string) {
-  return Array.from(document.querySelectorAll<HTMLTableRowElement>("tbody tr"))
-    .find((row) => normalize(row.querySelector(".participant-cell span")?.textContent).replace(/^@/, "") === normalize(username)) || null;
+  const button = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-participant-actions="true"]'))
+    .find((item) => normalize(item.dataset.participantUsername) === normalize(username));
+  return button?.closest<HTMLTableRowElement>("tr") || null;
 }
 
 function updateCourseRow(originalTitle: string, course: ApiCourse) {
@@ -199,6 +207,16 @@ export default function AdminFunctionalityEnhancer() {
       return course;
     };
     const locateUser = async (element: Element) => {
+      const actionButton = element.closest<HTMLButtonElement>('[data-participant-actions="true"]');
+      if (actionButton?.dataset.participantId) {
+        return {
+          id: actionButton.dataset.participantId,
+          username: actionButton.dataset.participantUsername || "",
+          fullName: actionButton.dataset.participantName || "Participant",
+          branch: actionButton.dataset.participantBranch || "",
+          status: normalize(actionButton.dataset.participantStatus) || "active",
+        };
+      }
       const username = usernameFromRow(element);
       const data = await dashboard();
       const user = (data.participants || []).find(
@@ -281,7 +299,7 @@ export default function AdminFunctionalityEnhancer() {
         button.closest(".inline-actions") && button.closest("tr")?.querySelector(".table-title-cell"),
       );
       const participantAction = Boolean(
-        button.querySelector(".lucide-more-horizontal") && button.closest("tr")?.querySelector(".participant-cell"),
+        button.dataset.participantActions === "true" && button.closest("tr")?.querySelector(".participant-cell"),
       );
       if (!courseAction && !participantAction) return;
 
@@ -425,6 +443,7 @@ export default function AdminFunctionalityEnhancer() {
           passingScore: Number(editCourse.passingScore || 75),
           duration: Number(editCourse.duration || 20),
           attemptLimit: Math.min(100, Math.max(0, Math.floor(Number(editCourse.attemptLimit || 0)))),
+          randomizeAnswers: editCourse.randomizeAnswers === true,
           startAt: editCourse.startAt || "",
           endAt: editCourse.endAt || "",
           status: normalize(editCourse.status) || "draft",
@@ -507,6 +526,7 @@ export default function AdminFunctionalityEnhancer() {
         status,
       });
       updateUserRow(data.user);
+      announceParticipantChange(data.user);
       toast(`Account ${status === "active" ? "activated" : "deactivated"}.`);
       setModal(null);
     } catch (nextError) {
@@ -589,6 +609,7 @@ export default function AdminFunctionalityEnhancer() {
                   <div><span>Duration</span><strong>{modal.course.duration} min</strong></div>
                   <div><span>Passing score</span><strong>{modal.course.passingScore}%</strong></div>
                   <div><span>Attempts</span><strong>{attemptLimitLabel(modal.course.attemptLimit)}</strong></div>
+                  <div><span>Answer order</span><strong>{modal.course.randomizeAnswers ? "Randomized" : "Fixed"}</strong></div>
                 </div>
                 <div className="cgv-preview-questions">
                   {modal.questions.map((question, index) => (
@@ -622,6 +643,7 @@ export default function AdminFunctionalityEnhancer() {
                   <label className="field-label">Duration<input type="number" min={1} value={editCourse.duration || 20} onChange={(event) => setEditCourse({ ...editCourse, duration: Number(event.target.value) })} /></label>
                   <label className="field-label">Passing score<input type="number" min={1} max={100} value={editCourse.passingScore || 75} onChange={(event) => setEditCourse({ ...editCourse, passingScore: Number(event.target.value) })} /></label>
                   <label className="field-label">Maximum attempts (0 = unlimited)<input type="number" min={0} max={100} value={editCourse.attemptLimit ?? 0} onChange={(event) => setEditCourse({ ...editCourse, attemptLimit: Math.min(100, Math.max(0, Math.floor(Number(event.target.value)))) })} /></label>
+                  <label className="toggle-row full"><div><strong>Randomize answer order</strong><span>Shuffle choices consistently for each participant attempt.</span></div><input type="checkbox" checked={editCourse.randomizeAnswers === true} onChange={(event) => setEditCourse({ ...editCourse, randomizeAnswers: event.target.checked })} /></label>
                   <label className="field-label">Publishing<select value={courseAuthoringStatus(editCourse.status)} onChange={(event) => setEditCourse({ ...editCourse, status: event.target.value })}><option value="draft">Draft</option><option value="live">Published</option><option value="completed">Completed</option></select></label>
                   <label className="field-label">Opens on<input type="date" value={dateInput(editCourse.startAt)} onChange={(event) => setEditCourse({ ...editCourse, startAt: event.target.value ? new Date(`${event.target.value}T00:00:00`).toISOString() : "" })} /></label>
                   <label className="field-label">Closes on<input type="date" value={dateInput(editCourse.endAt)} onChange={(event) => setEditCourse({ ...editCourse, endAt: event.target.value ? new Date(`${event.target.value}T23:59:59`).toISOString() : "" })} /></label>
