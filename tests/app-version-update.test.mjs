@@ -25,6 +25,9 @@ test("settings displays the exact running application version", () => {
   assert.match(sitesBuild, /prepare-app-version\.mjs/);
   assert.match(pagesBuild, /NEXT_PUBLIC_APP_VERSION/);
   assert.match(sitesBuild, /NEXT_PUBLIC_APP_VERSION/);
+  assert.match(pagesBuild, /find "\$project_dir\/dist\/client\/assets" -type f -name '\*\.css'/);
+  assert.match(pagesBuild, /replaceAll\("\/assets\/", "\/CGV\.Exams\/assets\/"\)/);
+  assert.match(pagesBuild, /grep -qF 'url\(\/assets\/'/);
 });
 
 test("new deployments trigger a mandatory full-screen refresh prompt", () => {

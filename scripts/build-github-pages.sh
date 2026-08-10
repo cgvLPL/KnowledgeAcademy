@@ -45,6 +45,12 @@ exported_files=(
   "$project_dir/dist/client/404.html"
 )
 
+# Vite emits imported images as root-relative URLs inside generated CSS. Include
+# every stylesheet in the base-path rewrite so those assets resolve on Pages.
+while IFS= read -r stylesheet; do
+  exported_files+=("$stylesheet")
+done < <(find "$project_dir/dist/client/assets" -type f -name '*.css' -print)
+
 node --input-type=module - "${exported_files[@]}" <<'NODE'
 import { readFile, writeFile } from "node:fs/promises";
 
