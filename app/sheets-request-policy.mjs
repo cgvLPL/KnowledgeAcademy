@@ -1,7 +1,7 @@
 export const EXAM_CAPACITY_TARGET = 30;
 export const SHEETS_REQUEST_TIMEOUT_MS = 110_000;
-export const BURST_SPREAD_MS = 900;
-export const RETRY_DELAYS_MS = Object.freeze([0, 650, 1_500, 3_000, 6_000, 10_000]);
+export const BURST_SPREAD_MS = 300;
+export const RETRY_DELAYS_MS = Object.freeze([0, 300, 750, 1_500, 3_000, 6_000]);
 
 const RETRYABLE_ACTIONS = new Set(["login", "startAttempt", "submitAttempt"]);
 const RETRYABLE_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);

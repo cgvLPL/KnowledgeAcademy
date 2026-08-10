@@ -50,7 +50,7 @@ Apps Script project and deploy a new version. The live `/exec` health response
 must report:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.09-30-participant-capacity"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.09-fast-response"}
 ```
 
 Until that version is visible, the live site is still using the older backend

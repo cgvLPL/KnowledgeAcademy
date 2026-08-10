@@ -27,6 +27,7 @@ administrator-managed content.
   results, and question-by-question answer analysis
 - Google Sheets / Apps Script backend with server-side scoring
 - Capacity safeguards and automated coverage for 30 simultaneous participants
+- Fast sign-in, cached reads, and lightweight spreadsheet mutations
 - Automatically generated spreadsheet dashboard, KPIs, leaderboard, and chart
 - Responsive desktop and mobile layouts
 
@@ -82,5 +83,13 @@ keeps start and submission retries idempotent.
 
 See [the 30-participant capacity audit](audit/concurrency-audit-2026-08-09.md)
 for the verification boundary and the required Apps Script deployment step.
+
+## Response performance
+
+The branded opening screen is capped below one second, sign-in returns the
+authenticated workspace in one backend response, and Apps Script reuses sheet
+reads during each execution. Course changes update only the affected data rows;
+the generated spreadsheet dashboard remains formula-driven and no longer needs
+to be rebuilt after routine saves or deletes.
 
 No worksheet cells are merged.

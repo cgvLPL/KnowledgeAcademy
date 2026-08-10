@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.09-30-participant-capacity"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.09-fast-response"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -81,6 +81,11 @@ participants submit at nearly the same time. Capacity-sensitive participant
 writes use a 90-second queue sized for a 30-person burst. Session and ID lookups
 target exact rows instead of scanning whole tabs, and start/submission retries
 remain idempotent.
+
+Each request also reuses spreadsheet, sheet, row, and exact-lookup reads within
+the current execution. Sign-in returns the participant or administrator
+workspace in the same response, and routine course changes no longer rebuild
+the spreadsheet dashboard.
 
 ## Reset administrator credentials
 

@@ -128,8 +128,8 @@ type AuthUser = {
 const publicSheetsEndpoint =
   process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim() || "";
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
-const BOOT_SCREEN_MINIMUM_MS = 2500;
-const BOOT_SCREEN_REDUCED_MS = 700;
+const BOOT_SCREEN_MINIMUM_MS = 650;
+const BOOT_SCREEN_REDUCED_MS = 250;
 const BUILDER_STEPS = [
   ["Course details", 1],
   ["Questions", 2],
@@ -2210,6 +2210,12 @@ export default function ExamClient() {
           role?: string;
           status?: string;
         };
+        workspace?: {
+          courses?: Record<string, unknown>[];
+          history?: Record<string, unknown>[];
+          participants?: Record<string, unknown>[];
+          scoreboard?: Record<string, unknown>[];
+        };
       };
 
       if (!response.ok || loginData.ok === false || !loginData.token) {
@@ -2223,11 +2229,17 @@ export default function ExamClient() {
       const authenticatedRole = roleValue as Role;
 
       if (authenticatedRole === "participant") {
-        const homeData = await sheetsRequest<{
-          ok: boolean;
-          courses: Record<string, unknown>[];
-          history: Record<string, unknown>[];
-        }>("getParticipantHome", { token: loginData.token });
+        const homeData = Array.isArray(loginData.workspace?.courses) &&
+          Array.isArray(loginData.workspace?.history)
+          ? {
+            courses: loginData.workspace.courses,
+            history: loginData.workspace.history,
+          }
+          : await sheetsRequest<{
+            ok: boolean;
+            courses: Record<string, unknown>[];
+            history: Record<string, unknown>[];
+          }>("getParticipantHome", { token: loginData.token });
         setEvaluations(homeData.courses.map(apiCourseToEvaluation));
         setHistory(homeData.history.map((item, index) => ({
           id: String(item.id || `history-${index}`),
@@ -2239,12 +2251,20 @@ export default function ExamClient() {
           duration: formatDuration(Number(item.durationSeconds || 0)),
         })));
       } else {
-        const dashboardData = await sheetsRequest<{
-          ok: boolean;
-          courses: Record<string, unknown>[];
-          participants: Record<string, unknown>[];
-          scoreboard: Record<string, unknown>[];
-        }>("adminGetDashboard", { token: loginData.token });
+        const dashboardData = Array.isArray(loginData.workspace?.courses) &&
+          Array.isArray(loginData.workspace?.participants) &&
+          Array.isArray(loginData.workspace?.scoreboard)
+          ? {
+            courses: loginData.workspace.courses,
+            participants: loginData.workspace.participants,
+            scoreboard: loginData.workspace.scoreboard,
+          }
+          : await sheetsRequest<{
+            ok: boolean;
+            courses: Record<string, unknown>[];
+            participants: Record<string, unknown>[];
+            scoreboard: Record<string, unknown>[];
+          }>("adminGetDashboard", { token: loginData.token });
         setEvaluations(dashboardData.courses.map(apiCourseToEvaluation));
         const liveLeaderboard = apiScoreboardToLeaderboard(dashboardData.scoreboard);
         setLeaderboardData(liveLeaderboard);
