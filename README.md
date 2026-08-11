@@ -21,6 +21,7 @@ administrator-managed content.
 - Responsive one-question-at-a-time quiz flow with progress and results
 - Personal score history for current and previous evaluations
 - Administrator course and question builder
+- Shared Knowledge Centre with admin-published lessons, imported text/Markdown notes, and resource links
 - Participant account creation
 - Per-evaluation live scoreboard
 - Per-evaluation executive PDF reports with score distribution, participant
@@ -68,7 +69,7 @@ administrator through Apps Script Properties as described in
 
 ## Data model
 
-The workbook uses separate tabs for settings, users, courses, questions,
+The workbook uses separate tabs for settings, users, courses, lessons, questions,
 attempts, answers, sessions, and the dashboard. Passwords are salted and
 hashed, session tokens are stored as hashes, correct answers are never sent to
 participants, and scores are calculated server-side.

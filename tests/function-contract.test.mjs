@@ -28,12 +28,15 @@ const requiredActions = [
   "login",
   "logout",
   "getParticipantHome",
+  "getKnowledgeCentre",
   "startAttempt",
   "submitAttempt",
   "adminGetDashboard",
   "adminGetExecutiveReport",
   "adminGetCourse",
   "adminSaveCourse",
+  "adminSaveLesson",
+  "adminDeleteLesson",
   "adminDuplicateCourse",
   "adminDeleteCourse",
   "adminSetCourseStatus",
@@ -288,6 +291,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.10-archived-report-results"/);
-  assert.match(runtime, /2026\.08\.10-archived-report-results/);
+  assert.match(backend, /version:\s*"2026\.08\.11-knowledge-centre"/);
+  assert.match(runtime, /2026\.08\.11-knowledge-centre/);
 });

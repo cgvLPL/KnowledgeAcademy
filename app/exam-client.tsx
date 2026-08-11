@@ -49,13 +49,14 @@ import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { ExecutiveReportData } from "./executive-report";
+import KnowledgeCentre, { type Lesson, type LessonInput } from "./knowledge-centre";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
 import { selectLatestScoreboardEvaluation } from "./scoreboard-selection.mjs";
 import { fetchSheetsWithRetry } from "./sheets-request-policy.mjs";
 
 type Role = "participant" | "admin";
-type ParticipantView = "home" | "evaluations" | "history" | "profile";
-type AdminView = "overview" | "courses" | "participants" | "scoreboard";
+type ParticipantView = "home" | "evaluations" | "knowledge" | "history" | "profile";
+type AdminView = "overview" | "courses" | "knowledge" | "participants" | "scoreboard";
 type View = ParticipantView | AdminView;
 
 type Evaluation = {
@@ -253,6 +254,22 @@ function apiCourseToEvaluation(course: Record<string, unknown>, index = 0): Eval
     attemptsUsed: Math.max(0, Math.floor(Number(course.attemptsUsed || 0))),
     randomizeAnswers: course.randomizeAnswers === true,
     color: colors[index % colors.length],
+  };
+}
+
+function apiLessonToLesson(lesson: Record<string, unknown>, index = 0): Lesson {
+  return {
+    id: String(lesson.id || `lesson-${index}`),
+    title: String(lesson.title || "Untitled lesson"),
+    summary: String(lesson.summary || ""),
+    content: String(lesson.content || ""),
+    category: String(lesson.category || "General"),
+    duration: Math.max(1, Number(lesson.duration || 5)),
+    resourceTitle: String(lesson.resourceTitle || ""),
+    resourceUrl: String(lesson.resourceUrl || ""),
+    status: String(lesson.status || "draft").toLowerCase() === "published" ? "published" : "draft",
+    createdAt: String(lesson.createdAt || ""),
+    updatedAt: String(lesson.updatedAt || ""),
   };
 }
 
@@ -493,12 +510,14 @@ function Sidebar({
   const participantItems: { id: ParticipantView; label: string; icon: typeof Home }[] = [
     { id: "home", label: "Overview", icon: Home },
     { id: "evaluations", label: "Evaluations", icon: BookOpen },
+    { id: "knowledge", label: "Knowledge centre", icon: GraduationCap },
     { id: "history", label: "Score history", icon: History },
     { id: "profile", label: "My profile", icon: UserRound },
   ];
   const adminItems: { id: AdminView; label: string; icon: typeof Home }[] = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "courses", label: "Quiz courses", icon: BookOpen },
+    { id: "knowledge", label: "Knowledge centre", icon: GraduationCap },
     { id: "participants", label: "Participants", icon: Users },
     { id: "scoreboard", label: "Scoreboard", icon: Trophy },
   ];
@@ -2233,8 +2252,8 @@ function CourseBuilder({
 
 function MobileNav({ role, view, setView }: { role: Role; view: View; setView: (view: View) => void }) {
   const items = role === "admin"
-    ? [{ id: "overview", icon: LayoutDashboard, label: "Home" }, { id: "courses", icon: BookOpen, label: "Courses" }, { id: "participants", icon: Users, label: "People" }, { id: "scoreboard", icon: Trophy, label: "Scores" }]
-    : [{ id: "home", icon: Home, label: "Home" }, { id: "evaluations", icon: BookOpen, label: "Courses" }, { id: "history", icon: History, label: "History" }, { id: "profile", icon: UserRound, label: "Profile" }];
+    ? [{ id: "overview", icon: LayoutDashboard, label: "Home" }, { id: "courses", icon: BookOpen, label: "Courses" }, { id: "knowledge", icon: GraduationCap, label: "Library" }, { id: "participants", icon: Users, label: "People" }, { id: "scoreboard", icon: Trophy, label: "Scores" }]
+    : [{ id: "home", icon: Home, label: "Home" }, { id: "evaluations", icon: BookOpen, label: "Courses" }, { id: "knowledge", icon: GraduationCap, label: "Learn" }, { id: "history", icon: History, label: "History" }, { id: "profile", icon: UserRound, label: "Profile" }];
   return (
     <nav className="mobile-nav" aria-label="Primary navigation">
       {items.map((item) => {
@@ -2272,6 +2291,7 @@ export default function ExamClient() {
   const [certificateItem, setCertificateItem] = useState<HistoryItem | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardRow[]>([]);
   const [participantsData, setParticipantsData] = useState<ParticipantRow[]>([]);
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -2282,6 +2302,7 @@ export default function ExamClient() {
   const titleMap = useMemo<Record<View, [string, string]>>(() => ({
     home: ["Overview", "Your evaluation snapshot"],
     evaluations: ["Evaluations", "Live, scheduled, and completed courses"],
+    knowledge: ["Knowledge centre", "Lessons, guides, and learning resources"],
     history: ["Score history", "Every result, in one place"],
     profile: ["My profile", "Account and learning details"],
     overview: ["Admin overview", "Evaluation performance at a glance"],
@@ -2379,6 +2400,19 @@ export default function ExamClient() {
     };
   }, [role]);
 
+  useEffect(() => {
+    if (view !== "knowledge" || backendMode !== "sheets" || !sessionToken || !role) return;
+    let active = true;
+    void sheetsRequest<{ ok: boolean; lessons?: Record<string, unknown>[] }>("getKnowledgeCentre", {
+      token: sessionToken,
+    }).then((data) => {
+      if (active) setLessons((data.lessons || []).map(apiLessonToLesson));
+    }).catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [backendMode, role, sessionToken, view]);
+
   async function login(username: string, password: string): Promise<string | null> {
     try {
       const response = await sheetsFetch({ action: "login", username, password });
@@ -2397,6 +2431,7 @@ export default function ExamClient() {
         workspace?: {
           courses?: Record<string, unknown>[];
           history?: Record<string, unknown>[];
+          lessons?: Record<string, unknown>[];
           participants?: Record<string, unknown>[];
           scoreboard?: Record<string, unknown>[];
         };
@@ -2418,13 +2453,16 @@ export default function ExamClient() {
           ? {
             courses: loginData.workspace.courses,
             history: loginData.workspace.history,
+            lessons: Array.isArray(loginData.workspace.lessons) ? loginData.workspace.lessons : [],
           }
           : await sheetsRequest<{
             ok: boolean;
             courses: Record<string, unknown>[];
             history: Record<string, unknown>[];
+            lessons?: Record<string, unknown>[];
           }>("getParticipantHome", { token: loginData.token });
         setEvaluations(homeData.courses.map(apiCourseToEvaluation));
+        setLessons((homeData.lessons || []).map(apiLessonToLesson));
         setHistory(homeData.history.map((item, index) => ({
           id: String(item.id || `history-${index}`),
           title: String(item.title || "Evaluation"),
@@ -2442,14 +2480,17 @@ export default function ExamClient() {
             courses: loginData.workspace.courses,
             participants: loginData.workspace.participants,
             scoreboard: loginData.workspace.scoreboard,
+            lessons: Array.isArray(loginData.workspace.lessons) ? loginData.workspace.lessons : [],
           }
           : await sheetsRequest<{
             ok: boolean;
             courses: Record<string, unknown>[];
             participants: Record<string, unknown>[];
             scoreboard: Record<string, unknown>[];
+            lessons?: Record<string, unknown>[];
           }>("adminGetDashboard", { token: loginData.token });
         setEvaluations(dashboardData.courses.map(apiCourseToEvaluation));
+        setLessons((dashboardData.lessons || []).map(apiLessonToLesson));
         const liveLeaderboard = apiScoreboardToLeaderboard(dashboardData.scoreboard);
         setLeaderboardData(liveLeaderboard);
         setParticipantsData(dashboardData.participants.map((item) => {
@@ -2493,6 +2534,7 @@ export default function ExamClient() {
     setCurrentUser(null);
     setHistory([]);
     setEvaluations([]);
+    setLessons([]);
     setLeaderboardData([]);
     setParticipantsData([]);
     setActiveQuiz(null);
@@ -2648,6 +2690,47 @@ export default function ExamClient() {
     setView("courses");
   }
 
+  async function saveLesson(lesson: LessonInput): Promise<string | null> {
+    if (backendMode !== "sheets" || !sessionToken) {
+      return "The Google Sheets backend is required to save a lesson.";
+    }
+    try {
+      const data = await sheetsRequest<{
+        ok: boolean;
+        lesson: Record<string, unknown>;
+      }>("adminSaveLesson", {
+        token: sessionToken,
+        lesson,
+      });
+      const savedLesson = apiLessonToLesson(data.lesson);
+      setLessons((items) => {
+        const exists = items.some((item) => item.id === savedLesson.id);
+        return exists
+          ? items.map((item) => item.id === savedLesson.id ? savedLesson : item)
+          : [savedLesson, ...items];
+      });
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Unable to save this lesson.";
+    }
+  }
+
+  async function deleteLesson(lesson: Lesson): Promise<string | null> {
+    if (backendMode !== "sheets" || !sessionToken) {
+      return "The Google Sheets backend is required to delete a lesson.";
+    }
+    try {
+      await sheetsRequest("adminDeleteLesson", {
+        token: sessionToken,
+        lessonId: lesson.id,
+      });
+      setLessons((items) => items.filter((item) => item.id !== lesson.id));
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : "Unable to delete this lesson.";
+    }
+  }
+
   async function addParticipant(input: { name: string; username: string; branch: string; password: string }): Promise<string | null> {
     try {
       if (backendMode !== "sheets" || !sessionToken) {
@@ -2756,6 +2839,7 @@ export default function ExamClient() {
         <Topbar role={role} title={title} subtitle={subtitle} user={currentUser} />
         {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} onCertificate={setCertificateItem} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
         {role === "participant" && view === "evaluations" && <EvaluationsView evaluations={evaluations} onStart={startQuiz} />}
+        {view === "knowledge" && <KnowledgeCentre role={role} lessons={lessons} onSave={saveLesson} onDelete={deleteLesson} />}
         {role === "participant" && view === "history" && <HistoryView history={history} onCertificate={setCertificateItem} />}
         {role === "participant" && view === "profile" && <ProfileView user={currentUser} history={history} />}
         {role === "admin" && view === "overview" && <AdminOverview setView={setView} onCreate={() => setBuilderOpen(true)} leaderboardData={leaderboardData} evaluations={evaluations} participantsData={participantsData} />}

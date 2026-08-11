@@ -39,5 +39,5 @@ test("archived tests remain available when no current test exists", () => {
 test("course payloads expose creation time for deterministic recency", () => {
   assert.match(client, /createdAt:\s*String\(course\.createdAt \|\| ""\)/);
   assert.match(backend, /createdAt:\s*toIso_\(course\.created_at\)/);
-  assert.match(backend, /version:\s*"2026\.08\.10-archived-report-results"/);
+  assert.match(backend, /version:\s*"2026\.08\.11-knowledge-centre"/);
 });
