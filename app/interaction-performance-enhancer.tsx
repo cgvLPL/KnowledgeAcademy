@@ -11,10 +11,13 @@ const READ_TTL: Record<string, number> = {
   adminGetExecutiveReport: 30_000,
   adminGetCourse: 90_000,
   getParticipantHome: 20_000,
+  getKnowledgeCentre: 20_000,
 };
 
 const INVALIDATING_ACTIONS = new Set([
   "adminSaveCourse",
+  "adminSaveLesson",
+  "adminDeleteLesson",
   "adminDuplicateCourse",
   "adminDeleteCourse",
   "adminSetCourseStatus",

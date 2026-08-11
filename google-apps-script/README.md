@@ -47,7 +47,7 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.10-archived-report-results"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.11-knowledge-centre"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -60,6 +60,7 @@ Participant functions:
 
 - Sign in and sign out.
 - Load currently available evaluations and score history.
+- Review all published Knowledge Centre lessons and linked resources.
 - Start or resume one unfinished attempt for the same course.
 - Respect each course's administrator-defined attempt limit, including unlimited attempts.
 - Submit answers with server-side scoring.
@@ -74,6 +75,7 @@ Administrator functions:
 - Reset passwords and activate or deactivate accounts.
 - Create, inspect, edit, duplicate, publish, complete, archive, restore, or
   delete a course.
+- Create, edit, publish, draft, and delete Knowledge Centre lessons.
 - Preserve submitted results by archiving courses that already have attempts.
 
 The backend confirms writes only after `SpreadsheetApp.flush()`. Script locks
@@ -113,6 +115,7 @@ server-side, and administrator actions require an administrator session.
   distribution.
 - `Users` — participant and administrator accounts.
 - `Courses` — course metadata, schedule, status, time limit, passing score, and attempt limit.
+- `Lessons` — Knowledge Centre lesson notes, topic, visibility, reading time, and resource link.
 - `Questions` — four-option question bank and correct-answer keys.
 - `Attempts` — one row per started or submitted evaluation.
 - `Answers` — participant answer audit trail.

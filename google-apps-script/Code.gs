@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.10-archived-report-results",
+  version: "2026.08.11-knowledge-centre",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -12,6 +12,7 @@ const APP = Object.freeze({
     settings: "Settings",
     users: "Users",
     courses: "Courses",
+    lessons: "Lessons",
     questions: "Questions",
     attempts: "Attempts",
     answers: "Answers",
@@ -30,6 +31,10 @@ const HEADERS = Object.freeze({
     "course_id", "title", "description", "category", "passing_score",
     "time_limit_min", "start_at", "end_at", "status", "created_by",
     "created_at", "updated_at", "attempt_limit", "randomize_answers",
+  ],
+  Lessons: [
+    "lesson_id", "title", "summary", "content", "category", "duration_min",
+    "resource_title", "resource_url", "status", "created_by", "created_at", "updated_at",
   ],
   Questions: [
     "question_id", "course_id", "order_no", "question_text", "option_a",
@@ -52,12 +57,15 @@ const API_ACTIONS = Object.freeze({
   login: login_,
   logout: logout_,
   getParticipantHome: getParticipantHome_,
+  getKnowledgeCentre: getKnowledgeCentre_,
   startAttempt: startAttempt_,
   submitAttempt: submitAttempt_,
   adminGetDashboard: adminGetDashboard_,
   adminGetExecutiveReport: adminGetExecutiveReport_,
   adminGetCourse: adminGetCourse_,
   adminSaveCourse: adminSaveCourse_,
+  adminSaveLesson: adminSaveLesson_,
+  adminDeleteLesson: adminDeleteLesson_,
   adminDuplicateCourse: adminDuplicateCourse_,
   adminDeleteCourse: adminDeleteCourse_,
   adminSetCourseStatus: adminSetCourseStatus_,
@@ -141,6 +149,7 @@ function resetEvaluationPlatformToAdminOnly() {
       .forEach(function (user) { getSheet_(APP.sheets.users).deleteRow(user.__row); });
     [
       APP.sheets.courses,
+      APP.sheets.lessons,
       APP.sheets.questions,
       APP.sheets.attempts,
       APP.sheets.answers,
@@ -246,6 +255,15 @@ function getParticipantHome_(body) {
   return participantHomeForUser_(context.user);
 }
 
+function getKnowledgeCentre_(body) {
+  const context = requireSession_(body.token);
+  return {
+    ok: true,
+    user: publicUser_(context.user),
+    lessons: lessonsForUser_(context.user),
+  };
+}
+
 function participantHomeForUser_(user) {
   const questionCounts = questionCountsByCourse_();
   const attempts = attemptsForUser_(user.user_id);
@@ -282,6 +300,7 @@ function participantHomeForUser_(user) {
     ok: true,
     user: publicUser_(user),
     courses: courses,
+    lessons: lessonsForUser_(user),
     history: history,
     summary: summarizeAttempts_(history),
   };
@@ -550,6 +569,7 @@ function adminDashboardForUser_(user, courseId) {
       result.average = stats.count ? Math.round(stats.total / stats.count) : 0;
       return result;
     }),
+    lessons: lessonsForUser_(user),
     participants: participants.map(function (user) {
       const result = publicUser_(user);
       const stats = participantStats[user.user_id] || { attempts: 0, scoreTotal: 0 };
@@ -957,6 +977,75 @@ function adminDeleteCourse_(body) {
     updateDashboardCourseSelection_(course.title, "");
     SpreadsheetApp.flush();
     return { ok: true, deleted: true };
+  });
+}
+
+function adminSaveLesson_(body) {
+  const context = requireSession_(body.token, "admin");
+  const input = body.lesson || {};
+  const title = String(input.title || "").trim();
+  const summary = String(input.summary || "").trim();
+  const content = String(input.content || "").trim();
+  const category = String(input.category || "General").trim() || "General";
+  const resourceTitle = String(input.resourceTitle || "").trim();
+  const resourceUrl = String(input.resourceUrl || "").trim();
+  if (!title) throw new Error("Lesson title is required.");
+  if (!summary) throw new Error("Lesson summary is required.");
+  if (!content) throw new Error("Lesson content is required.");
+  if (title.length > 160) throw new Error("Lesson titles must be 160 characters or fewer.");
+  if (summary.length > 500) throw new Error("Lesson summaries must be 500 characters or fewer.");
+  if (content.length > 45000) throw new Error("Lesson content must be 45,000 characters or fewer.");
+  if (category.length > 80) throw new Error("Lesson topics must be 80 characters or fewer.");
+  if (resourceTitle.length > 160) throw new Error("Resource labels must be 160 characters or fewer.");
+  if (resourceUrl.length > 2048) throw new Error("Resource links must be 2,048 characters or fewer.");
+  if (resourceUrl && !/^https?:\/\//i.test(resourceUrl)) {
+    throw new Error("Resource links must use http or https.");
+  }
+  const status = String(input.status || "published").toLowerCase() === "published"
+    ? "published"
+    : "draft";
+
+  return withScriptLock_(30000, function () {
+    const sheet = lessonsSheet_();
+    const lessonId = String(input.id || Utilities.getUuid()).trim();
+    const existing = findById_(APP.sheets.lessons, "lesson_id", lessonId);
+    const now = new Date();
+    const record = {
+      lesson_id: lessonId,
+      title: title,
+      summary: summary,
+      content: content,
+      category: category,
+      duration_min: clamp_(Math.round(Number(input.duration || 5)), 1, 240),
+      resource_title: resourceTitle,
+      resource_url: resourceUrl,
+      status: status,
+      created_by: existing ? existing.created_by : context.user.user_id,
+      created_at: existing ? existing.created_at : now,
+      updated_at: now,
+    };
+    if (existing) {
+      updateObjectRow_(sheet, existing.__row, record);
+    } else {
+      appendObject_(sheet, record);
+    }
+    SpreadsheetApp.flush();
+    return { ok: true, lesson: publicLesson_(record) };
+  });
+}
+
+function adminDeleteLesson_(body) {
+  requireSession_(body.token, "admin");
+  const lessonId = String(body.lessonId || "").trim();
+  if (!lessonId) throw new Error("Lesson ID is required.");
+  return withScriptLock_(15000, function () {
+    const sheet = lessonsSheet_();
+    const lesson = findById_(APP.sheets.lessons, "lesson_id", lessonId);
+    if (!lesson) throw new Error("Lesson not found.");
+    sheet.deleteRow(lesson.__row);
+    invalidateSheetCache_(sheet);
+    SpreadsheetApp.flush();
+    return { ok: true, deleted: true, lessonId: lessonId };
   });
 }
 
@@ -1430,6 +1519,24 @@ function questionsForCourse_(courseId) {
     .sort(function (a, b) { return Number(a.order_no) - Number(b.order_no); });
 }
 
+function lessonsSheet_() {
+  const spreadsheet = activeSpreadsheet_();
+  return spreadsheet.getSheetByName(APP.sheets.lessons) ||
+    ensureDataSheet_(spreadsheet, APP.sheets.lessons, HEADERS.Lessons);
+}
+
+function lessonsForUser_(user) {
+  return rowsAsObjects_(lessonsSheet_())
+    .filter(function (lesson) {
+      return user.role === "admin" || String(lesson.status || "").toLowerCase() === "published";
+    })
+    .sort(function (first, second) {
+      return new Date(second.updated_at || second.created_at || 0) -
+        new Date(first.updated_at || first.created_at || 0);
+    })
+    .map(publicLesson_);
+}
+
 function questionCountsByCourse_() {
   return rowsAsObjects_(getSheet_(APP.sheets.questions)).reduce(function (counts, question) {
     const courseId = String(question.course_id || "");
@@ -1464,6 +1571,22 @@ function publicUser_(user) {
     status: user.status,
     createdAt: toIso_(user.created_at),
     lastLogin: toIso_(user.last_login),
+  };
+}
+
+function publicLesson_(lesson) {
+  return {
+    id: lesson.lesson_id,
+    title: lesson.title,
+    summary: lesson.summary,
+    content: lesson.content,
+    category: lesson.category || "General",
+    duration: Math.max(1, Number(lesson.duration_min || 5)),
+    resourceTitle: lesson.resource_title || "",
+    resourceUrl: lesson.resource_url || "",
+    status: String(lesson.status || "draft").toLowerCase() === "published" ? "published" : "draft",
+    createdAt: toIso_(lesson.created_at),
+    updatedAt: toIso_(lesson.updated_at),
   };
 }
 
