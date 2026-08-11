@@ -48,6 +48,23 @@ performance, certificates, and administrator tools in one cinematic workspace.
   score distributions and question-level answer analysis.
 - Keep archived quizzes in a distinct section that is collapsed by default.
 
+## Version 1.1.2 — Productivity & Insights
+
+This frontend-only release adds practical tools without requiring a new Google
+Apps Script deployment:
+
+- Search and filter the participant directory by branch, position, and account
+  status, then export the current filtered view as a formula-safe CSV file.
+- Search quiz titles and categories, filter by lifecycle status, and sort by
+  newest, title, or status while preserving the collapsible archive.
+- Export the currently filtered scoreboard and personal score history to CSV.
+- Download scheduled quizzes as `.ics` calendar events, including a reminder,
+  for Apple Calendar, Google Calendar, Outlook, and other calendar apps.
+- Review an accessible performance trend chart across the eight latest scores.
+
+All exports run locally in the browser. No participant or quiz data is sent to
+an additional service.
+
 ## Roles and positions
 
 | Role | Available positions | Access |
@@ -64,7 +81,7 @@ on the sign-in screen.
 | --- | --- |
 | Interface | React 19, TypeScript, Vite, vinext, and responsive CSS |
 | Data and API | Google Sheets with Google Apps Script |
-| Reports | jsPDF executive reports and browser-printable certificates |
+| Reports | jsPDF executive reports, safe CSV exports, calendar events, and browser-printable certificates |
 | Delivery | GitHub Pages and GitHub Actions |
 | Quality | ESLint, TypeScript checks, production builds, and Node regression tests |
 

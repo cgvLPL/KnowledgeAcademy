@@ -51,6 +51,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, ty
 import { createPortal } from "react-dom";
 import type { ExecutiveReportData } from "./executive-report";
 import KnowledgeCentre, { type Lesson, type LessonInput } from "./knowledge-centre";
+import { createCsvDocument, createEvaluationCalendar, safeFilename } from "./productivity-insights.mjs";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
 import { selectLatestScoreboardEvaluation } from "./scoreboard-selection.mjs";
 import { fetchSheetsWithRetry } from "./sheets-request-policy.mjs";
@@ -204,6 +205,35 @@ function formatDuration(totalSeconds: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+function downloadBrowserFile(content: string, filename: string, type: string) {
+  if (typeof document === "undefined" || typeof URL === "undefined") return;
+  const objectUrl = URL.createObjectURL(new Blob([content], { type }));
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.hidden = true;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+}
+
+function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number>>) {
+  downloadBrowserFile(
+    createCsvDocument(headers, rows),
+    `${safeFilename(filename, "cgv-knowledge-academy-export")}.csv`,
+    "text/csv;charset=utf-8",
+  );
+}
+
+function downloadEvaluationCalendar(evaluation: Evaluation) {
+  downloadBrowserFile(
+    createEvaluationCalendar(evaluation),
+    `${safeFilename(evaluation.title, "cgv-evaluation")}.ics`,
+    "text/calendar;charset=utf-8",
+  );
 }
 
 function apiScoreboardToLeaderboard(items: Record<string, unknown>[]): LeaderboardRow[] {
@@ -827,6 +857,7 @@ function CertificateModal({
 
 function ParticipantHome({
   onStart,
+  onCalendar,
   onCertificate,
   setView,
   history,
@@ -834,6 +865,7 @@ function ParticipantHome({
   user,
 }: {
   onStart: (evaluation: Evaluation) => void;
+  onCalendar: (evaluation: Evaluation) => void;
   onCertificate: (item: HistoryItem) => void;
   setView: (view: ParticipantView) => void;
   history: HistoryItem[];
@@ -965,17 +997,24 @@ function ParticipantHome({
                 <span>{evaluation.status === "Scheduled" ? "Opens" : "Due date"}</span>
                 <strong>{evaluation.status === "Scheduled" ? evaluation.opens : evaluation.due}</strong>
               </div>
-              <button
-                className="row-button"
-                disabled={evaluation.status === "Scheduled" || isAttemptLimitReached(evaluation)}
-                onClick={() => evaluation.status === "Live" && onStart(evaluation)}
-              >
-                {evaluation.status === "Scheduled"
-                  ? <><LockKeyhole size={15} /> Not open yet</>
-                  : isAttemptLimitReached(evaluation)
-                    ? <><LockKeyhole size={15} /> Limit reached</>
-                    : <>Start <ArrowRight size={17} /></>}
-              </button>
+              <div className="evaluation-row-actions">
+                {evaluation.status === "Scheduled" && (
+                  <button className="calendar-row-button" type="button" data-button-safety-net onClick={() => onCalendar(evaluation)}>
+                    <CalendarDays size={15} /> Add to calendar
+                  </button>
+                )}
+                <button
+                  className="row-button"
+                  disabled={evaluation.status === "Scheduled" || isAttemptLimitReached(evaluation)}
+                  onClick={() => evaluation.status === "Live" && onStart(evaluation)}
+                >
+                  {evaluation.status === "Scheduled"
+                    ? <><LockKeyhole size={15} /> Not open yet</>
+                    : isAttemptLimitReached(evaluation)
+                      ? <><LockKeyhole size={15} /> Limit reached</>
+                      : <>Start <ArrowRight size={17} /></>}
+                </button>
+              </div>
             </article>
           ))}
           {!visibleEvaluations.length && (
@@ -1030,9 +1069,11 @@ function ParticipantHome({
 function EvaluationsView({
   evaluations,
   onStart,
+  onCalendar,
 }: {
   evaluations: Evaluation[];
   onStart: (evaluation: Evaluation) => void;
+  onCalendar: (evaluation: Evaluation) => void;
 }) {
   const [filter, setFilter] = useState("All");
   const shown = filter === "All" ? evaluations : evaluations.filter((item) => item.status === filter);
@@ -1061,6 +1102,7 @@ function EvaluationsView({
           const isClosed = item.status === "Completed";
           const limitReached = isAttemptLimitReached(item);
           const isUnavailable = item.status !== "Live" || limitReached;
+          const hasCalendarDate = Boolean(item.startAt && !Number.isNaN(new Date(item.startAt).getTime()));
           return (
           <article className={`course-card accent-${item.color}${isScheduled ? " is-scheduled" : ""}${isClosed ? " is-completed" : ""}`} key={item.id}>
             <div className="course-card-top">
@@ -1080,22 +1122,29 @@ function EvaluationsView({
                 <span>{isScheduled ? "Opens" : isClosed ? "Closed" : item.status === "Draft" ? "Availability" : "Due date"}</span>
                 <strong>{isScheduled ? item.opens : isClosed ? item.due : item.status === "Draft" ? "Not published" : item.due}</strong>
               </div>
-              <button
-                className={isUnavailable ? "secondary-button" : "primary-button small"}
-                disabled={isUnavailable}
-                onClick={() => item.status === "Live" && onStart(item)}
-              >
-                {isClosed
-                  ? <><LockKeyhole size={15} /> Closed</>
-                  : isScheduled
-                    ? <><LockKeyhole size={15} /> Not open yet</>
-                    : item.status === "Draft"
-                      ? "Draft"
-                      : limitReached
-                        ? <><LockKeyhole size={15} /> Attempt limit reached</>
-                        : "Start"}
-                {item.status === "Live" && !limitReached && <ArrowRight size={16} />}
-              </button>
+              <div className="course-card-actions">
+                {isScheduled && (
+                  <button className="secondary-button calendar-course-button" type="button" data-button-safety-net disabled={!hasCalendarDate} onClick={() => onCalendar(item)}>
+                    <CalendarDays size={15} /> {hasCalendarDate ? "Add to calendar" : "Schedule unavailable"}
+                  </button>
+                )}
+                <button
+                  className={isUnavailable ? "secondary-button" : "primary-button small"}
+                  disabled={isUnavailable}
+                  onClick={() => item.status === "Live" && onStart(item)}
+                >
+                  {isClosed
+                    ? <><LockKeyhole size={15} /> Closed</>
+                    : isScheduled
+                      ? <><LockKeyhole size={15} /> Not open yet</>
+                      : item.status === "Draft"
+                        ? "Draft"
+                        : limitReached
+                          ? <><LockKeyhole size={15} /> Attempt limit reached</>
+                          : "Start"}
+                  {item.status === "Live" && !limitReached && <ArrowRight size={16} />}
+                </button>
+              </div>
             </div>
           </article>
           );
@@ -1119,11 +1168,43 @@ function HistoryView({
   history: HistoryItem[];
   onCertificate: (item: HistoryItem) => void;
 }) {
+  const [exportMessage, setExportMessage] = useState("");
   const average = history.length
     ? Math.round(history.reduce((sum, item) => sum + item.score, 0) / history.length)
     : 0;
   const passed = history.filter((item) => item.status === "Passed").length;
   const best = history.length ? Math.max(...history.map((item) => item.score)) : 0;
+  const trendItems = history.slice(0, 8).reverse();
+  const chartWidth = 720;
+  const chartHeight = 230;
+  const chartPadding = { top: 22, right: 24, bottom: 45, left: 48 };
+  const chartBottom = chartHeight - chartPadding.bottom;
+  const chartPlotWidth = chartWidth - chartPadding.left - chartPadding.right;
+  const chartPlotHeight = chartBottom - chartPadding.top;
+  const trendPoints = trendItems.map((item, index) => ({
+    ...item,
+    x: trendItems.length === 1
+      ? chartPadding.left + chartPlotWidth / 2
+      : chartPadding.left + (index / (trendItems.length - 1)) * chartPlotWidth,
+    y: chartPadding.top + (1 - Math.min(100, Math.max(0, item.score)) / 100) * chartPlotHeight,
+  }));
+  const trendLine = trendPoints
+    .map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+    .join(" ");
+  const trendArea = trendPoints.length > 1
+    ? `${trendLine} L ${trendPoints.at(-1)?.x.toFixed(1)} ${chartBottom} L ${trendPoints[0].x.toFixed(1)} ${chartBottom} Z`
+    : "";
+
+  function exportHistory() {
+    if (!history.length) return;
+    downloadCsv(
+      "my-cgv-score-history",
+      ["Evaluation", "Category", "Completed", "Duration", "Score", "Outcome"],
+      history.map((item) => [item.title, item.category, item.date, item.duration, item.score, item.status]),
+    );
+    setExportMessage(`${history.length} result${history.length === 1 ? "" : "s"} exported.`);
+  }
+
   return (
     <div className="content participant-section participant-history">
       <section className="page-intro history-intro participant-page-header">
@@ -1132,7 +1213,10 @@ function HistoryView({
           <h2>Score history</h2>
           <p>Review every result and track how your performance changes over time.</p>
         </div>
-        <button className="secondary-button"><Download size={17} /> Export report</button>
+        <div className="participant-header-actions">
+          <button className="secondary-button" type="button" data-button-safety-net disabled={!history.length} onClick={exportHistory}><Download size={17} /> Export CSV</button>
+          {exportMessage && <span className="insights-status" role="status" aria-live="polite">{exportMessage}</span>}
+        </div>
       </section>
       <section className="history-summary">
         <div className="history-score-card">
@@ -1146,6 +1230,48 @@ function HistoryView({
         <div className="history-stat"><span>Completed</span><strong>{history.length}</strong><small>evaluations</small></div>
         <div className="history-stat"><span>Passed</span><strong>{passed}</strong><small>{history.length ? `${Math.round(passed / history.length * 100)}% pass rate` : "No attempts"}</small></div>
         <div className="history-stat"><span>Best score</span><strong>{best}%</strong><small>personal best</small></div>
+      </section>
+      <section className="score-trend-card" aria-labelledby="score-trend-title">
+        <div className="score-trend-heading">
+          <div>
+            <span className="card-kicker"><BarChart3 size={15} /> PERFORMANCE TREND</span>
+            <h3 id="score-trend-title">Your latest scores</h3>
+            <p>{trendItems.length ? `Showing ${trendItems.length} most recent result${trendItems.length === 1 ? "" : "s"}, oldest to newest.` : "Complete an evaluation to begin tracking progress."}</p>
+          </div>
+          {trendItems.length > 1 && <strong className={trendItems.at(-1)!.score >= trendItems[0].score ? "trend-change up" : "trend-change down"}>{trendItems.at(-1)!.score - trendItems[0].score >= 0 ? "+" : ""}{trendItems.at(-1)!.score - trendItems[0].score} pts</strong>}
+        </div>
+        {trendItems.length ? (
+          <div className="score-trend-visual" role="img" aria-label={`Score trend from ${trendItems[0].score}% to ${trendItems.at(-1)!.score}% across ${trendItems.length} evaluations`}>
+            <svg className="score-trend-svg" viewBox={`0 0 ${chartWidth} ${chartHeight}`} aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="score-trend-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ff7a1a" stopOpacity="0.34" />
+                  <stop offset="100%" stopColor="#ff7a1a" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {[0, 25, 50, 75, 100].map((score) => {
+                const y = chartPadding.top + (1 - score / 100) * chartPlotHeight;
+                return <g key={score}><line className="trend-grid-line" x1={chartPadding.left} x2={chartWidth - chartPadding.right} y1={y} y2={y} /><text className="trend-axis-label" x={chartPadding.left - 10} y={y + 4} textAnchor="end">{score}%</text></g>;
+              })}
+              {trendArea && <path className="trend-area" d={trendArea} />}
+              <path className="trend-line" d={trendLine} />
+              {trendPoints.map((point, index) => (
+                <g key={point.id}>
+                  <circle className="trend-point-halo" cx={point.x} cy={point.y} r="9" />
+                  <circle className="trend-point" cx={point.x} cy={point.y} r="4.5"><title>{point.title}: {point.score}% on {point.date}</title></circle>
+                  <text className="trend-score-label" x={point.x} y={Math.max(14, point.y - 14)} textAnchor="middle">{point.score}%</text>
+                  <text className="trend-date-label" x={point.x} y={chartHeight - 17} textAnchor="middle">{point.date.split(" ").slice(0, 2).join(" ")}</text>
+                  {index < trendPoints.length - 1 && <title>{point.title}</title>}
+                </g>
+              ))}
+            </svg>
+            <ol className="visually-hidden">
+              {trendItems.map((item) => <li key={item.id}>{item.title}, {item.date}: {item.score}%</li>)}
+            </ol>
+          </div>
+        ) : (
+          <div className="score-trend-empty"><BarChart3 size={24} /><span>No score data yet</span></div>
+        )}
       </section>
       <section className="table-card">
         <div className="table-card-header">
@@ -1696,6 +1822,50 @@ function CoursesView({
   const activeCourses = evaluations.filter((course) => course.status !== "Archived");
   const archivedCourses = evaluations.filter((course) => course.status === "Archived");
   const [archivedOpen, setArchivedOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [courseStatus, setCourseStatus] = useState<"All" | Evaluation["status"]>("All");
+  const [courseSort, setCourseSort] = useState<"Newest" | "Title" | "Status">("Newest");
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const statusOrder: Record<Evaluation["status"], number> = {
+    Live: 0,
+    Scheduled: 1,
+    Draft: 2,
+    Completed: 3,
+    Archived: 4,
+  };
+  const matchesCourse = (course: Evaluation) => (
+    (!normalizedSearch || `${course.title} ${course.category} ${course.description}`.toLowerCase().includes(normalizedSearch)) &&
+    (courseStatus === "All" || course.status === courseStatus)
+  );
+  const sortCourses = (courses: Evaluation[]) => [...courses].sort((first, second) => {
+    if (courseSort === "Title") return first.title.localeCompare(second.title);
+    if (courseSort === "Status") return statusOrder[first.status] - statusOrder[second.status] || first.title.localeCompare(second.title);
+    const firstDate = new Date(first.createdAt || first.startAt || first.endAt || "").getTime() || 0;
+    const secondDate = new Date(second.createdAt || second.startAt || second.endAt || "").getTime() || 0;
+    return secondDate - firstDate || first.title.localeCompare(second.title);
+  });
+  const visibleActiveCourses = sortCourses(activeCourses.filter(matchesCourse));
+  const visibleArchivedCourses = sortCourses(archivedCourses.filter(matchesCourse));
+  const filtersActive = Boolean(normalizedSearch || courseStatus !== "All" || courseSort !== "Newest");
+
+  function clearCourseFilters() {
+    setSearchTerm("");
+    setCourseStatus("All");
+    setCourseSort("Newest");
+  }
+
+  function updateCourseSearch(value: string) {
+    setSearchTerm(value);
+    if (value.trim() && archivedCourses.some((course) => `${course.title} ${course.category} ${course.description}`.toLowerCase().includes(value.trim().toLowerCase()))) {
+      setArchivedOpen(true);
+    }
+  }
+
+  function updateCourseStatus(value: "All" | Evaluation["status"]) {
+    setCourseStatus(value);
+    if (value === "Archived") setArchivedOpen(true);
+  }
+
   return (
     <div className="content admin-section admin-courses">
       <section className="page-intro admin-section-header">
@@ -1704,20 +1874,25 @@ function CoursesView({
           <button className="primary-button" onClick={onCreate}><Plus size={18} /> New quiz course</button>
         </div>
       </section>
-      <div className="toolbar">
-        <div className="admin-search"><Search size={17} /><input placeholder="Search courses…" /></div>
-        <div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Status</button><button className="secondary-button"><CalendarDays size={16} /> Schedule</button></div>
+      <div className="toolbar insights-toolbar course-insights-toolbar">
+        <div className="admin-search"><Search size={17} /><input aria-label="Search quiz courses" placeholder="Search title or category…" value={searchTerm} onChange={(event) => updateCourseSearch(event.target.value)} /></div>
+        <div className="toolbar-buttons course-filter-controls">
+          <label className="insights-select-field"><span>Status</span><select aria-label="Filter quiz courses by status" value={courseStatus} onChange={(event) => updateCourseStatus(event.target.value as "All" | Evaluation["status"])}><option value="All">All statuses</option><option value="Live">Live</option><option value="Scheduled">Scheduled</option><option value="Draft">Draft</option><option value="Completed">Completed</option><option value="Archived">Archived</option></select></label>
+          <label className="insights-select-field"><span>Sort</span><select aria-label="Sort quiz courses" value={courseSort} onChange={(event) => setCourseSort(event.target.value as "Newest" | "Title" | "Status")}><option value="Newest">Newest first</option><option value="Title">Course title</option><option value="Status">Lifecycle status</option></select></label>
+          {filtersActive && <button className="secondary-button clear-insights-button" type="button" data-button-safety-net onClick={clearCourseFilters}><X size={16} /> Clear</button>}
+        </div>
+        <span className="toolbar-result-count" role="status">{visibleActiveCourses.length + visibleArchivedCourses.length} of {evaluations.length} quizzes</span>
       </div>
       <section className="table-card current-course-section">
         <div className="table-card-header archived-section-heading">
           <div><h3>Current quizzes</h3><p>Draft, scheduled, live, and completed evaluations.</p></div>
-          <span className="course-section-count">{activeCourses.length}</span>
+          <span className="course-section-count">{visibleActiveCourses.length}</span>
         </div>
         <div className="responsive-table">
           <table className="course-management-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
-              {activeCourses.map((course) => (
+              {visibleActiveCourses.map((course) => (
               <tr key={course.id}>
                 <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
@@ -1727,14 +1902,14 @@ function CoursesView({
                 <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button aria-label="Edit"><Pencil size={17} /></button><button aria-label="More"><MoreHorizontal size={17} /></button></div></td>
               </tr>
               ))}
-              {!activeCourses.length && (
+              {!visibleActiveCourses.length && (
                 <tr className="empty-table-row">
                   <td colSpan={6}>
                     <EmptyState
                       icon={BookOpen}
-                      title="No quiz courses"
-                      description="Create your first course to start building the evaluation workspace."
-                      action={<button className="primary-button" onClick={onCreate}><Plus size={17} /> Create course</button>}
+                      title={activeCourses.length ? "No matching current quizzes" : "No quiz courses"}
+                      description={activeCourses.length ? "Adjust the course search, status, or sort filters." : "Create your first course to start building the evaluation workspace."}
+                      action={activeCourses.length ? <button className="secondary-button" type="button" data-button-safety-net onClick={clearCourseFilters}><X size={17} /> Clear filters</button> : <button className="primary-button" onClick={onCreate}><Plus size={17} /> Create course</button>}
                     />
                   </td>
                 </tr>
@@ -1750,7 +1925,7 @@ function CoursesView({
             <div><h3 id="archived-quizzes-heading">Archived quizzes</h3><p>Stored quizzes are hidden from participants but keep their questions and results.</p></div>
           </div>
           <div className="archived-section-controls">
-            <span className="course-section-count" aria-label={`${archivedCourses.length} archived quizzes`}>{archivedCourses.length}</span>
+            <span className="course-section-count" aria-label={`${visibleArchivedCourses.length} matching archived quizzes`}>{visibleArchivedCourses.length}</span>
             <button
               type="button"
               className={`archived-section-toggle ${archivedOpen ? "is-open" : ""}`}
@@ -1768,7 +1943,7 @@ function CoursesView({
           <table className="course-management-table archived-course-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
-              {archivedCourses.map((course) => (
+              {visibleArchivedCourses.map((course) => (
                 <tr key={course.id}>
                   <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                   <td><span className="status-pill status-archived">Archived</span></td>
@@ -1778,10 +1953,10 @@ function CoursesView({
                   <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button className="restore-course-button" aria-label="Restore"><ArchiveRestore size={17} /></button></div></td>
                 </tr>
               ))}
-              {!archivedCourses.length && (
+              {!visibleArchivedCourses.length && (
                 <tr className="empty-table-row">
                   <td colSpan={6}>
-                    <EmptyState icon={Archive} title="No archived quizzes" description="Quizzes you archive will be safely stored here and can be restored later." />
+                    <EmptyState icon={Archive} title={archivedCourses.length ? "No matching archived quizzes" : "No archived quizzes"} description={archivedCourses.length ? "Adjust the course search or status filter." : "Quizzes you archive will be safely stored here and can be restored later."} />
                   </td>
                 </tr>
               )}
@@ -1809,6 +1984,11 @@ function ParticipantsView({
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [branchFilter, setBranchFilter] = useState("All");
+  const [positionFilter, setPositionFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [exportMessage, setExportMessage] = useState("");
 
   async function submitParticipant(event: FormEvent) {
     event.preventDefault();
@@ -1837,6 +2017,35 @@ function ParticipantsView({
 
   const active = participantsData.filter((item) => item.status === "Active").length;
   const inactive = participantsData.length - active;
+  const branchOptions = useMemo(() => Array.from(new Set(participantsData.map((item) => item.branch.trim()).filter(Boolean))).sort((first, second) => first.localeCompare(second)), [participantsData]);
+  const positionOptions = useMemo(() => Array.from(new Set(participantsData.map((item) => item.position.trim()).filter(Boolean))).sort((first, second) => first.localeCompare(second)), [participantsData]);
+  const statusOptions = useMemo(() => Array.from(new Set(participantsData.map((item) => item.status.trim()).filter(Boolean))).sort((first, second) => first.localeCompare(second)), [participantsData]);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const visibleParticipants = useMemo(() => participantsData.filter((person) => {
+    const matchesSearch = !normalizedSearch || `${person.name} ${person.username} ${person.branch} ${person.position}`.toLowerCase().includes(normalizedSearch);
+    return matchesSearch &&
+      (branchFilter === "All" || person.branch === branchFilter) &&
+      (positionFilter === "All" || person.position === positionFilter) &&
+      (statusFilter === "All" || person.status === statusFilter);
+  }), [branchFilter, normalizedSearch, participantsData, positionFilter, statusFilter]);
+  const filtersActive = Boolean(normalizedSearch || branchFilter !== "All" || positionFilter !== "All" || statusFilter !== "All");
+
+  function clearParticipantFilters() {
+    setSearchTerm("");
+    setBranchFilter("All");
+    setPositionFilter("All");
+    setStatusFilter("All");
+  }
+
+  function exportParticipants() {
+    if (!visibleParticipants.length) return;
+    downloadCsv(
+      "cgv-participant-directory",
+      ["Participant", "Username", "Position", "Branch", "Attempts", "Average", "Status"],
+      visibleParticipants.map((person) => [person.name, person.username, person.position, person.branch, person.attempts, `${person.average}%`, person.status]),
+    );
+    setExportMessage(`${visibleParticipants.length} participant${visibleParticipants.length === 1 ? "" : "s"} exported.`);
+  }
 
   return (
     <div className="content admin-section admin-participants">
@@ -1851,13 +2060,23 @@ function ParticipantsView({
         <article><span className="metric-icon blue"><Check size={20} /></span><div><p>Active accounts</p><strong>{active}</strong><small>{participantsData.length ? `${Math.round(active / participantsData.length * 100)}% active rate` : "No participants added"}</small></div></article>
         <article><span className="metric-icon orange"><ShieldCheck size={20} /></span><div><p>Inactive accounts</p><strong>{inactive}</strong><small>Access currently disabled</small></div></article>
       </section>
-      <div className="toolbar participants-toolbar"><div className="admin-search"><Search size={17} /><input aria-label="Search participants" placeholder="Search name, username, or branch…" /></div><div className="toolbar-buttons"><button className="secondary-button"><Filter size={16} /> Branch</button><button className="secondary-button"><Download size={16} /> Export</button></div></div>
+      <div className="toolbar participants-toolbar">
+        <div className="admin-search"><Search size={17} /><input aria-label="Search participants" placeholder="Search name, username, branch, or position…" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /></div>
+        <div className="toolbar-buttons participant-filter-controls">
+          <label className="insights-select-field"><span>Branch</span><select aria-label="Filter participants by branch" value={branchFilter} onChange={(event) => setBranchFilter(event.target.value)}><option value="All">All branches</option>{branchOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+          <label className="insights-select-field"><span>Position</span><select aria-label="Filter participants by position" value={positionFilter} onChange={(event) => setPositionFilter(event.target.value)}><option value="All">All positions</option>{positionOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+          <label className="insights-select-field"><span>Status</span><select aria-label="Filter participants by status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="All">All statuses</option>{statusOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+          {filtersActive && <button className="secondary-button clear-insights-button" type="button" data-button-safety-net onClick={clearParticipantFilters}><X size={16} /> Clear</button>}
+          <button className="secondary-button participants-export-button" type="button" data-button-safety-net disabled={!visibleParticipants.length} onClick={exportParticipants}><Download size={16} /> Export CSV</button>
+        </div>
+        <div className="toolbar-feedback"><span className="toolbar-result-count" role="status">{visibleParticipants.length} of {participantsData.length} participants</span>{exportMessage && <span className="insights-status" role="status" aria-live="polite">{exportMessage}</span>}</div>
+      </div>
       <section className="table-card participants-table-card">
         <div className="responsive-table">
           <table className="participants-management-table">
             <thead><tr><th>Participant</th><th>Position</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
             <tbody>
-              {participantsData.map((person) => (
+              {visibleParticipants.map((person) => (
               <tr key={person.username}>
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
                 <td data-label="Position">{person.position || "—"}</td><td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
@@ -1865,14 +2084,14 @@ function ParticipantsView({
                 <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-position={person.position} data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
               </tr>
               ))}
-              {!participantsData.length && (
+              {!visibleParticipants.length && (
                 <tr className="empty-table-row">
                   <td colSpan={7}>
                     <EmptyState
                       icon={Users}
-                      title="Admin is the only account"
-                      description="No participant accounts have been created."
-                      action={<button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={17} /> Add participant</button>}
+                      title={participantsData.length ? "No matching participants" : "Admin is the only account"}
+                      description={participantsData.length ? "Adjust the name, branch, position, or status filters." : "No participant accounts have been created."}
+                      action={participantsData.length ? <button className="secondary-button" type="button" data-button-safety-net onClick={clearParticipantFilters}><X size={17} /> Clear filters</button> : <button className="primary-button" onClick={() => setAdding(true)}><UserPlus size={17} /> Add participant</button>}
                     />
                   </td>
                 </tr>
@@ -1927,6 +2146,7 @@ function ScoreboardView({
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [downloadingReport, setDownloadingReport] = useState(false);
   const [reportMessage, setReportMessage] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
   const scoreboardRequestRef = useRef(0);
   const scoreboardLoadingRef = useRef(false);
   const scoreboardLoaderRef = useRef(onEvaluationChange);
@@ -2023,6 +2243,7 @@ function ScoreboardView({
     setSearchTerm("");
     setOutcomeFilter("all");
     setReportMessage("");
+    setExportMessage("");
   }
 
   function cycleOutcomeFilter() {
@@ -2040,11 +2261,41 @@ function ScoreboardView({
     setReportMessage(error || "Executive PDF downloaded.");
   }
 
+  function exportScoreboard() {
+    if (!selectedEvaluation || !visibleRows.length) return;
+    downloadCsv(
+      `${selectedEvaluation.title}-scoreboard`,
+      ["Rank", "Participant", "Branch", "Score", "Correct", "Total questions", "Completion time", "Completed", "Outcome", "Evaluation"],
+      visibleRows.map((item) => [
+        item.rank,
+        item.name,
+        item.branch,
+        `${item.score}%`,
+        item.correctCount,
+        item.totalQuestions,
+        item.time,
+        item.submittedAt || "",
+        item.score >= selectedEvaluation.passingScore ? "Passed" : "Needs review",
+        selectedEvaluation.title,
+      ]),
+    );
+    setExportMessage(`${visibleRows.length} scoreboard row${visibleRows.length === 1 ? "" : "s"} exported.`);
+  }
+
   return (
     <div className="content admin-section admin-scoreboard">
       <section className="page-intro admin-section-header">
         <div><span className="eyebrow dark-eyebrow"><Trophy size={15} /> LIVE RESULTS</span><h2>Evaluation scoreboard</h2><p>Compare results for every participant in the selected evaluation.</p></div>
         <div className="admin-header-actions">
+          <button
+            className="secondary-button scoreboard-csv-button"
+            type="button"
+            data-button-safety-net
+            disabled={!selectedEvaluation || !visibleRows.length}
+            onClick={exportScoreboard}
+          >
+            <Download size={17} /> Export filtered CSV
+          </button>
           <button
             className="secondary-button executive-report-button"
             type="button"
@@ -2059,6 +2310,7 @@ function ScoreboardView({
               {reportMessage}
             </span>
           )}
+          {exportMessage && <span className="insights-status scoreboard-export-status" role="status" aria-live="polite">{exportMessage}</span>}
         </div>
       </section>
       <section className="scoreboard-hero">
@@ -2858,6 +3110,14 @@ export default function ExamClient() {
     }
   }
 
+  function addEvaluationToCalendar(evaluation: Evaluation) {
+    try {
+      downloadEvaluationCalendar(evaluation);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Unable to create this calendar event.");
+    }
+  }
+
   if (booting) return <BootScreen onComplete={() => setBooting(false)} />;
   if (!role) return <Login onLogin={login} />;
   if (builderOpen && role === "admin") return <CourseBuilder onClose={() => setBuilderOpen(false)} onSave={saveCourse} />;
@@ -2886,8 +3146,8 @@ export default function ExamClient() {
       <Sidebar role={role} view={view} setView={setView} onLogout={logout} evaluationCount={evaluations.filter((item) => item.status === "Live").length} />
       <div className="main-shell">
         <Topbar role={role} title={title} subtitle={subtitle} user={currentUser} />
-        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} onCertificate={setCertificateItem} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
-        {role === "participant" && view === "evaluations" && <EvaluationsView evaluations={evaluations} onStart={startQuiz} />}
+        {role === "participant" && view === "home" && <ParticipantHome onStart={startQuiz} onCalendar={addEvaluationToCalendar} onCertificate={setCertificateItem} setView={setView} history={history} evaluations={evaluations} user={currentUser} />}
+        {role === "participant" && view === "evaluations" && <EvaluationsView evaluations={evaluations} onStart={startQuiz} onCalendar={addEvaluationToCalendar} />}
         {view === "knowledge" && <KnowledgeCentre role={role} lessons={lessons} onSave={saveLesson} onDelete={deleteLesson} />}
         {role === "participant" && view === "history" && <HistoryView history={history} onCertificate={setCertificateItem} />}
         {role === "participant" && view === "profile" && <ProfileView user={currentUser} history={history} />}
