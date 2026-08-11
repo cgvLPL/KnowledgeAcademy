@@ -9,6 +9,7 @@ import {
   BookOpen,
   CalendarDays,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleHelp,
@@ -1694,6 +1695,7 @@ function CoursesView({
 }) {
   const activeCourses = evaluations.filter((course) => course.status !== "Archived");
   const archivedCourses = evaluations.filter((course) => course.status === "Archived");
+  const [archivedOpen, setArchivedOpen] = useState(false);
   return (
     <div className="content admin-section admin-courses">
       <section className="page-intro admin-section-header">
@@ -1747,9 +1749,22 @@ function CoursesView({
             <span className="metric-icon orange"><Archive size={19} /></span>
             <div><h3 id="archived-quizzes-heading">Archived quizzes</h3><p>Stored quizzes are hidden from participants but keep their questions and results.</p></div>
           </div>
-          <span className="course-section-count">{archivedCourses.length}</span>
+          <div className="archived-section-controls">
+            <span className="course-section-count" aria-label={`${archivedCourses.length} archived quizzes`}>{archivedCourses.length}</span>
+            <button
+              type="button"
+              className={`archived-section-toggle ${archivedOpen ? "is-open" : ""}`}
+              aria-expanded={archivedOpen}
+              aria-controls="archived-quizzes-content"
+              aria-label={`${archivedOpen ? "Collapse" : "Expand"} archived quizzes`}
+              onClick={() => setArchivedOpen((open) => !open)}
+            >
+              <span>{archivedOpen ? "Hide" : "Show"}</span>
+              <ChevronDown size={17} aria-hidden="true" />
+            </button>
+          </div>
         </div>
-        <div className="responsive-table">
+        <div id="archived-quizzes-content" className="responsive-table archived-course-content" hidden={!archivedOpen}>
           <table className="course-management-table archived-course-table">
             <thead><tr><th>Course</th><th>Status</th><th>Schedule</th><th>Participants</th><th>Average</th><th>Actions</th></tr></thead>
             <tbody>
