@@ -32,6 +32,51 @@
   min-width: 0;
 }
 
+.archived-section-controls {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.archived-section-toggle {
+  align-items: center;
+  background: rgba(255, 111, 43, 0.08);
+  border: 1px solid rgba(255, 126, 52, 0.24);
+  border-radius: 999px;
+  color: #ffad73;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 7px;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 14px;
+}
+
+.archived-section-toggle:hover {
+  background: rgba(255, 106, 34, 0.15);
+  border-color: rgba(255, 126, 52, 0.48);
+}
+
+.archived-section-toggle:focus-visible {
+  outline: 2px solid #ff9a52;
+  outline-offset: 3px;
+}
+
+.archived-section-toggle svg {
+  transition: transform 180ms ease;
+}
+
+.archived-section-toggle.is-open svg {
+  transform: rotate(180deg);
+}
+
+.archived-course-content[hidden] {
+  display: none !important;
+}
+
 .course-section-count {
   align-items: center;
   background: rgba(255, 111, 43, 0.12);
@@ -83,12 +128,25 @@
     padding: clamp(16px, 4.5vw, 21px);
   }
 
+  .archived-course-section .archived-section-heading {
+    flex-direction: column;
+  }
+
   .archived-section-title {
     align-items: flex-start;
   }
 
   .archived-section-title .metric-icon {
     flex: 0 0 auto;
+  }
+
+  .archived-section-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .archived-section-toggle {
+    min-width: 96px;
   }
 
   .archived-course-table .inline-actions {
@@ -100,5 +158,11 @@
   .archived-section-heading p {
     font-size: 11px;
     line-height: 1.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archived-section-toggle svg {
+    transition: none;
   }
 }

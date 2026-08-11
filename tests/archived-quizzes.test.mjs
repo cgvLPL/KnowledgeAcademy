@@ -46,6 +46,16 @@ test("admin course workspace separates current and archived quizzes", () => {
   assert.match(client, /No archived quizzes/);
 });
 
+test("archived quiz library is collapsed by default and exposes an accessible toggle", () => {
+  assert.match(client, /const \[archivedOpen, setArchivedOpen\] = useState\(false\)/);
+  assert.match(client, /aria-expanded=\{archivedOpen\}/);
+  assert.match(client, /aria-controls="archived-quizzes-content"/);
+  assert.match(client, /aria-label=\{`\$\{archivedOpen \? "Collapse" : "Expand"\} archived quizzes`\}/);
+  assert.match(client, /id="archived-quizzes-content"[\s\S]*?hidden=\{!archivedOpen\}/);
+  assert.match(client, /archivedOpen \? "Hide" : "Show"/);
+  assert.match(client, /setArchivedOpen\(\(open\) => !open\)/);
+});
+
 test("archive and restore actions synchronize the React course list", () => {
   assert.match(adminTools, /status:\s*"draft"/);
   assert.match(adminTools, /Quiz restored to drafts/);
@@ -60,6 +70,11 @@ test("archived quiz section remains distinct and mobile friendly", () => {
   assert.match(css, /\.archived-course-section/);
   assert.match(css, /\.status-archived/);
   assert.match(css, /\.archived-course-table \.inline-actions/);
+  assert.match(css, /\.archived-section-toggle/);
+  assert.match(css, /min-height:\s*44px/);
+  assert.match(css, /\.archived-section-toggle\.is-open svg[\s\S]*?rotate\(180deg\)/);
+  assert.match(css, /\.archived-course-content\[hidden\][\s\S]*?display:\s*none\s*!important/);
   assert.match(css, /grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(css, /@media \(max-width: 760px\)/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
