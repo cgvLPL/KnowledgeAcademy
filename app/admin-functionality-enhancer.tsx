@@ -15,9 +15,12 @@ type ApiUser = {
   username?: string;
   fullName?: string;
   branch?: string;
+  position?: string;
   role?: string;
   status?: string;
 };
+
+type PositionChoice = "MoD" | "Cinema Manager" | "Stars" | "Custom";
 
 type ApiCourse = {
   id?: string;
@@ -157,10 +160,13 @@ function updateCourseRow(originalTitle: string, course: ApiCourse) {
 function updateUserRow(user: ApiUser) {
   const row = findUserRow(String(user.username || ""));
   const pill = row?.querySelector<HTMLElement>(".outcome-pill");
-  if (!pill) return;
-  const active = normalize(user.status) === "active";
-  pill.textContent = active ? "Active" : "Inactive";
-  pill.className = `outcome-pill ${active ? "pass" : "neutral"}`;
+  const position = row?.querySelector<HTMLElement>('[data-label="Position"]');
+  if (pill) {
+    const active = normalize(user.status) === "active";
+    pill.textContent = active ? "Active" : "Inactive";
+    pill.className = `outcome-pill ${active ? "pass" : "neutral"}`;
+  }
+  if (position && user.position !== undefined) position.textContent = user.position || "—";
 }
 
 export default function AdminFunctionalityEnhancer() {
@@ -172,7 +178,11 @@ export default function AdminFunctionalityEnhancer() {
   const [adminName, setAdminName] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminBranch, setAdminBranch] = useState("");
+  const [adminPosition, setAdminPosition] = useState<"MoD" | "Cinema Manager">("MoD");
   const [adminPassword, setAdminPassword] = useState("");
+
+  const [positionChoice, setPositionChoice] = useState<PositionChoice>("Stars");
+  const [customPosition, setCustomPosition] = useState("");
 
   const [editCourse, setEditCourse] = useState<ApiCourse | null>(null);
   const [editQuestions, setEditQuestions] = useState<ApiQuestion[]>([]);
@@ -214,6 +224,8 @@ export default function AdminFunctionalityEnhancer() {
           username: actionButton.dataset.participantUsername || "",
           fullName: actionButton.dataset.participantName || "Participant",
           branch: actionButton.dataset.participantBranch || "",
+          position: actionButton.dataset.participantPosition || "",
+          role: "participant",
           status: normalize(actionButton.dataset.participantStatus) || "active",
         };
       }
@@ -272,7 +284,10 @@ export default function AdminFunctionalityEnhancer() {
         } else {
           try {
             const data = await dashboard();
-            setModal({ type: "account", user: data.user || {} });
+            const user = data.user || {};
+            setPositionChoice(normalize(user.position) === "cinema manager" ? "Cinema Manager" : "MoD");
+            setCustomPosition("");
+            setModal({ type: "account", user });
           } catch (nextError) {
             setModal({
               type: "message",
@@ -309,7 +324,11 @@ export default function AdminFunctionalityEnhancer() {
       setError("");
       try {
         if (participantAction) {
-          setModal({ type: "userActions", user: await locateUser(button) });
+          const user = await locateUser(button);
+          const position = String(user.position || "").trim();
+          setPositionChoice(normalize(position) === "stars" || !position ? "Stars" : "Custom");
+          setCustomPosition(normalize(position) === "stars" ? "" : position);
+          setModal({ type: "userActions", user });
           return;
         }
 
@@ -393,6 +412,7 @@ export default function AdminFunctionalityEnhancer() {
           fullName: adminName,
           username: adminUsername,
           branch: adminBranch,
+          position: adminPosition,
           password: adminPassword,
           role: "admin",
           status: "active",
@@ -401,6 +421,7 @@ export default function AdminFunctionalityEnhancer() {
       setAdminName("");
       setAdminUsername("");
       setAdminBranch("");
+      setAdminPosition("MoD");
       setAdminPassword("");
       setModal(null);
       toast("Administrator account created.");
@@ -536,6 +557,36 @@ export default function AdminFunctionalityEnhancer() {
     }
   }
 
+  async function setUserPosition(user: ApiUser) {
+    if (!user.id) return;
+    const admin = normalize(user.role) === "admin";
+    const position = admin
+      ? (positionChoice === "Cinema Manager" ? "Cinema Manager" : "MoD")
+      : positionChoice === "Stars"
+        ? "Stars"
+        : customPosition.trim();
+    if (!position) {
+      setError("Enter the participant's custom position.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const data = await api<{ user: ApiUser }>("adminSetUserPosition", {
+        userId: user.id,
+        position,
+      });
+      updateUserRow(data.user);
+      announceParticipantChange(data.user);
+      toast("Account position updated.");
+      setModal(null);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to update the account position.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function resetUserPassword(user: ApiUser) {
     if (!user.id || resetPassword.length < 8) {
       setError("Enter a new password containing at least eight characters.");
@@ -561,7 +612,7 @@ export default function AdminFunctionalityEnhancer() {
       {modal && (
         <div className="modal-backdrop cgv-function-backdrop" onMouseDown={closeModal}>
           <section
-            className={`confirm-modal cgv-function-modal ${modal.type === "edit" ? "cgv-course-editor-modal" : ""}`}
+            className={`confirm-modal cgv-function-modal ${modal.type === "edit" ? "cgv-course-editor-modal" : ""} ${modal.type === "account" ? "cgv-admin-account-modal" : ""}`}
             onMouseDown={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -575,6 +626,7 @@ export default function AdminFunctionalityEnhancer() {
                 <p>Create another account with full access to courses, users, and scoreboards.</p>
                 <label className="field-label">Full name<input required value={adminName} onChange={(event) => setAdminName(event.target.value)} /></label>
                 <label className="field-label">Username<input required minLength={3} maxLength={40} pattern="[A-Za-z0-9._-]+" value={adminUsername} onChange={(event) => setAdminUsername(event.target.value)} /></label>
+                <label className="field-label">Position<select value={adminPosition} onChange={(event) => setAdminPosition(event.target.value as "MoD" | "Cinema Manager")}><option value="MoD">MoD</option><option value="Cinema Manager">Cinema Manager</option></select></label>
                 <label className="field-label">Branch / department<input value={adminBranch} onChange={(event) => setAdminBranch(event.target.value)} /></label>
                 <label className="field-label">Temporary password<input required type="password" minLength={8} value={adminPassword} onChange={(event) => setAdminPassword(event.target.value)} /></label>
                 {error && <p className="login-error">{error}</p>}
@@ -589,13 +641,15 @@ export default function AdminFunctionalityEnhancer() {
               <>
                 <span className="card-kicker">SIGNED IN</span>
                 <h2>{modal.user.fullName || "Administrator"}</h2>
-                <p>@{modal.user.username || "admin"}{modal.user.branch ? ` · ${modal.user.branch}` : ""}</p>
+                <p>@{modal.user.username || "admin"}{modal.user.position ? ` · ${modal.user.position}` : ""}{modal.user.branch ? ` · ${modal.user.branch}` : ""}</p>
                 <div className="cgv-account-summary">
                   <div><span>Role</span><strong>{modal.user.role || "admin"}</strong></div>
                   <div><span>Status</span><strong>{modal.user.status || "active"}</strong></div>
                   <div><span>Account ID</span><strong>{modal.user.id || "—"}</strong></div>
                 </div>
-                <div className="modal-actions"><button className="primary-button" onClick={closeModal}>Done</button></div>
+                <label className="field-label">Position<select value={positionChoice} onChange={(event) => setPositionChoice(event.target.value as PositionChoice)}><option value="MoD">MoD</option><option value="Cinema Manager">Cinema Manager</option></select></label>
+                {error && <p className="login-error">{error}</p>}
+                <div className="modal-actions"><button type="button" className="secondary-button" onClick={closeModal}>Cancel</button><button type="button" className="primary-button" disabled={busy} onClick={() => void setUserPosition(modal.user)}>{busy ? "Saving…" : "Save position"}</button></div>
               </>
             )}
 
@@ -697,10 +751,15 @@ export default function AdminFunctionalityEnhancer() {
               <>
                 <span className="card-kicker">ACCOUNT ACTIONS</span>
                 <h2>{modal.user.fullName}</h2>
-                <p>@{modal.user.username} · {modal.user.branch || "No branch"}</p>
+                <p>@{modal.user.username}{modal.user.position ? ` · ${modal.user.position}` : ""} · {modal.user.branch || "No branch"}</p>
                 <div className="cgv-action-grid">
                   <button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button>
                   <button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button>
+                </div>
+                <div className="cgv-position-editor">
+                  <label className="field-label">Position<select value={positionChoice} onChange={(event) => setPositionChoice(event.target.value as PositionChoice)}><option value="Stars">Stars</option><option value="Custom">Custom</option></select></label>
+                  {positionChoice === "Custom" && <label className="field-label">Custom position<input value={customPosition} onChange={(event) => setCustomPosition(event.target.value)} placeholder="Enter participant position" maxLength={80} required /></label>}
+                  <button type="button" className="secondary-button" disabled={busy} onClick={() => void setUserPosition(modal.user)}>{busy ? "Saving…" : "Save position"}</button>
                 </div>
                 <label className="field-label">New password<input type="password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} placeholder="Minimum 8 characters" /></label>
                 {error && <p className="login-error">{error}</p>}

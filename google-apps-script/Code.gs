@@ -1,6 +1,6 @@
 const APP = Object.freeze({
   name: "CGV Exams",
-  version: "2026.08.11-knowledge-centre",
+  version: "2026.08.11-account-positions",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
   capacity: Object.freeze({
@@ -25,7 +25,7 @@ const HEADERS = Object.freeze({
   Settings: ["key", "value", "updated_at"],
   Users: [
     "user_id", "email", "full_name", "branch", "password_hash", "salt",
-    "role", "status", "created_at", "last_login", "username",
+    "role", "status", "created_at", "last_login", "username", "position",
   ],
   Courses: [
     "course_id", "title", "description", "category", "passing_score",
@@ -71,6 +71,7 @@ const API_ACTIONS = Object.freeze({
   adminSetCourseStatus: adminSetCourseStatus_,
   adminSaveParticipant: adminSaveParticipant_,
   adminSaveUser: adminSaveUser_,
+  adminSetUserPosition: adminSetUserPosition_,
   adminSetUserStatus: adminSetUserStatus_,
   adminResetPassword: adminResetPassword_,
 });
@@ -1060,6 +1061,7 @@ function adminSaveUser_(body) {
   const username = normalizeUsername_(input.username);
   const password = String(input.password || "");
   const role = input.role === "admin" ? "admin" : "participant";
+  const position = normalizeUserPosition_(input.position, role);
   if (!isValidUsername_(username)) {
     throw new Error("Username must be 3–40 characters using letters, numbers, dots, underscores, or hyphens.");
   }
@@ -1072,12 +1074,31 @@ function adminSaveUser_(body) {
       email: normalizeEmail_(input.email),
       fullName: String(input.fullName).trim(),
       branch: String(input.branch || ""),
+      position: position,
       password: password,
       role: role,
       status: input.status === "inactive" ? "inactive" : "active",
     });
     SpreadsheetApp.flush();
     return { ok: true, user: publicUser_(user) };
+  });
+}
+
+function adminSetUserPosition_(body) {
+  requireSession_(body.token, "admin");
+  const userId = String(body.userId || "").trim();
+  if (!userId) throw new Error("Account ID is required.");
+  return withScriptLock_(10000, function () {
+    const user = findById_(APP.sheets.users, "user_id", userId);
+    if (!user) throw new Error("Account not found.");
+    const role = user.role === "admin" ? "admin" : "participant";
+    const position = normalizeUserPosition_(body.position, role);
+    updateObjectRow_(getSheet_(APP.sheets.users), user.__row, { position: position });
+    SpreadsheetApp.flush();
+    return {
+      ok: true,
+      user: publicUser_(Object.assign({}, user, { position: position })),
+    };
   });
 }
 
@@ -1143,6 +1164,7 @@ function ensureInitialAdmin_() {
     email: normalizeEmail_(properties.getProperty("INITIAL_ADMIN_EMAIL")),
     fullName: String(properties.getProperty("INITIAL_ADMIN_NAME") || "Administrator"),
     branch: String(properties.getProperty("INITIAL_ADMIN_BRANCH") || ""),
+    position: normalizeUserPosition_(properties.getProperty("INITIAL_ADMIN_POSITION") || "MoD", "admin"),
     password: password,
     role: "admin",
     status: "active",
@@ -1168,6 +1190,7 @@ function createUserInternal_(input) {
     created_at: new Date(),
     last_login: "",
     username: username,
+    position: normalizeUserPosition_(input.position, input.role === "admin" ? "admin" : "participant"),
   };
   appendObject_(getSheet_(APP.sheets.users), record);
   return record;
@@ -1567,6 +1590,7 @@ function publicUser_(user) {
     email: user.email,
     fullName: user.full_name,
     branch: user.branch,
+    position: user.position || "",
     role: user.role,
     status: user.status,
     createdAt: toIso_(user.created_at),
@@ -1705,6 +1729,21 @@ function normalizeEmail_(value) {
 
 function normalizeUsername_(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeUserPosition_(value, role) {
+  const position = String(value || "").replace(/\s+/g, " ").trim();
+  if (position.length > 80) throw new Error("Position must be 80 characters or fewer.");
+  const normalized = position.toLowerCase();
+  if (role === "admin") {
+    if (normalized === "mod") return "MoD";
+    if (normalized === "cinema manager") return "Cinema Manager";
+    throw new Error("Administrator position must be MoD or Cinema Manager.");
+  }
+  if (!position || normalized === "custom") {
+    throw new Error("Choose Stars or enter a custom participant position.");
+  }
+  return normalized === "stars" ? "Stars" : position;
 }
 
 function isValidUsername_(value) {

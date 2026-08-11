@@ -22,7 +22,7 @@ administrator-managed content.
 - Personal score history for current and previous evaluations
 - Administrator course and question builder
 - Shared Knowledge Centre with admin-published lessons, imported text/Markdown notes, and resource links
-- Participant account creation
+- Participant and administrator account creation with role-specific positions
 - Per-evaluation live scoreboard
 - Per-evaluation executive PDF reports with score distribution, participant
   results, and question-by-question answer analysis

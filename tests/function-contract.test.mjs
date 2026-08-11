@@ -42,6 +42,7 @@ const requiredActions = [
   "adminSetCourseStatus",
   "adminSaveParticipant",
   "adminSaveUser",
+  "adminSetUserPosition",
   "adminSetUserStatus",
   "adminResetPassword",
 ];
@@ -161,6 +162,7 @@ test("administrator, course, and account management controls are loaded", () => 
     "adminDuplicateCourse",
     "adminDeleteCourse",
     "adminSetCourseStatus",
+    "adminSetUserPosition",
     "adminSetUserStatus",
     "adminResetPassword",
   ]) {
@@ -291,6 +293,6 @@ test("audited colour pairs meet WCAG AA normal-text contrast", () => {
 });
 
 test("backend health exposes the audited version", () => {
-  assert.match(backend, /version:\s*"2026\.08\.11-knowledge-centre"/);
-  assert.match(runtime, /2026\.08\.11-knowledge-centre/);
+  assert.match(backend, /version:\s*"2026\.08\.11-account-positions"/);
+  assert.match(runtime, /2026\.08\.11-account-positions/);
 });

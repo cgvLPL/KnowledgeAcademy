@@ -170,6 +170,25 @@
   opacity: 0.55;
 }
 
+.cgv-position-editor {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 18px 0;
+  width: 100%;
+}
+
+.cgv-position-editor .field-label {
+  margin: 0;
+}
+
+.cgv-position-editor > button {
+  justify-self: end;
+  min-height: 44px;
+}
+
 .cgv-function-toast {
   background: #15200d;
   border: 1px solid rgba(175, 255, 47, 0.38);
@@ -208,5 +227,10 @@
   .cgv-function-modal {
     max-height: 92vh;
     max-width: calc(100vw - 20px);
+  }
+
+  .cgv-position-editor > button {
+    justify-self: stretch;
+    width: 100%;
   }
 }
