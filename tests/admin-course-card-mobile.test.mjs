@@ -27,3 +27,11 @@ test("populated metrics share one row while actions remain touch friendly", () =
   assert.match(css, /tr:has\(td\.course-card-stat\.is-empty\)[\s\S]*?grid-column:\s*1 \/ -1\s*!important/);
   assert.match(css, /\.inline-actions button\s*\{[\s\S]*?min-height:\s*44px\s*!important/);
 });
+
+test("quiz rows fill the mobile section without a doubled right gutter", () => {
+  assert.match(css, /\.admin-courses \.table-card\s*\{[\s\S]*?padding:\s*0\s*!important/);
+  assert.match(css, /\.admin-courses \.responsive-table\s*\{[\s\S]*?padding:\s*clamp\(6px, 1\.8vw, 9px\)\s*!important/);
+  assert.match(css, /\.admin-courses \.course-management-table tbody\s*\{[\s\S]*?padding:\s*0\s*!important/);
+  assert.match(css, /tbody tr:not\(\.empty-table-row\)[\s\S]*?inline-size:\s*auto\s*!important[\s\S]*?justify-self:\s*stretch\s*!important[\s\S]*?width:\s*auto\s*!important/);
+  assert.match(css, /padding-bottom:\s*calc\(176px \+ env\(safe-area-inset-bottom\)\)\s*!important/);
+});

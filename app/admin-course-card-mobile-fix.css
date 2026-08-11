@@ -1,13 +1,53 @@
 /* Compact admin quiz cards so their controls stay clear of mobile navigation. */
 @media (max-width: 760px) {
+  .admin-courses {
+    padding-bottom: calc(176px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+
+  .admin-courses .table-card {
+    padding: 0 !important;
+  }
+
+  .admin-courses .table-card > .table-card-header,
+  .admin-courses .responsive-table,
+  .admin-courses .course-management-table,
   .admin-courses .course-management-table tbody {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+
+  .admin-courses .table-card > .table-card-header {
+    margin: 0 !important;
+  }
+
+  .admin-courses .responsive-table {
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    padding: clamp(6px, 1.8vw, 9px) !important;
+  }
+
+  .admin-courses .course-management-table {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .admin-courses .course-management-table tbody {
+    display: grid !important;
     gap: clamp(8px, 2.5vw, 12px) !important;
+    padding: 0 !important;
   }
 
   .admin-courses .course-management-table tbody tr:not(.empty-table-row) {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    inline-size: auto !important;
+    justify-self: stretch !important;
+    max-inline-size: 100% !important;
     padding: clamp(10px, 3vw, 13px) !important;
+    width: auto !important;
   }
 
   .admin-courses .course-management-table tbody tr:not(.empty-table-row) > td:nth-child(1),
