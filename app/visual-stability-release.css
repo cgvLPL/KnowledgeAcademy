@@ -1,0 +1,88 @@
+/* Final visual stability pass for touch targets, long labels, and dense tables. */
+.login-page .login-options {
+  justify-content: flex-end !important;
+}
+
+.login-page .input-action,
+.login-page .text-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.login-page .input-action {
+  flex: 0 0 44px;
+  min-width: 44px;
+  padding: 0 !important;
+}
+
+.login-page .text-button {
+  margin-left: auto;
+  padding: 8px 0;
+}
+
+.login-page .login-card::after {
+  color: #929894 !important;
+}
+
+.modal-close {
+  height: 44px !important;
+  right: 14px;
+  top: 14px;
+  width: 44px !important;
+}
+
+.cgv-function-modal > .field-label,
+.cgv-position-editor .field-label {
+  width: 100%;
+}
+
+.participants-management-table {
+  min-width: 920px;
+  table-layout: fixed;
+}
+
+.participants-management-table th:nth-child(1) {
+  width: 25%;
+}
+
+.participants-management-table th:nth-child(2),
+.participants-management-table th:nth-child(3) {
+  width: 16%;
+}
+
+.participants-management-table th:nth-child(4),
+.participants-management-table th:nth-child(5) {
+  width: 10%;
+}
+
+.participants-management-table th:nth-child(6) {
+  width: 13%;
+}
+
+.participants-management-table th:nth-child(7) {
+  width: 58px;
+}
+
+.participants-management-table td[data-label="Position"],
+.participants-management-table td[data-label="Branch"],
+.profile-copy p,
+.detail-grid strong {
+  overflow-wrap: anywhere;
+}
+
+.profile-copy {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .participants-management-table {
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  .participants-management-table tbody tr:not(.empty-table-row) td[data-label="Status"] {
+    grid-column: 1 / -1 !important;
+  }
+}

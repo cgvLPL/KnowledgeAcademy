@@ -422,6 +422,7 @@ function Login({
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 required
               />
