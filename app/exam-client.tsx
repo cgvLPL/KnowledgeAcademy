@@ -1722,8 +1722,8 @@ function CoursesView({
                 <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                 <td><span className={`status-pill status-${course.status.toLowerCase()}`}>{course.status}</span></td>
                 <td><div className="date-cell"><strong>{course.opens && course.opens !== "Scheduled" ? course.opens : course.due}</strong><span>{course.opens && course.opens !== "Scheduled" ? "Opening date" : "Closing date"} · {course.duration} min</span></div></td>
-                <td><strong>{course.participants || "—"}</strong></td>
-                <td><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
+                <td className={course.participants ? "course-card-stat" : "course-card-stat is-empty"}><strong>{course.participants || "—"}</strong></td>
+                <td className={course.average ? "course-card-stat" : "course-card-stat is-empty"}><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
                 <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button aria-label="Edit"><Pencil size={17} /></button><button aria-label="More"><MoreHorizontal size={17} /></button></div></td>
               </tr>
               ))}
@@ -1773,8 +1773,8 @@ function CoursesView({
                   <td><div className="table-title-cell"><EvaluationIcon color={course.color} /><div><strong>{course.title}</strong><span>{course.category} · {course.questionCount} questions · {attemptPolicyLabel(course)}</span></div></div></td>
                   <td><span className="status-pill status-archived">Archived</span></td>
                   <td><div className="date-cell"><strong>{course.due}</strong><span>Last closing date · {course.duration} min</span></div></td>
-                  <td><strong>{course.participants || "—"}</strong></td>
-                  <td><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
+                  <td className={course.participants ? "course-card-stat" : "course-card-stat is-empty"}><strong>{course.participants || "—"}</strong></td>
+                  <td className={course.average ? "course-card-stat" : "course-card-stat is-empty"}><strong>{course.average ? `${course.average}%` : "—"}</strong></td>
                   <td><div className="inline-actions"><button aria-label="Preview"><Eye size={17} /></button><button aria-label="Duplicate"><Copy size={17} /></button><button className="restore-course-button" aria-label="Restore"><ArchiveRestore size={17} /></button></div></td>
                 </tr>
               ))}

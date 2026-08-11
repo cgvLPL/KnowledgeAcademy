@@ -65,6 +65,7 @@ import "./archived-courses.css";
 import "./login-static-backdrop.css";
 import "./knowledge-centre.css";
 import "./visual-stability-release.css";
+import "./admin-course-card-mobile-fix.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
