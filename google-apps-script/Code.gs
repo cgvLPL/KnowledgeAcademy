@@ -1,8 +1,12 @@
 const APP = Object.freeze({
   name: "CGV Exams",
   version: "2026.08.11-account-positions",
+  release: "2026.08.11-backend-hardening",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
+  request: Object.freeze({
+    maxBodyBytes: 512 * 1024,
+  }),
   capacity: Object.freeze({
     targetSimultaneousParticipants: 30,
     writeLockTimeoutMs: 90000,
@@ -80,33 +84,42 @@ let REQUEST_STATE_ = null;
 
 function doGet() {
   beginRequest_();
-  return json_(health_());
+  try {
+    return json_(withResponseMeta_(health_()));
+  } catch (error) {
+    logRequestError_(error);
+    return json_(errorResponse_(error));
+  }
 }
 
 function doPost(event) {
   beginRequest_();
   try {
     const body = parseBody_(event);
-    const action = String(body.action || "");
+    const action = String(body.action || "").trim();
     if (!Object.prototype.hasOwnProperty.call(API_ACTIONS, action)) {
       throw new Error("Unsupported action.");
     }
-    return json_(API_ACTIONS[action](body));
+    return json_(withResponseMeta_(API_ACTIONS[action](body)));
   } catch (error) {
-    console.error(error && error.stack ? error.stack : error);
-    return json_({
-      ok: false,
-      error: error && error.message ? error.message : "Unexpected server error.",
-    });
+    logRequestError_(error);
+    return json_(errorResponse_(error));
   }
 }
 
 function health_() {
+  const spreadsheet = activeSpreadsheet_();
+  const requiredSheets = Object.keys(HEADERS).concat([APP.sheets.dashboard]);
+  const missingSheets = requiredSheets.filter(function (name) {
+    return !spreadsheet.getSheetByName(name);
+  });
   return {
-    ok: true,
+    ok: missingSheets.length === 0,
+    ready: missingSheets.length === 0,
     service: APP.name,
     version: APP.version,
-    spreadsheetId: activeSpreadsheet_().getId(),
+    release: APP.release,
+    missingSheets: missingSheets,
     now: new Date().toISOString(),
   };
 }
@@ -320,7 +333,7 @@ function startAttempt_(body) {
   const questions = questionsForCourse_(courseId);
   if (!questions.length) throw new Error("This evaluation has no published questions.");
 
-  const attemptId = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
+  const attemptContext = withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
     const currentCourse = findById_(APP.sheets.courses, "course_id", courseId, true);
     if (!currentCourse) throw new Error("This evaluation is not available.");
     const userAttempts = findObjectsByExactValue_(
@@ -332,22 +345,38 @@ function startAttempt_(body) {
       return String(attempt.course_id) === courseId &&
         attempt.status === "started";
     });
-    if (existing) return existing.attempt_id;
+    if (existing) {
+      let existingStartedAt = toIso_(existing.started_at);
+      if (!existingStartedAt) {
+        existingStartedAt = now.toISOString();
+        updateObjectRow_(getSheet_(APP.sheets.attempts), existing.__row, {
+          started_at: now,
+        });
+        SpreadsheetApp.flush();
+      }
+      return {
+        attemptId: existing.attempt_id,
+        startedAt: existingStartedAt,
+      };
+    }
     assertAttemptLimitAvailable_(currentCourse, userAttempts);
     const id = Utilities.getUuid();
     appendRow_(getSheet_(APP.sheets.attempts), [
       id, courseId, context.user.user_id, now, "", "started", "", "", "", "", "",
     ]);
     SpreadsheetApp.flush();
-    return id;
+    return {
+      attemptId: id,
+      startedAt: now.toISOString(),
+    };
   });
   const questionCounts = {};
   questionCounts[courseId] = questions.length;
 
   return {
     ok: true,
-    attemptId: attemptId,
-    startedAt: now.toISOString(),
+    attemptId: attemptContext.attemptId,
+    startedAt: attemptContext.startedAt,
     course: publicCourse_(course, questionCounts),
     questions: questions.map(function (question) {
       return {
@@ -427,10 +456,7 @@ function submitAttempt_(body) {
     ];
   });
   const score = total ? Math.round(earned / total * 100) : 0;
-  const durationSeconds = Math.max(
-    0,
-    Math.round((now.getTime() - new Date(initialAttempt.started_at).getTime()) / 1000),
-  );
+  attemptDurationSeconds_(initialAttempt, now);
 
   return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
     const current = findById_(APP.sheets.attempts, "attempt_id", attemptId, true);
@@ -441,6 +467,7 @@ function submitAttempt_(body) {
     if (!currentCourse) throw new Error("The course for this attempt no longer exists.");
     if (current.status === "submitted") return existingAttemptResult_(current, currentCourse);
     if (current.status !== "started") throw new Error("This attempt cannot be submitted.");
+    const durationSeconds = attemptDurationSeconds_(current, now);
     const userAttempts = findObjectsByExactValue_(
       getSheet_(APP.sheets.attempts),
       "user_id",
@@ -453,6 +480,7 @@ function submitAttempt_(body) {
       current.attempt_id,
     ) + 1;
     const answersSheet = getSheet_(APP.sheets.answers);
+    deleteRowsMatching_(answersSheet, "attempt_id", attemptId);
     answersSheet
       .getRange(answersSheet.getLastRow() + 1, 1, answerRows.length, HEADERS.Answers.length)
       .setValues(answerRows);
@@ -504,6 +532,15 @@ function assertAttemptLimitAvailable_(course, attempts, excludedAttemptId) {
   if (attemptsUsed >= attemptLimit) {
     throw new Error("You have reached the " + attemptLimit + "-attempt limit for this evaluation.");
   }
+}
+
+function attemptDurationSeconds_(attempt, endedAt) {
+  const startedAtMs = new Date(attempt && attempt.started_at).getTime();
+  const endedAtMs = endedAt instanceof Date ? endedAt.getTime() : new Date(endedAt).getTime();
+  if (!isFinite(startedAtMs) || !isFinite(endedAtMs) || endedAtMs < startedAtMs) {
+    throw new Error("Attempt timing data is invalid. Please contact an administrator.");
+  }
+  return Math.max(0, Math.round((endedAtMs - startedAtMs) / 1000));
 }
 
 function adminGetDashboard_(body) {
@@ -1343,16 +1380,61 @@ function parseBody_(event) {
   if (!event || !event.postData || !event.postData.contents) {
     throw new Error("Request body is required.");
   }
+  const contents = String(event.postData.contents);
+  const bodyBytes = Utilities.newBlob(contents, "application/json").getBytes().length;
+  if (bodyBytes > APP.request.maxBodyBytes) {
+    throw new Error("Request body is too large.");
+  }
+  let body;
   try {
-    return JSON.parse(event.postData.contents);
+    body = JSON.parse(contents);
   } catch (error) {
     throw new Error("Request body must be valid JSON.");
   }
+  if (!body || Object.prototype.toString.call(body) !== "[object Object]") {
+    throw new Error("Request body must be a JSON object.");
+  }
+  return body;
 }
 
 function json_(value) {
   return ContentService.createTextOutput(JSON.stringify(value))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function withResponseMeta_(value) {
+  const state = requestState_();
+  const payload = value && typeof value === "object" && !Array.isArray(value)
+    ? value
+    : { ok: true, data: value };
+  return Object.assign({}, payload, {
+    version: payload.version || APP.version,
+    release: APP.release,
+    requestId: state.requestId,
+    durationMs: Math.max(0, Date.now() - state.startedAtMs),
+  });
+}
+
+function errorResponse_(error) {
+  const message = error && error.message
+    ? String(error.message)
+    : "Unexpected server error.";
+  return withResponseMeta_({
+    ok: false,
+    error: message,
+    retryable: /temporarily busy|try again|quota|service invoked too many|internal error|timed? out/i
+      .test(message),
+  });
+}
+
+function logRequestError_(error) {
+  const state = requestState_();
+  console.error(JSON.stringify({
+    requestId: state.requestId,
+    release: APP.release,
+    message: error && error.message ? String(error.message) : String(error),
+    stack: error && error.stack ? String(error.stack) : "",
+  }));
 }
 
 function withScriptLock_(timeoutMs, callback) {
@@ -1369,6 +1451,8 @@ function withScriptLock_(timeoutMs, callback) {
 
 function beginRequest_() {
   REQUEST_STATE_ = {
+    requestId: Utilities.getUuid(),
+    startedAtMs: Date.now(),
     spreadsheet: null,
     sheets: {},
     rows: {},
@@ -1383,7 +1467,20 @@ function requestState_() {
 
 function activeSpreadsheet_() {
   const state = requestState_();
-  if (!state.spreadsheet) state.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (!state.spreadsheet) {
+    state.spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    if (!state.spreadsheet) {
+      const spreadsheetId = String(
+        PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID") || "",
+      ).trim();
+      if (spreadsheetId) state.spreadsheet = SpreadsheetApp.openById(spreadsheetId);
+    }
+    if (!state.spreadsheet) {
+      throw new Error(
+        "Spreadsheet is not configured. Bind this script to a spreadsheet or set SPREADSHEET_ID.",
+      );
+    }
+  }
   return state.spreadsheet;
 }
 

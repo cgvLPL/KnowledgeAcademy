@@ -17,6 +17,8 @@ scoreboard.
    - `INITIAL_ADMIN_NAME` (optional)
    - `INITIAL_ADMIN_BRANCH` (optional)
    - `INITIAL_ADMIN_POSITION` (optional: `MoD` or `Cinema Manager`; defaults to `MoD`)
+   - `SPREADSHEET_ID` (optional fallback for a standalone or rebound script;
+     container-bound projects do not need it)
 6. Run `setupEvaluationPlatform()` once and approve the requested spreadsheet
    permission.
 7. Choose **Deploy → New deployment → Web app**:
@@ -53,12 +55,27 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.11-account-positions"}
+{"ok":true,"ready":true,"service":"CGV Exams","version":"2026.08.11-account-positions","release":"2026.08.11-backend-hardening","missingSheets":[]}
 ```
 
 The response contains additional fields, but the version value must match.
-Until it does, the website is still connected to an older backend and newer
-administrator or course functions will not work.
+The `release` value identifies the hardened backend revision without breaking
+the compatible frontend API contract. Until both values match, the website is
+still connected to an older deployment.
+
+## Operational hardening
+
+The web API rejects malformed, non-object, and oversized request bodies before
+they reach spreadsheet operations. Every response includes a request ID,
+backend release, and execution duration so a failed browser request can be
+matched to its Apps Script execution log.
+
+The health response reports missing workbook sheets and can recover through the
+optional `SPREADSHEET_ID` Script Property when the project is no longer
+container-bound. Resumed attempts retain their original server start time, and
+submission retries remove partial answer rows before writing the canonical
+answer set. This keeps timers and result records stable after refreshes,
+timeouts, or ambiguous network retries.
 
 ## Audited API functions
 
