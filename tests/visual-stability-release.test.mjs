@@ -34,3 +34,10 @@ test("participant data uses a stable desktop table and balanced mobile cards", (
   assert.match(css, /@media \(max-width: 760px\)[\s\S]*?min-width:\s*0\s*!important[\s\S]*?table-layout:\s*auto\s*!important/);
   assert.match(css, /td\[data-label="Status"\]\s*\{[\s\S]*?grid-column:\s*1 \/ -1\s*!important/);
 });
+
+test("participant table header and account status remain legible on the dark surface", () => {
+  assert.match(css, /\.admin-participants \.participants-management-table thead th\s*\{[\s\S]*?background:\s*rgba\(12, 14, 14, 0\.96\)\s*!important/);
+  assert.match(css, /color:\s*#b8bfba\s*!important/);
+  assert.match(css, /\.admin-participants \.participants-management-table \.outcome-pill\.pass\s*\{[\s\S]*?background:\s*rgba\(255, 111, 43, 0\.16\)\s*!important/);
+  assert.match(css, /color:\s*#ffb078\s*!important/);
+});
