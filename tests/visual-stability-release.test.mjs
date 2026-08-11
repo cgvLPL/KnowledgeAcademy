@@ -41,3 +41,8 @@ test("participant table header and account status remain legible on the dark sur
   assert.match(css, /\.admin-participants \.participants-management-table \.outcome-pill\.pass\s*\{[\s\S]*?background:\s*rgba\(255, 111, 43, 0\.16\)\s*!important/);
   assert.match(css, /color:\s*#ffb078\s*!important/);
 });
+
+test("desktop participant action buttons stay centered inside the table edge", () => {
+  assert.match(css, /\.participants-management-table th:nth-child\(7\)\s*\{[\s\S]*?width:\s*84px/);
+  assert.match(css, /@media \(min-width: 761px\)[\s\S]*?th:nth-child\(7\),[\s\S]*?td:nth-child\(7\)\s*\{[\s\S]*?padding-left:\s*12px\s*!important[\s\S]*?padding-right:\s*12px\s*!important[\s\S]*?text-align:\s*center/);
+});
