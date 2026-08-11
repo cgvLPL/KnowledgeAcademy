@@ -6,65 +6,134 @@
   </tr>
 </table>
 
+<p align="center">
+  <a href="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/verify-pr.yml"><img src="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/verify-pr.yml/badge.svg" alt="Verify application"></a>
+  <a href="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/deploy-pages.yml"><img src="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/deploy-pages.yml/badge.svg" alt="Publish site"></a>
+  <img src="https://img.shields.io/badge/Node.js-22%2B-339933?logo=node.js&logoColor=white" alt="Node.js 22 or newer">
+</p>
+
 # CGV Knowledge Academy
 
-CGV Knowledge Academy is an online learning and evaluation platform for quiz
-courses, participant accounts, score history, certificates, live rankings, and
-administrator-managed content.
+CGV Knowledge Academy is CGV's responsive learning and evaluation platform.
+It combines published learning material, scheduled quizzes, participant
+performance, certificates, and administrator tools in one cinematic workspace.
 
 > Focused learning. Cinematic energy.
 
-## What is included
+## Live application
 
-- Username-based participant and administrator sign-in workspaces
-- Live, scheduled, completed, and draft evaluations with date-driven state changes
-- Responsive one-question-at-a-time quiz flow with progress and results
-- Personal score history for current and previous evaluations
-- Administrator course and question builder
-- Shared Knowledge Centre with admin-published lessons, imported text/Markdown notes, and resource links
-- Participant and administrator account creation with role-specific positions
-- Per-evaluation live scoreboard
-- Per-evaluation executive PDF reports with score distribution, participant
-  results, and question-by-question answer analysis
-- Google Sheets / Apps Script backend with server-side scoring
-- Capacity safeguards and automated coverage for 30 simultaneous participants
-- Fast sign-in, cached reads, and lightweight spreadsheet mutations
-- Automatically generated spreadsheet dashboard, KPIs, leaderboard, and chart
-- Responsive desktop and mobile layouts
+[Open CGV Knowledge Academy](https://rayhanmawuntu-stack.github.io/CGV.Exams/)
+
+## Product highlights
+
+### Participants
+
+- Sign in once and enter the participant workspace automatically.
+- Review published Knowledge Centre lessons and open attached resources safely.
+- Take scheduled or live quizzes in a responsive, one-question-at-a-time flow.
+- Resume an unfinished attempt, follow course attempt limits, and use a stable
+  randomized answer order when enabled.
+- Review score history, pass or not-pass outcomes, and printable A4 certificates.
+
+### Administrators
+
+- Monitor workspace activity, KPIs, recent results, and top performers.
+- Create, edit, duplicate, schedule, publish, complete, archive, and restore quizzes.
+- Configure passing scores, timers, attempt limits, and answer randomization.
+- Build four-choice questions with a responsive question outline.
+- Upload `.txt` or `.md` lesson notes, edit lesson content, attach resource links,
+  and control draft or published visibility in the Knowledge Centre.
+- Manage participant and administrator accounts, positions, passwords, and status.
+- Review a quiz-specific live scoreboard and download executive PDF reports with
+  score distributions and question-level answer analysis.
+- Keep archived quizzes in a distinct section that is collapsed by default.
+
+## Roles and positions
+
+| Role | Available positions | Access |
+| --- | --- | --- |
+| Administrator | `MoD` or `Cinema Manager` | Content, accounts, reports, settings, and scoreboards |
+| Participant | `Stars` or a custom title up to 80 characters | Published lessons, available quizzes, history, and certificates |
+
+The authenticated account determines the workspace; users do not select a role
+on the sign-in screen.
+
+## Technology
+
+| Layer | Implementation |
+| --- | --- |
+| Interface | React 19, TypeScript, Vite, vinext, and responsive CSS |
+| Data and API | Google Sheets with Google Apps Script |
+| Reports | jsPDF executive reports and browser-printable certificates |
+| Delivery | GitHub Pages and GitHub Actions |
+| Quality | ESLint, TypeScript checks, production builds, and Node regression tests |
 
 ## Repository structure
 
-- `app/` — hosted web application and the server-side Sheets proxy
-- `public/` — production visual assets
-- `google-apps-script/` — Google Sheets database, authentication, scoring API,
-  workbook setup, and dashboard generator
-- `.env.example` — hosted environment variable template
-- `.github/workflows/deploy-pages.yml` — automatic GitHub Pages deployment
+- `app/` — application interface, responsive styles, and the server-side Sheets proxy.
+- `public/` — CGV brand assets, icons, and web manifest.
+- `google-apps-script/` — spreadsheet schema, authentication, scoring API,
+  workbook setup, and dashboard generator.
+- `tests/` — functional, visual, security, performance, and capacity regressions.
+- `audit/` — functional and 30-participant concurrency audits.
+- `scripts/` — verified build and artifact-validation utilities.
+- `.github/workflows/` — pull-request verification and GitHub Pages deployment.
 
-## Live site
+## Local development
 
-The GitHub Pages version is published at:
+Requirements: Node.js 22.13 or newer and npm.
 
-<https://rayhanmawuntu-stack.github.io/CGV.Exams/>
+```bash
+git clone https://github.com/rayhanmawuntu-stack/CGV.Exams.git
+cd CGV.Exams
+cp .env.example .env.local
+npm ci
+npm run dev
+```
 
-Every push to `main` rebuilds and redeploys the static frontend automatically.
-The Pages build connects directly to the configured Apps Script Web App, while
-the full-stack deployment uses the server-side Sheets proxy.
+Replace the placeholder in `.env.local` with the deployed Apps Script `/exec`
+URL. Local and full-stack deployments use `GOOGLE_APPS_SCRIPT_URL` through the
+server-side proxy. A static build uses `NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL` to
+connect directly from the browser.
 
-## Google Sheets connection
+### Useful commands
 
-Follow [google-apps-script/README.md](google-apps-script/README.md) to create the
-spreadsheet backend and deploy its Apps Script Web App. Set the resulting
-`/exec` URL as `GOOGLE_APPS_SCRIPT_URL` in the hosted site.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the local development server |
+| `npm test` | Run lint, type-checking, the Pages build, and every regression test |
+| `npm run build` | Create and validate a production build |
+| `npm run build:github-pages` | Create the static GitHub Pages artifact |
 
-The application does not contain offline or demo accounts. Authentication and
-all evaluation data come from the connected spreadsheet.
+## Google Sheets and Apps Script setup
 
-## Clean initial workspace
+Follow [the backend setup guide](google-apps-script/README.md) to:
 
-The setup creates or preserves one username-based administrator and removes seeded content,
-participants, attempts, answers, and sessions. Configure the initial
-administrator through Apps Script Properties as described in
+1. Create the spreadsheet and Apps Script project.
+2. Configure the initial administrator through Script Properties.
+3. Run `setupEvaluationPlatform()`.
+4. Deploy the project as a Web App.
+5. Connect its `/exec` URL to the frontend.
+
+The application has no offline or demo accounts. Authentication, lessons,
+evaluations, attempts, and results come from the connected spreadsheet.
+`setupEvaluationPlatform()` preserves existing data and adds required columns.
+Use `resetEvaluationPlatformToAdminOnly()` only when an intentional clean reset
+is required.
+
+## Deployment
+
+Every pull request targeting `main` runs the **Verify application** workflow:
+Apps Script syntax validation, TypeScript, lint, a static production build, the
+complete regression suite, and Pages artifact checks.
+
+After a verified pull request is merged, **Publish CGV Knowledge Academy site**
+builds and deploys the frontend to GitHub Pages automatically.
+
+Google Apps Script versions are deployed separately. When
+`google-apps-script/Code.gs` changes, copy the latest file into the Apps Script
+editor and publish a new version of the existing Web App deployment. Keep the
+same `/exec` URL. The detailed update and health-check procedure is in
 [google-apps-script/README.md](google-apps-script/README.md).
 
 ## Data model
