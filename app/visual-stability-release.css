@@ -86,3 +86,23 @@
     grid-column: 1 / -1 !important;
   }
 }
+
+/* Keep the desktop People table inside the dark CGV visual system. */
+.admin-participants .participants-management-table thead th {
+  background: rgba(12, 14, 14, 0.96) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #b8bfba !important;
+  -webkit-text-fill-color: #b8bfba !important;
+}
+
+.admin-participants .participants-management-table thead th:last-child {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.admin-participants .participants-management-table .outcome-pill.pass {
+  background: rgba(255, 111, 43, 0.16) !important;
+  border: 1px solid rgba(255, 137, 70, 0.3) !important;
+  color: #ffb078 !important;
+  -webkit-text-fill-color: #ffb078 !important;
+}
