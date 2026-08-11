@@ -323,7 +323,8 @@
     margin-bottom: 13px;
   }
 
-  .admin-participants .add-participant-modal .field-label input {
+  .admin-participants .add-participant-modal .field-label input,
+  .admin-participants .add-participant-modal .field-label select {
     min-height: 48px;
     min-width: 0;
     width: 100%;

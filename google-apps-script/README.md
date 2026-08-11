@@ -16,6 +16,7 @@ scoreboard.
    - `INITIAL_ADMIN_EMAIL` (optional)
    - `INITIAL_ADMIN_NAME` (optional)
    - `INITIAL_ADMIN_BRANCH` (optional)
+   - `INITIAL_ADMIN_POSITION` (optional: `MoD` or `Cinema Manager`; defaults to `MoD`)
 6. Run `setupEvaluationPlatform()` once and approve the requested spreadsheet
    permission.
 7. Choose **Deploy → New deployment → Web app**:
@@ -31,6 +32,9 @@ data, run `resetEvaluationPlatformToAdminOnly()`.
 Accounts sign in with usernames. Usernames are lowercase and may contain
 letters, numbers, dots, underscores, and hyphens.
 
+Administrator positions are limited to **MoD** and **Cinema Manager**.
+Participant positions can be **Stars** or a custom title of up to 80 characters.
+
 ## Apply backend updates
 
 GitHub Pages deploys the frontend automatically, but it cannot replace an
@@ -38,16 +42,18 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 
 1. Copy the latest repository `google-apps-script/Code.gs` into the Apps Script
    editor.
-2. Select **Deploy → Manage deployments**.
-3. Edit the existing web-app deployment.
-4. Choose **New version**, then press **Deploy**.
-5. Keep the same `/exec` URL so the website configuration does not need to
+2. Run `setupEvaluationPlatform()` once so new workbook columns are added while
+   existing account and course data is preserved.
+3. Select **Deploy → Manage deployments**.
+4. Edit the existing web-app deployment.
+5. Choose **New version**, then press **Deploy**.
+6. Keep the same `/exec` URL so the website configuration does not need to
    change.
 
 Open the `/exec` URL directly after deployment. The health response must show:
 
 ```json
-{"ok":true,"service":"CGV Exams","version":"2026.08.11-knowledge-centre"}
+{"ok":true,"service":"CGV Exams","version":"2026.08.11-account-positions"}
 ```
 
 The response contains additional fields, but the version value must match.
@@ -71,7 +77,8 @@ Administrator functions:
 - Load courses, participants, administrators, scores, and aggregate statistics.
 - Download an executive PDF for each quiz with score distribution, participant
   results, and answer patterns for every question.
-- Create participant and administrator accounts.
+- Create participant and administrator accounts with role-specific positions.
+- Change positions for existing accounts.
 - Reset passwords and activate or deactivate accounts.
 - Create, inspect, edit, duplicate, publish, complete, archive, restore, or
   delete a course.
@@ -113,7 +120,7 @@ server-side, and administrator actions require an administrator session.
 
 - `Dashboard` — evaluation selector, KPIs, participant leaderboard, and score
   distribution.
-- `Users` — participant and administrator accounts.
+- `Users` — participant and administrator accounts, including branch and position.
 - `Courses` — course metadata, schedule, status, time limit, passing score, and attempt limit.
 - `Lessons` — Knowledge Centre lesson notes, topic, visibility, reading time, and resource link.
 - `Questions` — four-option question bank and correct-answer keys.

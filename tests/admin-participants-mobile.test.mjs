@@ -13,20 +13,22 @@ test("the admin People page exposes responsive layout hooks and labelled values"
   assert.match(client, /className="table-card participants-table-card"/);
   assert.match(client, /className="participants-management-table"/);
   assert.match(client, /aria-label="Search participants"/);
-  for (const label of ["Branch", "Attempts", "Average", "Status"]) {
+  for (const label of ["Position", "Branch", "Attempts", "Average", "Status"]) {
     assert.ok(client.includes(`data-label="${label}"`));
   }
   assert.match(client, /className="participants-action-label">Manage participant/);
   assert.match(client, /data-participant-actions="true"/);
   assert.match(client, /data-participant-id=\{person\.id\}/);
+  assert.match(client, /data-participant-position=\{person\.position\}/);
   assert.match(client, /aria-labelledby="add-participant-title"/);
 });
 
 test("participant action buttons open the real account controls", () => {
   assert.match(adminTools, /button\.dataset\.participantActions === "true"/);
   assert.match(adminTools, /actionButton\?\.dataset\.participantId/);
-  assert.match(adminTools, /setModal\(\{ type: "userActions", user: await locateUser\(button\) \}\)/);
+  assert.match(adminTools, /const user = await locateUser\(button\);[\s\S]*?setModal\(\{ type: "userActions", user \}\)/);
   assert.match(adminTools, /adminSetUserStatus/);
+  assert.match(adminTools, /adminSetUserPosition/);
   assert.match(adminTools, /adminResetPassword/);
   assert.match(buttonSafetyNet, /button\.dataset\.participantActions === "true"\) return/);
   assert.doesNotMatch(adminTools, /button\.querySelector\("\.lucide-more-horizontal"\)/);

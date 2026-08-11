@@ -23,6 +23,7 @@ const INVALIDATING_ACTIONS = new Set([
   "adminSetCourseStatus",
   "adminSaveParticipant",
   "adminSaveUser",
+  "adminSetUserPosition",
   "adminSetUserStatus",
   "adminResetPassword",
   "submitAttempt",

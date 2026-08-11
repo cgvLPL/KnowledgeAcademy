@@ -19,6 +19,7 @@ const ALLOWED_ACTIONS = new Set([
   "adminSetCourseStatus",
   "adminSaveParticipant",
   "adminSaveUser",
+  "adminSetUserPosition",
   "adminSetUserStatus",
   "adminResetPassword",
 ]);

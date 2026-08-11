@@ -132,6 +132,7 @@ type ParticipantRow = {
   name: string;
   username: string;
   branch: string;
+  position: string;
   attempts: number;
   average: number;
   status: string;
@@ -142,6 +143,7 @@ type AuthUser = {
   username: string;
   fullName: string;
   branch: string;
+  position: string;
   role: Role;
   status: string;
 };
@@ -601,7 +603,7 @@ function Topbar({
           <Initials name={displayName} size="sm" />
           <div>
             <strong>{displayName}</strong>
-            <span>{role === "admin" ? "Learning Admin" : "Participant"}</span>
+            <span>{user?.position || (role === "admin" ? "Learning Admin" : "Participant")}</span>
           </div>
           <ChevronRight size={15} />
         </div>
@@ -1199,7 +1201,7 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
         <div className="profile-copy">
           <span>PARTICIPANT PROFILE</span>
           <h2>{displayName}</h2>
-          <p>@{user?.username || "participant"}{user?.branch ? ` · ${user.branch}` : ""}</p>
+          <p>@{user?.username || "participant"}{user?.position ? ` · ${user.position}` : ""}{user?.branch ? ` · ${user.branch}` : ""}</p>
         </div>
         <div className="profile-stats">
           <div><strong>{average}%</strong><span>Average</span></div>
@@ -1213,6 +1215,7 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
           <div className="detail-grid">
             <label>Full name<strong>{displayName}</strong></label>
             <label>Username<strong>{user?.username ? `@${user.username}` : "—"}</strong></label>
+            <label>Position<strong>{user?.position || "—"}</strong></label>
             <label>Location / branch<strong>{user?.branch || "—"}</strong></label>
             <label>Account ID<strong>{user?.id || "—"}</strong></label>
             <label>Role<strong>Participant</strong></label>
@@ -1779,12 +1782,14 @@ function ParticipantsView({
   onAdd,
 }: {
   participantsData: ParticipantRow[];
-  onAdd: (participant: { name: string; username: string; branch: string; password: string }) => Promise<string | null>;
+  onAdd: (participant: { name: string; username: string; branch: string; position: string; password: string }) => Promise<string | null>;
 }) {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [branch, setBranch] = useState("");
+  const [positionChoice, setPositionChoice] = useState<"Stars" | "Custom">("Stars");
+  const [customPosition, setCustomPosition] = useState("");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -1793,7 +1798,13 @@ function ParticipantsView({
     event.preventDefault();
     setSaving(true);
     setError("");
-    const nextError = await onAdd({ name, username, branch, password });
+    const position = positionChoice === "Stars" ? "Stars" : customPosition.trim();
+    if (!position) {
+      setSaving(false);
+      setError("Enter the participant's custom position.");
+      return;
+    }
+    const nextError = await onAdd({ name, username, branch, position, password });
     setSaving(false);
     if (nextError) {
       setError(nextError);
@@ -1803,6 +1814,8 @@ function ParticipantsView({
     setName("");
     setUsername("");
     setBranch("");
+    setPositionChoice("Stars");
+    setCustomPosition("");
     setPassword("");
   }
 
@@ -1826,19 +1839,19 @@ function ParticipantsView({
       <section className="table-card participants-table-card">
         <div className="responsive-table">
           <table className="participants-management-table">
-            <thead><tr><th>Participant</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Participant</th><th>Position</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th /></tr></thead>
             <tbody>
               {participantsData.map((person) => (
               <tr key={person.username}>
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
-                <td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
+                <td data-label="Position">{person.position || "—"}</td><td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
                 <td data-label="Status"><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
-                <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
+                <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-position={person.position} data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
               </tr>
               ))}
               {!participantsData.length && (
                 <tr className="empty-table-row">
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <EmptyState
                       icon={Users}
                       title="Admin is the only account"
@@ -1862,6 +1875,8 @@ function ParticipantsView({
             <p>Create an account that can sign in and keep its own evaluation history.</p>
             <label className="field-label">Full name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Participant name" required /></label>
             <label className="field-label">Username<input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Lowercase letters, numbers, dots, _ or -" minLength={3} maxLength={40} pattern="[A-Za-z0-9._-]+" autoComplete="username" required /></label>
+            <label className="field-label">Position<select value={positionChoice} onChange={(event) => setPositionChoice(event.target.value as "Stars" | "Custom")}><option value="Stars">Stars</option><option value="Custom">Custom</option></select></label>
+            {positionChoice === "Custom" && <label className="field-label">Custom position<input value={customPosition} onChange={(event) => setCustomPosition(event.target.value)} placeholder="Enter participant position" maxLength={80} required /></label>}
             <label className="field-label">Branch / location<input value={branch} onChange={(event) => setBranch(event.target.value)} placeholder="Branch or department" required /></label>
             <label className="field-label">Temporary password<input type="password" minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Minimum 8 characters" required /></label>
             {error && <p className="login-error" role="alert">{error}</p>}
@@ -2360,10 +2375,23 @@ export default function ExamClient() {
               id: String(detail.user?.id || item.id),
               name: String(detail.user?.fullName || item.name),
               branch: String(detail.user?.branch ?? item.branch),
+              position: String(detail.user?.position ?? item.position),
               status: String(detail.user?.status || "active").toLowerCase() === "active" ? "Active" : "Inactive",
             }
           : item
       )));
+      setCurrentUser((user) => {
+        if (!user) return user;
+        const changedId = String(detail.user?.id || "");
+        if (changedId !== user.id && username !== user.username.trim().toLowerCase()) return user;
+        return {
+          ...user,
+          fullName: String(detail.user?.fullName || user.fullName),
+          branch: String(detail.user?.branch ?? user.branch),
+          position: String(detail.user?.position ?? user.position),
+          status: String(detail.user?.status || user.status),
+        };
+      });
     };
     window.addEventListener("cgv:course-change", onCourseChange);
     window.addEventListener("cgv:participant-change", onParticipantChange);
@@ -2425,6 +2453,7 @@ export default function ExamClient() {
           username?: string;
           fullName?: string;
           branch?: string;
+          position?: string;
           role?: string;
           status?: string;
         };
@@ -2499,6 +2528,7 @@ export default function ExamClient() {
             name: String(item.fullName || "Participant"),
             username: String(item.username || item.email || ""),
             branch: String(item.branch || ""),
+            position: String(item.position || ""),
             attempts: Number(item.attempts || 0),
             average: Number(item.average || 0),
             status: String(item.status || "active") === "active" ? "Active" : "Inactive",
@@ -2513,6 +2543,7 @@ export default function ExamClient() {
         username: String(loginData.user?.username || username),
         fullName: String(loginData.user?.fullName || (authenticatedRole === "admin" ? "Administrator" : "Participant")),
         branch: String(loginData.user?.branch || ""),
+        position: String(loginData.user?.position || ""),
         role: authenticatedRole,
         status: String(loginData.user?.status || "active"),
       });
@@ -2731,7 +2762,7 @@ export default function ExamClient() {
     }
   }
 
-  async function addParticipant(input: { name: string; username: string; branch: string; password: string }): Promise<string | null> {
+  async function addParticipant(input: { name: string; username: string; branch: string; position: string; password: string }): Promise<string | null> {
     try {
       if (backendMode !== "sheets" || !sessionToken) {
         return "The Google Sheets backend is required to create an account.";
@@ -2745,6 +2776,7 @@ export default function ExamClient() {
           fullName: input.name,
           username: input.username,
           branch: input.branch,
+          position: input.position,
           password: input.password,
           status: "active",
         },
@@ -2754,6 +2786,7 @@ export default function ExamClient() {
         name: String(data.user.fullName || input.name),
         username: String(data.user.username || input.username),
         branch: String(data.user.branch || input.branch),
+        position: String(data.user.position || input.position),
         attempts: 0,
         average: 0,
         status: "Active",
