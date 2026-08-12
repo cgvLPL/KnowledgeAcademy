@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 
 const STORAGE_KEY = "cgv-exams-interface-settings-v1";
+const TOKEN_KEY = "cgv-exams-session-token";
+const ENDPOINT_KEY = "cgv-exams-api-endpoint";
 type Language = "en" | "id";
 
 const TEXT_TRANSLATIONS: Record<string, string> = {
@@ -91,11 +93,11 @@ const TEXT_TRANSLATIONS: Record<string, string> = {
   "Settings saved.": "Pengaturan tersimpan.",
   "Changes save automatically.": "Perubahan tersimpan otomatis.",
   "PREFERENCES": "PREFERENSI",
-  "Interface preferences are saved in this browser and apply immediately.": "Preferensi tampilan disimpan di browser ini dan langsung diterapkan.",
+  "Interface preferences are saved in this browser and apply immediately.": "Preferensi tampilan diterapkan langsung. Bahasa disimpan ke akun Anda.",
   "App version": "Versi aplikasi",
   "The portal checks automatically for a newer release.": "Portal otomatis memeriksa versi yang lebih baru.",
   "Language": "Bahasa",
-  "Choose the interface language for this browser.": "Pilih bahasa tampilan untuk browser ini.",
+  "Choose the interface language for your account.": "Pilih bahasa tampilan untuk akun Anda.",
   "Compact interface": "Tampilan ringkas",
   "Reduce padding and fit more course and result data on screen.": "Kurangi jarak agar lebih banyak data kursus dan hasil terlihat di layar.",
   "Reduce motion": "Kurangi animasi",
@@ -113,18 +115,50 @@ const ATTRIBUTE_TRANSLATIONS: Record<string, string> = {
   "Find participant": "Cari peserta",
   "Select evaluation scoreboard": "Pilih papan peringkat evaluasi",
   "Close settings": "Tutup pengaturan",
-  "Open account": "Buka akun"
+  "Open account": "Buka akun",
+  "Language": "Bahasa"
 };
 
 const reverseText = Object.fromEntries(Object.entries(TEXT_TRANSLATIONS).map(([en, id]) => [id, en]));
 const reverseAttributes = Object.fromEntries(Object.entries(ATTRIBUTE_TRANSLATIONS).map(([en, id]) => [id, en]));
 
+function normalizeLanguage(value: unknown): Language {
+  return String(value || "").trim().toLowerCase() === "id" ? "id" : "en";
+}
+
 function readLanguage(): Language {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}") as { language?: string };
-    return parsed.language === "id" ? "id" : "en";
+    return normalizeLanguage(parsed.language);
   } catch {
     return "en";
+  }
+}
+
+function storeLanguage(language: Language) {
+  let current: Record<string, unknown> = {};
+  try {
+    current = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "{}") as Record<string, unknown>;
+  } catch {
+    current = {};
+  }
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, language }));
+  document.documentElement.dataset.cgvLanguage = language;
+  document.documentElement.lang = language;
+}
+
+function requestUrl(input: RequestInfo | URL) {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
+}
+
+function parseAction(init?: RequestInit) {
+  if (typeof init?.body !== "string") return "";
+  try {
+    return String((JSON.parse(init.body) as { action?: string }).action || "");
+  } catch {
+    return "";
   }
 }
 
@@ -163,6 +197,44 @@ export default function LanguageEnhancer() {
   useEffect(() => {
     let language = readLanguage();
     let scheduled = false;
+    const nativeFetch = window.fetch;
+    const previousFetch = nativeFetch.bind(window);
+
+    const setLanguage = (next: Language, root?: ParentNode) => {
+      language = next;
+      storeLanguage(next);
+      translateDocument(next, root || document.body);
+    };
+
+    const enhancedFetch: typeof window.fetch = async (input, init) => {
+      const action = parseAction(init);
+      const response = await previousFetch(input, init);
+
+      if (action === "login") {
+        try {
+          const data = await response.clone().json() as {
+            ok?: boolean;
+            token?: string;
+            user?: { language?: string };
+          };
+          if (response.ok && data.ok !== false && data.token) {
+            const accountLanguage = normalizeLanguage(data.user?.language);
+            storeLanguage(accountLanguage);
+            language = accountLanguage;
+            window.requestAnimationFrame(() => translateDocument(accountLanguage));
+          }
+        } catch {
+          // Login remains owned by the application.
+        }
+      } else if (action === "logout" && response.ok) {
+        storeLanguage("en");
+        language = "en";
+      }
+
+      return response;
+    };
+
+    window.fetch = enhancedFetch;
 
     const apply = (root: ParentNode = document.body) => {
       scheduled = false;
@@ -182,15 +254,36 @@ export default function LanguageEnhancer() {
 
     const onSettingsChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ language?: Language }>).detail;
-      const next = detail?.language === "id" ? "id" : "en";
+      const next = normalizeLanguage(detail?.language);
       if (next === language) return;
-      language = next;
-      translateDocument(language);
+      setLanguage(next);
+
+      const token = window.sessionStorage.getItem(TOKEN_KEY);
+      const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY)
+        || process.env.NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL?.trim()
+        || "";
+      if (!token || !endpoint) return;
+
+      void previousFetch(endpoint, {
+        method: "POST",
+        headers: { "content-type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "setAccountLanguage", token, language: next }),
+      }).then(async (response) => {
+        if (!response.ok) throw new Error("Unable to save account language.");
+        const data = await response.json() as { ok?: boolean; user?: { language?: string } };
+        if (data.ok === false) throw new Error("Unable to save account language.");
+        const savedLanguage = normalizeLanguage(data.user?.language || next);
+        if (savedLanguage !== language) setLanguage(savedLanguage);
+      }).catch(() => {
+        // Keep the selected language locally for this session; the next login
+        // re-applies the server-side account preference as the source of truth.
+      });
     };
 
     window.addEventListener("cgv:settings-changed", onSettingsChanged);
     return () => {
       observer.disconnect();
+      if (window.fetch === enhancedFetch) window.fetch = nativeFetch;
       window.removeEventListener("cgv:settings-changed", onSettingsChanged);
     };
   }, []);
