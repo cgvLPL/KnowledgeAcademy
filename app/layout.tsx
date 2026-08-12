@@ -72,6 +72,7 @@ import "./productivity-insights-release.css";
 import "./mobile-sidebar-bottom-actions.css";
 import "./shape-system.css";
 import "./table-label-visibility.css";
+import "./overall-visual-polish.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
