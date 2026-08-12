@@ -11,6 +11,7 @@ type Preferences = {
   reducedMotion: boolean;
   enhancedContrast: boolean;
   autoRefresh: boolean;
+  language: "en" | "id";
 };
 
 const defaults: Preferences = {
@@ -18,6 +19,7 @@ const defaults: Preferences = {
   reducedMotion: false,
   enhancedContrast: false,
   autoRefresh: true,
+  language: "en",
 };
 
 function normalize(value: string | null | undefined) {
@@ -36,6 +38,7 @@ function readPreferences(): Preferences {
       reducedMotion: Boolean(parsed.reducedMotion),
       enhancedContrast: Boolean(parsed.enhancedContrast),
       autoRefresh: parsed.autoRefresh !== false,
+      language: parsed.language === "id" ? "id" : "en",
     };
   } catch {
     return defaults;
@@ -49,6 +52,8 @@ function applyPreferences(preferences: Preferences) {
   document.documentElement.dataset.cgvDensity = preferences.compact ? "compact" : "comfortable";
   document.documentElement.dataset.cgvMotion = preferences.reducedMotion ? "reduced" : "full";
   document.documentElement.dataset.cgvContrast = preferences.enhancedContrast ? "enhanced" : "standard";
+  document.documentElement.dataset.cgvLanguage = preferences.language;
+  document.documentElement.lang = preferences.language;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
   window.localStorage.setItem(AUTO_REFRESH_KEY, String(preferences.autoRefresh));
   window.dispatchEvent(new CustomEvent("cgv:settings-changed", { detail: preferences }));
@@ -61,6 +66,7 @@ export default function SettingsEnhancer() {
 
   useEffect(() => {
     const stored = readPreferences();
+    setPreferences(stored);
     applyPreferences(stored);
   }, []);
 
@@ -70,7 +76,7 @@ export default function SettingsEnhancer() {
       if (!(target instanceof Element)) return;
       const button = target.closest<HTMLButtonElement>("button");
       if (!button || button.closest("[data-cgv-settings-panel]")) return;
-      if (buttonLabel(button) !== "settings") return;
+      if (!(["settings", "pengaturan"] as string[]).includes(buttonLabel(button))) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -153,6 +159,21 @@ export default function SettingsEnhancer() {
             </span>
             <code>{APP_VERSION_LABEL}</code>
           </div>
+
+          <label className="cgv-settings-row cgv-settings-language-row">
+            <span>
+              <strong>Language</strong>
+              <small>Choose the interface language for this browser.</small>
+            </span>
+            <select
+              aria-label="Language"
+              value={preferences.language}
+              onChange={(event) => update("language", event.target.value === "id" ? "id" : "en")}
+            >
+              <option value="en">English</option>
+              <option value="id">Bahasa Indonesia</option>
+            </select>
+          </label>
 
           <label className="cgv-settings-row">
             <span>
