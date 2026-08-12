@@ -59,6 +59,19 @@ function fixtureHtml() {
     .visual-fixture-logo span { color: #ff6a22; }
     .visual-fixture-icon { align-items: center; display: inline-flex; justify-content: center; font-size: 15px; }
     .visual-fixture-copy { max-width: 62ch; }
+    /* Full-page artifacts must paint lazy production sections even when they are
+       outside the current viewport. Runtime content-visibility remains unchanged. */
+    .visual-fixture .participant-section > .section-block,
+    .visual-fixture .participant-section > .metric-grid,
+    .visual-fixture .participant-section > .course-grid,
+    .visual-fixture .participant-section > .history-summary,
+    .visual-fixture .participant-section > .table-card,
+    .visual-fixture .metric-card,
+    .visual-fixture .course-card,
+    .visual-fixture .participants-table-card {
+      content-visibility: visible !important;
+      contain-intrinsic-size: none !important;
+    }
   </style>
 </head>
 <body class="antialiased">
@@ -84,61 +97,59 @@ function fixtureHtml() {
         <div class="topbar-actions"><button class="icon-button" type="button" aria-label="Notifications">●</button></div>
       </header>
 
-      <main class="content">
-        <section class="participant-home">
-          <div class="welcome-row">
-            <div><p class="eyebrow">Participant workspace</p><h2>Welcome back, Cinema Team</h2><p class="visual-fixture-copy">Continue your learning plan, monitor upcoming evaluations, and keep progress visible across every screen size.</p></div>
-            <button class="primary-button" type="button">View evaluations</button>
+      <main class="content participant-section participant-home">
+        <section class="welcome-row participant-page-header">
+          <div><p class="eyebrow">Participant workspace</p><h2>Welcome back, Cinema Team</h2><p class="visual-fixture-copy">Continue your learning plan, monitor upcoming evaluations, and keep progress visible across every screen size.</p></div>
+          <button class="primary-button" type="button">View evaluations</button>
+        </section>
+
+        <article class="hero-evaluation">
+          <div class="hero-copy"><span class="status-pill status-live">Live</span><h3>Guest Experience Excellence</h3><p>Complete the current evaluation before the closing window.</p><button class="hero-button" type="button">Start quiz</button></div>
+        </article>
+
+        <div class="metric-grid">
+          <article class="metric-card"><span class="metric-icon visual-fixture-icon">✓</span><div><p>Completed</p><strong>12</strong><span>Evaluations</span></div></article>
+          <article class="metric-card"><span class="metric-icon visual-fixture-icon">★</span><div><p>Average score</p><strong>91%</strong><span>Current average</span></div></article>
+          <article class="metric-card"><span class="metric-icon visual-fixture-icon">↗</span><div><p>Progress</p><strong>86%</strong><span>Learning plan</span></div></article>
+        </div>
+
+        <section class="section-block">
+          <div class="section-heading"><div><h3>Available learning</h3><p>Production classes should remain cohesive after CSS consolidation.</p></div><button class="secondary-button" type="button">View all</button></div>
+          <div class="course-grid">
+            ${courseCard()}
+            ${courseCard({ scheduled: true })}
           </div>
+        </section>
 
-          <article class="hero-evaluation">
-            <div class="hero-copy"><span class="status-pill status-live">Live</span><h3>Guest Experience Excellence</h3><p>Complete the current evaluation before the closing window.</p><button class="hero-button" type="button">Start quiz</button></div>
-          </article>
-
-          <div class="metric-grid">
-            <article class="metric-card"><span class="metric-icon visual-fixture-icon">✓</span><div><p>Completed</p><strong>12</strong><span>Evaluations</span></div></article>
-            <article class="metric-card"><span class="metric-icon visual-fixture-icon">★</span><div><p>Average score</p><strong>91%</strong><span>Current average</span></div></article>
-            <article class="metric-card"><span class="metric-icon visual-fixture-icon">↗</span><div><p>Progress</p><strong>86%</strong><span>Learning plan</span></div></article>
+        <section class="admin-participants">
+          <div class="table-card participants-table-card">
+            <div class="table-card-header"><div><h3>Participant overview</h3><p>Table headers and generated mobile labels must stay readable.</p></div><button class="icon-button" type="button" aria-label="Filter participants">⌕</button></div>
+            <div class="responsive-table">
+              <table class="participants-management-table">
+                <thead><tr><th>Participant</th><th>Position</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="participant-cell"><span class="avatar avatar-sm">AR</span><div><strong>Alex Rahman</strong><span>@alex.rahman</span></div></div></td>
+                    <td data-label="Position">Stars</td>
+                    <td data-label="Branch">Grand Indonesia</td>
+                    <td data-label="Attempts">8</td>
+                    <td data-label="Average"><strong class="table-score">94%</strong></td>
+                    <td data-label="Status"><span class="outcome-pill pass">Active</span></td>
+                    <td><button class="icon-button" type="button" aria-label="Manage participant">•••</button></td>
+                  </tr>
+                  <tr>
+                    <td><div class="participant-cell"><span class="avatar avatar-sm">DN</span><div><strong>Dina Nur</strong><span>@dina.nur</span></div></div></td>
+                    <td data-label="Position">Cinema Manager</td>
+                    <td data-label="Branch">Central Park</td>
+                    <td data-label="Attempts">5</td>
+                    <td data-label="Average"><strong class="table-score">88%</strong></td>
+                    <td data-label="Status"><span class="outcome-pill pass">Active</span></td>
+                    <td><button class="icon-button" type="button" aria-label="Manage participant">•••</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          <section class="section-block">
-            <div class="section-heading"><div><h3>Available learning</h3><p>Production classes should remain cohesive after CSS consolidation.</p></div><button class="secondary-button" type="button">View all</button></div>
-            <div class="course-grid">
-              ${courseCard()}
-              ${courseCard({ scheduled: true })}
-            </div>
-          </section>
-
-          <section class="admin-participants">
-            <div class="table-card participants-table-card">
-              <div class="table-card-header"><div><h3>Participant overview</h3><p>Table headers and generated mobile labels must stay readable.</p></div><button class="icon-button" type="button" aria-label="Filter participants">⌕</button></div>
-              <div class="responsive-table">
-                <table class="participants-management-table">
-                  <thead><tr><th>Participant</th><th>Position</th><th>Branch</th><th>Attempts</th><th>Average</th><th>Status</th><th>Actions</th></tr></thead>
-                  <tbody>
-                    <tr>
-                      <td><div class="participant-cell"><span class="avatar avatar-sm">AR</span><div><strong>Alex Rahman</strong><span>@alex.rahman</span></div></div></td>
-                      <td data-label="Position">Stars</td>
-                      <td data-label="Branch">Grand Indonesia</td>
-                      <td data-label="Attempts">8</td>
-                      <td data-label="Average"><strong class="table-score">94%</strong></td>
-                      <td data-label="Status"><span class="outcome-pill pass">Active</span></td>
-                      <td><button class="icon-button" type="button" aria-label="Manage participant">•••</button></td>
-                    </tr>
-                    <tr>
-                      <td><div class="participant-cell"><span class="avatar avatar-sm">DN</span><div><strong>Dina Nur</strong><span>@dina.nur</span></div></div></td>
-                      <td data-label="Position">Cinema Manager</td>
-                      <td data-label="Branch">Central Park</td>
-                      <td data-label="Attempts">5</td>
-                      <td data-label="Average"><strong class="table-score">88%</strong></td>
-                      <td data-label="Status"><span class="outcome-pill pass">Active</span></td>
-                      <td><button class="icon-button" type="button" aria-label="Manage participant">•••</button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
         </section>
       </main>
     </div>
