@@ -185,7 +185,7 @@ for (const viewport of viewports) {
       const mobileNavPosition = await page.locator(".mobile-nav").evaluate((element) => getComputedStyle(element).position);
       expect(mobileNavPosition).toBe("fixed");
 
-      const labelStyle = await page.locator('.participants-management-table td[data-label="Position"]').evaluate((element) => {
+      const labelStyle = await page.locator('.participants-management-table td[data-label="Position"]').first().evaluate((element) => {
         const style = getComputedStyle(element, "::before");
         return {
           content: style.content,
