@@ -65,9 +65,7 @@ export default function SettingsEnhancer() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const stored = readPreferences();
-    setPreferences(stored);
-    applyPreferences(stored);
+    applyPreferences(readPreferences());
   }, []);
 
   useEffect(() => {
