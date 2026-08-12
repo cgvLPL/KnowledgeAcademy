@@ -93,7 +93,7 @@ const TEXT_TRANSLATIONS: Record<string, string> = {
   "Settings saved.": "Pengaturan tersimpan.",
   "Changes save automatically.": "Perubahan tersimpan otomatis.",
   "PREFERENCES": "PREFERENSI",
-  "Interface preferences are saved in this browser and apply immediately.": "Preferensi tampilan diterapkan langsung. Bahasa disimpan ke akun Anda.",
+  "Interface preferences apply immediately. Language is saved to your account.": "Preferensi tampilan diterapkan langsung. Bahasa disimpan ke akun Anda.",
   "App version": "Versi aplikasi",
   "The portal checks automatically for a newer release.": "Portal otomatis memeriksa versi yang lebih baru.",
   "Language": "Bahasa",
@@ -215,16 +215,29 @@ export default function LanguageEnhancer() {
           const data = await response.clone().json() as {
             ok?: boolean;
             token?: string;
-            user?: { language?: string };
           };
           if (response.ok && data.ok !== false && data.token) {
-            const accountLanguage = normalizeLanguage(data.user?.language);
+            const endpoint = requestUrl(input);
+            const preferenceResponse = await previousFetch(endpoint, {
+              method: "POST",
+              headers: { "content-type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "getAccountLanguage", token: data.token }),
+            });
+            const preference = await preferenceResponse.json() as {
+              ok?: boolean;
+              language?: string;
+            };
+            const accountLanguage = preferenceResponse.ok && preference.ok !== false
+              ? normalizeLanguage(preference.language)
+              : "en";
             storeLanguage(accountLanguage);
             language = accountLanguage;
             window.requestAnimationFrame(() => translateDocument(accountLanguage));
           }
         } catch {
-          // Login remains owned by the application.
+          // Login remains owned by the application. English is the safe fallback.
+          storeLanguage("en");
+          language = "en";
         }
       } else if (action === "logout" && response.ok) {
         storeLanguage("en");
@@ -270,13 +283,13 @@ export default function LanguageEnhancer() {
         body: JSON.stringify({ action: "setAccountLanguage", token, language: next }),
       }).then(async (response) => {
         if (!response.ok) throw new Error("Unable to save account language.");
-        const data = await response.json() as { ok?: boolean; user?: { language?: string } };
+        const data = await response.json() as { ok?: boolean; language?: string };
         if (data.ok === false) throw new Error("Unable to save account language.");
-        const savedLanguage = normalizeLanguage(data.user?.language || next);
+        const savedLanguage = normalizeLanguage(data.language || next);
         if (savedLanguage !== language) setLanguage(savedLanguage);
       }).catch(() => {
-        // Keep the selected language locally for this session; the next login
-        // re-applies the server-side account preference as the source of truth.
+        // Keep the selected language for this session; the next login reloads
+        // the server-side account preference as the source of truth.
       });
     };
 
