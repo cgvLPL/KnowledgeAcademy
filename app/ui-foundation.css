@@ -1,0 +1,667 @@
+/*
+ * CGV Knowledge Academy canonical UI foundation.
+ *
+ * This file consolidates the final shape, table-label visibility, and visual
+ * polish layers in their existing cascade order. Keeping these safeguards in
+ * one final stylesheet reduces cross-file override risk without changing the
+ * established dark CGV appearance.
+ */
+
+/* ========================================================================== 
+   1. SHAPE SYSTEM
+   ========================================================================== */
+
+:root {
+  --cgv-shape-hero: 24px;
+  --cgv-shape-panel: 20px;
+  --cgv-shape-card: 16px;
+  --cgv-shape-control: 12px;
+  --cgv-shape-compact: 10px;
+  --cgv-shape-modal: 22px;
+  --cgv-shape-pill: 999px;
+}
+
+/* Major surfaces: spacious but visibly related. */
+.login-card,
+.hero-evaluation,
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.builder-card,
+.result-card,
+.question-card,
+.cgv-settings-panel,
+.cgv-function-modal,
+.cgv-admin-account-modal,
+.confirm-modal,
+.button-safety-dialog {
+  border-radius: var(--cgv-shape-panel) !important;
+}
+
+.hero-evaluation,
+.login-card {
+  border-radius: var(--cgv-shape-hero) !important;
+}
+
+/* Repeating content cards use a tighter radius so dense screens feel orderly. */
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.profile-card,
+.settings-card,
+.detail-card,
+.evaluation-row,
+.question-editor,
+.question-outline,
+.knowledge-card,
+.lesson-card,
+.cgv-account-summary > div,
+.cgv-settings-version,
+.cgv-settings-row {
+  border-radius: var(--cgv-shape-card) !important;
+}
+
+/* Interactive controls share one silhouette across participant/admin views. */
+.primary-button,
+.secondary-button,
+.hero-button,
+.row-button,
+.text-button,
+.select-button,
+.filter-tabs button,
+.role-switch button,
+.sidebar-nav button,
+.sidebar-bottom button,
+.mobile-nav button,
+.question-outline button,
+.question-progress-bars button,
+.answer-list button,
+.add-question-card,
+.certificate-row-button,
+.cgv-settings-actions button,
+.cgv-function-modal button,
+.confirm-modal button {
+  border-radius: var(--cgv-shape-control) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.input-shell,
+.admin-search,
+.top-search,
+.filter-control,
+.search-field {
+  border-radius: var(--cgv-shape-control) !important;
+}
+
+/* Small utility/icon controls remain compact rather than becoming circular by accident. */
+.icon-button,
+.input-action,
+.notification,
+.builder-icon-button,
+.cgv-settings-close,
+.button-safety-dialog-close {
+  border-radius: var(--cgv-shape-compact) !important;
+}
+
+/* Semantic pills stay pills; avatars and progress rings remain intentionally round. */
+.eyebrow,
+.live-pill,
+.outcome-pill,
+.status-pill,
+.participant-status,
+.account-status,
+.badge-active,
+.badge-success,
+.count-badge,
+.evaluation-count,
+.notification-count,
+.cgv-settings-status,
+.sidebar-nav button small {
+  border-radius: var(--cgv-shape-pill) !important;
+}
+
+.avatar,
+.user-chip .avatar,
+.cgv-admin-account-avatar,
+.score-ring,
+.completion-ring,
+.progress-ring,
+.answer-radio {
+  border-radius: 50% !important;
+}
+
+.table-card table,
+.responsive-table table {
+  border-radius: inherit;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --cgv-shape-hero: 20px;
+    --cgv-shape-panel: 18px;
+    --cgv-shape-card: 16px;
+    --cgv-shape-control: 12px;
+    --cgv-shape-modal: 20px;
+  }
+
+  .button-safety-dialog,
+  .cgv-settings-panel,
+  .cgv-function-modal,
+  .confirm-modal,
+  .cgv-admin-account-modal {
+    border-radius: var(--cgv-shape-modal) !important;
+  }
+}
+
+/* ========================================================================== 
+   2. TABLE LABEL VISIBILITY
+   ========================================================================== */
+
+:root {
+  --cgv-table-label: #d7ddd5;
+  --cgv-table-label-mobile: #dde3dc;
+  --cgv-table-header-surface: rgba(255, 255, 255, 0.052);
+  --cgv-table-label-divider: rgba(255, 255, 255, 0.12);
+}
+
+/* Desktop/tablet column labels. */
+.table-card thead,
+.responsive-table thead,
+.course-management-table thead,
+.participants-management-table thead,
+.history-results-table thead {
+  background: var(--cgv-table-header-surface) !important;
+}
+
+.table-card thead th,
+.responsive-table thead th,
+.course-management-table thead th,
+.participants-management-table thead th,
+.history-results-table thead th {
+  border-bottom-color: var(--cgv-table-label-divider) !important;
+  color: var(--cgv-table-label) !important;
+  -webkit-text-fill-color: var(--cgv-table-label) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.045em;
+  opacity: 1 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile tables become cards and surface their column names through data-label.
+ * Keep those generated labels comfortably above the card-background contrast. */
+@media (max-width: 760px) {
+  .history-results-table tbody tr:not(.empty-table-row) td[data-label]::before,
+  .participants-management-table tbody tr:not(.empty-table-row) td[data-label]::before {
+    color: var(--cgv-table-label-mobile) !important;
+    -webkit-text-fill-color: var(--cgv-table-label-mobile) !important;
+    font-size: max(10px, 0.625rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.09em !important;
+    line-height: 1.15 !important;
+    opacity: 1 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.58);
+  }
+
+  body.cgv-enhanced-contrast .history-results-table tbody tr:not(.empty-table-row) td[data-label]::before,
+  body.cgv-enhanced-contrast .participants-management-table tbody tr:not(.empty-table-row) td[data-label]::before {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .table-card thead th,
+  .responsive-table thead th,
+  .history-results-table td[data-label]::before,
+  .participants-management-table td[data-label]::before {
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText !important;
+    text-shadow: none;
+  }
+}
+
+/* ========================================================================== 
+   3. APPLICATION-WIDE VISUAL POLISH
+   ========================================================================== */
+
+:root {
+  --cgv-visual-surface: rgba(17, 19, 18, 0.96);
+  --cgv-visual-surface-raised: rgba(23, 25, 24, 0.97);
+  --cgv-visual-surface-soft: rgba(255, 255, 255, 0.045);
+  --cgv-visual-border: rgba(255, 255, 255, 0.105);
+  --cgv-visual-border-strong: rgba(255, 255, 255, 0.16);
+  --cgv-visual-text: #f6f7f4;
+  --cgv-visual-secondary: #b8beb8;
+  --cgv-visual-muted: #8f9790;
+  --cgv-visual-accent: #ff6a22;
+  --cgv-visual-accent-warm: #ffb11f;
+  --cgv-visual-accent-hot: #e6322f;
+  --cgv-visual-shadow: 0 18px 46px rgba(0, 0, 0, 0.28);
+  --cgv-visual-shadow-raised: 0 24px 62px rgba(0, 0, 0, 0.38);
+}
+
+/* Page rhythm and typography. */
+.content,
+.builder-content,
+.quiz-layout,
+.result-layout {
+  color: var(--cgv-visual-text);
+}
+
+.content {
+  padding-top: clamp(22px, 2.5vw, 34px) !important;
+  padding-bottom: clamp(36px, 4vw, 58px) !important;
+}
+
+.participant-home,
+.participant-evaluations,
+.participant-history,
+.participant-profile,
+.admin-overview,
+.admin-courses,
+.admin-participants,
+.admin-scoreboard {
+  gap: clamp(18px, 2vw, 26px) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+.page-title h1,
+.welcome-row h2,
+.page-intro h2 {
+  color: var(--cgv-visual-text) !important;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.page-title h1,
+.welcome-row h2,
+.page-intro h2 {
+  line-height: 1.04 !important;
+}
+
+.section-heading h3,
+.table-card-header h3,
+.card-heading h3 {
+  font-weight: 780 !important;
+  letter-spacing: -0.018em;
+}
+
+.page-title p,
+.welcome-row p,
+.page-intro p,
+.section-heading p,
+.table-card-header p,
+.course-card > p,
+.history-preview-card p,
+.metric-card p,
+.admin-metrics p,
+.detail-card p,
+.profile-card p {
+  color: var(--cgv-visual-secondary) !important;
+  line-height: 1.55 !important;
+}
+
+/* Surface hierarchy: page panels are quiet, repeatable cards are slightly raised. */
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.profile-card,
+.settings-card,
+.detail-card,
+.builder-card,
+.question-card,
+.result-card,
+.cgv-settings-panel,
+.cgv-function-modal,
+.cgv-admin-account-modal,
+.confirm-modal,
+.button-safety-dialog {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.028), transparent 42%),
+    var(--cgv-visual-surface) !important;
+  border: 1px solid var(--cgv-visual-border) !important;
+  box-shadow: var(--cgv-visual-shadow) !important;
+}
+
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.evaluation-row,
+.knowledge-card,
+.lesson-card,
+.question-editor,
+.question-outline,
+.cgv-account-summary > div,
+.cgv-settings-row,
+.cgv-settings-version {
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.038), transparent 48%),
+    var(--cgv-visual-surface-raised) !important;
+  border: 1px solid var(--cgv-visual-border) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2) !important;
+}
+
+.hero-evaluation {
+  background:
+    radial-gradient(circle at 12% 88%, rgba(255, 177, 31, 0.26), transparent 27rem),
+    radial-gradient(circle at 78% 30%, rgba(230, 50, 47, 0.18), transparent 31rem),
+    linear-gradient(135deg, rgba(35, 18, 10, 0.98), rgba(12, 11, 10, 0.98) 62%, rgba(8, 9, 9, 0.99)) !important;
+  border-color: rgba(255, 122, 47, 0.23) !important;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+/* Repeating cards get a subtle interactive lift on devices that support hover. */
+@media (hover: hover) and (pointer: fine) {
+  .course-card,
+  .history-preview-card,
+  .metric-card,
+  .admin-metrics article,
+  .evaluation-row,
+  .knowledge-card,
+  .lesson-card {
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .course-card:hover,
+  .history-preview-card:hover,
+  .metric-card:hover,
+  .admin-metrics article:hover,
+  .evaluation-row:hover,
+  .knowledge-card:hover,
+  .lesson-card:hover {
+    border-color: rgba(255, 137, 67, 0.24) !important;
+    box-shadow: var(--cgv-visual-shadow-raised) !important;
+    transform: translateY(-2px);
+  }
+}
+
+/* Metric/icon visual consistency. */
+.metric-icon,
+.evaluation-icon,
+.course-icon,
+.knowledge-icon,
+.lesson-icon {
+  background:
+    linear-gradient(145deg, rgba(255, 177, 31, 0.16), rgba(230, 50, 47, 0.11)) !important;
+  border: 1px solid rgba(255, 133, 56, 0.18) !important;
+  color: #ff9b58 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.metric-card strong,
+.admin-metrics article strong,
+.table-score {
+  color: #ffffff !important;
+  letter-spacing: -0.025em;
+}
+
+/* Controls use the same weight and tactile treatment. */
+.primary-button,
+.hero-button,
+.row-button:not(:disabled) {
+  background: linear-gradient(105deg, var(--cgv-visual-accent-warm), var(--cgv-visual-accent) 56%, var(--cgv-visual-accent-hot)) !important;
+  border: 1px solid rgba(255, 151, 75, 0.24) !important;
+  box-shadow: 0 10px 26px rgba(226, 58, 31, 0.22) !important;
+  color: #fff !important;
+  font-weight: 780 !important;
+  min-height: 44px;
+  transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.secondary-button,
+.icon-button,
+.select-button,
+.filter-tabs button,
+.role-switch button,
+.sidebar-bottom button,
+.cgv-settings-actions button {
+  background: rgba(255, 255, 255, 0.055) !important;
+  border: 1px solid var(--cgv-visual-border) !important;
+  color: var(--cgv-visual-text) !important;
+  min-height: 42px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .primary-button:hover:not(:disabled),
+  .hero-button:hover:not(:disabled),
+  .row-button:hover:not(:disabled) {
+    box-shadow: 0 15px 34px rgba(226, 58, 31, 0.3) !important;
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .secondary-button:hover:not(:disabled),
+  .icon-button:hover:not(:disabled),
+  .select-button:hover:not(:disabled),
+  .filter-tabs button:hover:not(:disabled),
+  .sidebar-bottom button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.085) !important;
+    border-color: var(--cgv-visual-border-strong) !important;
+  }
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.input-shell,
+.admin-search,
+.top-search {
+  background: rgba(255, 255, 255, 0.047) !important;
+  border-color: var(--cgv-visual-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus,
+.input-shell:focus-within,
+.admin-search:focus-within,
+.top-search:focus-within {
+  border-color: rgba(255, 121, 47, 0.72) !important;
+  box-shadow: 0 0 0 3px rgba(255, 106, 34, 0.13) !important;
+}
+
+/* Navigation should read as one composed chrome system. */
+.sidebar {
+  box-shadow: 12px 0 38px rgba(0, 0, 0, 0.22);
+}
+
+.sidebar-nav {
+  gap: 5px !important;
+}
+
+.sidebar-nav button,
+.sidebar-bottom button {
+  font-weight: 680 !important;
+  letter-spacing: -0.008em;
+}
+
+.sidebar-nav button.active {
+  box-shadow: inset 0 0 0 1px rgba(255, 149, 69, 0.18), 0 10px 24px rgba(226, 58, 31, 0.14) !important;
+}
+
+.topbar {
+  background: rgba(7, 8, 8, 0.88) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.085) !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(22px) saturate(115%);
+}
+
+/* Tables: quieter separators, stronger row alignment, keep label contrast intact. */
+.table-card .responsive-table,
+.responsive-table {
+  scrollbar-color: rgba(255, 135, 62, 0.32) transparent;
+}
+
+.table-card thead th,
+.responsive-table thead th {
+  color: var(--cgv-table-label, #d7ddd5) !important;
+  padding-block: 13px !important;
+}
+
+.table-card tbody td,
+.responsive-table tbody td {
+  border-bottom-color: rgba(255, 255, 255, 0.065) !important;
+  padding-block: 16px;
+}
+
+.table-card tbody tr:last-child td,
+.responsive-table tbody tr:last-child td {
+  border-bottom-color: transparent !important;
+}
+
+.table-card tbody tr,
+.responsive-table tbody tr {
+  transition: background-color 140ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .table-card tbody tr:hover,
+  .responsive-table tbody tr:hover {
+    background: rgba(255, 108, 34, 0.038) !important;
+  }
+}
+
+.status-pill,
+.outcome-pill,
+.rank-badge,
+.live-pill,
+.eyebrow {
+  align-items: center;
+  min-height: 28px;
+  padding-inline: 10px;
+}
+
+/* Section headings and action groups align more cleanly. */
+.section-heading,
+.table-card-header,
+.page-intro,
+.welcome-row {
+  gap: 18px !important;
+}
+
+.section-heading,
+.table-card-header {
+  margin-bottom: 18px;
+}
+
+.table-actions,
+.admin-header-actions,
+.toolbar-buttons,
+.inline-actions,
+.result-actions,
+.modal-actions {
+  gap: 9px !important;
+}
+
+/* Keep reduced-motion preference authoritative. */
+body.cgv-reduced-motion *,
+body.cgv-reduced-motion *::before,
+body.cgv-reduced-motion *::after {
+  scroll-behavior: auto !important;
+  transition-duration: 0.001ms !important;
+}
+
+@media (max-width: 760px) {
+  .content {
+    padding-top: 16px !important;
+    padding-bottom: calc(98px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .participant-home,
+  .participant-evaluations,
+  .participant-history,
+  .participant-profile,
+  .admin-overview,
+  .admin-courses,
+  .admin-participants,
+  .admin-scoreboard {
+    gap: 14px !important;
+  }
+
+  .welcome-row,
+  .page-intro,
+  .section-block,
+  .table-card,
+  .analytics-card,
+  .completion-card,
+  .profile-card,
+  .settings-card,
+  .detail-card,
+  .scoreboard-hero {
+    padding: 18px !important;
+  }
+
+  .metric-card,
+  .admin-metrics article,
+  .course-card,
+  .history-preview-card,
+  .evaluation-row,
+  .knowledge-card,
+  .lesson-card {
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .hero-evaluation {
+    padding: 24px 20px !important;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .hero-button,
+  .row-button,
+  .select-button {
+    min-height: 46px;
+  }
+
+  .topbar {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  }
+
+  .mobile-nav {
+    background: rgba(8, 9, 9, 0.93) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(22px) saturate(115%);
+  }
+
+  .mobile-nav button {
+    min-height: 54px;
+  }
+
+  /* Preserve the strong mobile data-label contrast from the dedicated layer. */
+  .history-results-table td[data-label]::before,
+  .participants-management-table td[data-label]::before {
+    color: var(--cgv-table-label-mobile, #dde3dc) !important;
+    opacity: 1 !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .welcome-row,
+  .page-intro,
+  .section-block,
+  .table-card,
+  .metric-card,
+  .course-card,
+  .history-preview-card,
+  .evaluation-row {
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+}
