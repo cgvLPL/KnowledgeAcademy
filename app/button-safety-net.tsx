@@ -155,12 +155,6 @@ function duplicateQuestion(button: HTMLButtonElement) {
 export default function ButtonSafetyNet() {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    document.body.classList.toggle("cgv-mobile-menu-open", mobileMenuOpen);
-    return () => document.body.classList.remove("cgv-mobile-menu-open");
-  }, [mobileMenuOpen]);
 
   useEffect(() => {
     let toastTimer = 0;
@@ -198,22 +192,11 @@ export default function ButtonSafetyNet() {
       if (!button || button.disabled || button.closest("[data-button-safety-net]")) return;
       if (button.dataset.participantActions === "true") return;
 
-      if (button.closest(".sidebar-nav")) {
-        setMobileMenuOpen(false);
-        return;
-      }
-
       const label = getButtonLabel(button);
       const hasFilterIcon = Boolean(button.querySelector(".lucide-filter"));
       const hasSearchIcon = Boolean(button.querySelector(".lucide-search"));
       const hasChevronRight = Boolean(button.querySelector(".lucide-chevron-right"));
       const hasMoreIcon = Boolean(button.querySelector(".lucide-more-horizontal"));
-
-      if (label === "open menu") {
-        event.preventDefault();
-        setMobileMenuOpen((value) => !value);
-        return;
-      }
 
       if (label === "notifications") {
         event.preventDefault();
@@ -227,24 +210,6 @@ export default function ButtonSafetyNet() {
           title: "Password recovery",
           message: "For security, passwords are managed by the CGV Knowledge Academy administrator. Ask an administrator to reset the account password in the connected Google Sheets workspace.",
         });
-        return;
-      }
-
-      if (label === "help centre") {
-        event.preventDefault();
-        window.open(
-          "https://github.com/rayhanmawuntu-stack/CGV.Exams#google-sheets-connection",
-          "_blank",
-          "noopener,noreferrer",
-        );
-        return;
-      }
-
-      if (label === "settings") {
-        event.preventDefault();
-        const profileButton = findButton("My profile") || findButton("Profile");
-        if (profileButton) profileButton.click();
-        else setDialog({ title: "Admin settings", message: "Administrator configuration is managed through the connected Google Sheets and Apps Script workspace." });
         return;
       }
 
@@ -346,10 +311,7 @@ export default function ButtonSafetyNet() {
         event.preventDefault();
         document.querySelector<HTMLInputElement>(".top-search input")?.focus();
       }
-      if (event.key === "Escape") {
-        setDialog(null);
-        setMobileMenuOpen(false);
-      }
+      if (event.key === "Escape") setDialog(null);
     };
 
     document.addEventListener("click", onClick);
@@ -365,15 +327,6 @@ export default function ButtonSafetyNet() {
 
   return (
     <div data-button-safety-net>
-      {mobileMenuOpen && (
-        <button
-          type="button"
-          className="button-safety-menu-overlay"
-          aria-label="Close menu"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
       {dialog && (
         <div className="button-safety-dialog-backdrop" role="presentation" onMouseDown={() => setDialog(null)}>
           <section
