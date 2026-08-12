@@ -61,16 +61,21 @@ export default function SessionScrollEnhancer() {
       const button = target.closest<HTMLButtonElement>("button");
       if (!button || normalise(button.getAttribute("aria-label") || button.textContent) !== "sign out") return;
 
+      // Mobile Safari can leave the off-canvas menu/overlay alive long enough to
+      // swallow the React logout update. Handle sign out as a navigation boundary:
+      // close the mobile menu immediately, clear persisted credentials, then let
+      // the app's own onClick run before using a hard navigation as a fallback.
+      document.body.classList.remove("cgv-mobile-menu-open");
+      document.documentElement.classList.remove("cgv-mobile-menu-open");
+
       const token = window.sessionStorage.getItem("cgv-exams-session-token");
       notifyBackendLogout(token);
       clearClientSession();
 
-      // Let the application handler render the login screen first. The reload is
-      // a fallback for an intercepted React click or an older cached bundle.
       window.setTimeout(() => {
         if (document.querySelector(".login-page")) return;
         window.location.replace(window.location.href.split("#")[0]);
-      }, 180);
+      }, 80);
     };
 
     window.addEventListener("resize", onViewportChange, { passive: true });
