@@ -29,6 +29,8 @@ performance, certificates, and administrator tools in one cinematic workspace.
 ### Participants
 
 - Sign in once and enter the participant workspace automatically.
+- Choose English or Bahasa Indonesia in Settings; the language preference follows
+  the authenticated account rather than a single browser.
 - Review published Knowledge Centre lessons and open attached resources safely.
 - Take scheduled or live quizzes in a responsive, one-question-at-a-time flow.
 - Resume an unfinished attempt, follow course attempt limits, and use a stable
@@ -44,6 +46,7 @@ performance, certificates, and administrator tools in one cinematic workspace.
 - Upload `.txt` or `.md` lesson notes, edit lesson content, attach resource links,
   and control draft or published visibility in the Knowledge Centre.
 - Manage participant and administrator accounts, positions, passwords, and status.
+- Use the same account-level English/Bahasa Indonesia setting as participant users.
 - Review a quiz-specific live scoreboard and download executive PDF reports with
   score distributions and question-level answer analysis.
 - Keep archived quizzes in a distinct section that is collapsed by default.
@@ -64,6 +67,13 @@ Apps Script deployment:
 
 All exports run locally in the browser. No participant or quiz data is sent to
 an additional service.
+
+## Account language
+
+Settings includes `English` and `Bahasa Indonesia`. The selected language is
+stored server-side against the authenticated account through Google Apps Script.
+Signing into the same account on another browser reloads that account preference.
+English remains the default for accounts that have not selected a language yet.
 
 ## Roles and positions
 
@@ -90,7 +100,7 @@ on the sign-in screen.
 - `app/` — application interface, responsive styles, and the server-side Sheets proxy.
 - `public/` — CGV brand assets, icons, and web manifest.
 - `google-apps-script/` — spreadsheet schema, authentication, scoring API,
-  workbook setup, and dashboard generator.
+  account-language preferences, workbook setup, and dashboard generator.
 - `tests/` — functional, visual, security, performance, and capacity regressions.
 - `audit/` — functional and 30-participant concurrency audits.
 - `scripts/` — verified build and artifact-validation utilities.
@@ -133,10 +143,10 @@ Follow [the backend setup guide](google-apps-script/README.md) to:
 5. Connect its `/exec` URL to the frontend.
 
 The application has no offline or demo accounts. Authentication, lessons,
-evaluations, attempts, and results come from the connected spreadsheet.
-`setupEvaluationPlatform()` preserves existing data and adds required columns.
-Use `resetEvaluationPlatformToAdminOnly()` only when an intentional clean reset
-is required.
+evaluations, attempts, results, and account-language preferences come from the
+connected spreadsheet. `setupEvaluationPlatform()` preserves existing data and
+adds required columns. Use `resetEvaluationPlatformToAdminOnly()` only when an
+intentional clean reset is required.
 
 ## Deployment
 
@@ -156,9 +166,11 @@ same `/exec` URL. The detailed update and health-check procedure is in
 ## Data model
 
 The workbook uses separate tabs for settings, users, courses, lessons, questions,
-attempts, answers, sessions, and the dashboard. Passwords are salted and
-hashed, session tokens are stored as hashes, correct answers are never sent to
-participants, and scores are calculated server-side.
+attempts, answers, sessions, and the dashboard. Account language is stored as a
+per-user key in the existing Settings tab, avoiding a destructive Users-sheet
+migration. Passwords are salted and hashed, session tokens are stored as hashes,
+correct answers are never sent to participants, and scores are calculated
+server-side.
 
 ## Participant capacity
 
