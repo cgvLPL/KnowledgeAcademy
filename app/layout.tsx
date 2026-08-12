@@ -9,6 +9,7 @@ import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
 import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
+import LanguageEnhancer from "./language-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -103,7 +104,7 @@ export const metadata: Metadata = {
     images: [socialImageUrl],
   },
   other: {
-    "cgv-ui-release": "2026.07.31-knowledge-academy-brand-v1",
+    "cgv-ui-release": "2026.08.12-account-language-v1",
     "mobile-web-app-capable": "yes",
   },
   manifest: `${publicAssetUrl("/site.webmanifest")}?v=${iconRevision}`,
@@ -152,6 +153,7 @@ export default function RootLayout({
         <AdminAvatarEnhancer />
         <RuntimeFunctionalityEnhancer />
         <SessionScrollEnhancer />
+        <LanguageEnhancer />
       </body>
     </html>
   );
