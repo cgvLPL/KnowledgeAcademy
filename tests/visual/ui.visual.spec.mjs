@@ -24,6 +24,27 @@ function productionStylesheetTags() {
     .join("\n");
 }
 
+function courseCard({ scheduled = false } = {}) {
+  return `<article class="course-card accent-${scheduled ? "blue" : "orange"}${scheduled ? " is-scheduled" : ""}">
+    <div class="course-card-top">
+      <span class="evaluation-icon visual-fixture-icon">${scheduled ? "◇" : "◆"}</span>
+      <span class="status-pill ${scheduled ? "status-scheduled" : "status-live"}">${scheduled ? "Upcoming" : "Available"}</span>
+    </div>
+    <span class="course-category">${scheduled ? "Leadership" : "Operations"}</span>
+    <h3>${scheduled ? "Leadership Essentials" : "Operational Readiness"}</h3>
+    <p>${scheduled ? "People leadership and communication for cinema managers." : "Core procedures for safe, consistent cinema operations."}</p>
+    <div class="course-meta">
+      <span>${scheduled ? "10" : "8"} questions</span>
+      <span>${scheduled ? "25" : "20"} minutes</span>
+      <span>0/${scheduled ? "2" : "3"} attempts used</span>
+    </div>
+    <div class="course-card-footer">
+      <div><span>${scheduled ? "Opens" : "Due date"}</span><strong>${scheduled ? "20 Aug" : "18 Aug"}</strong></div>
+      <div class="course-card-actions"><button class="row-button" type="button"${scheduled ? " disabled" : ""}>${scheduled ? "Not open yet" : "Open"}</button></div>
+    </div>
+  </article>`;
+}
+
 function fixtureHtml() {
   return `<!doctype html>
 <html lang="en">
@@ -83,8 +104,8 @@ function fixtureHtml() {
           <section class="section-block">
             <div class="section-heading"><div><h3>Available learning</h3><p>Production classes should remain cohesive after CSS consolidation.</p></div><button class="secondary-button" type="button">View all</button></div>
             <div class="course-grid">
-              <article class="course-card"><span class="status-pill status-live">Available</span><h3>Operational Readiness</h3><p>Core procedures for safe, consistent cinema operations.</p><div class="course-meta"><span>8 questions</span><span>20 minutes</span></div><div class="course-card-footer"><strong>Due 18 Aug</strong><button class="row-button" type="button">Open</button></div></article>
-              <article class="course-card is-scheduled"><span class="status-pill status-scheduled">Upcoming</span><h3>Leadership Essentials</h3><p>People leadership and communication for cinema managers.</p><div class="course-meta"><span>10 questions</span><span>25 minutes</span></div><div class="course-card-footer"><strong>Opens 20 Aug</strong><button class="row-button" type="button" disabled>Not open yet</button></div></article>
+              ${courseCard()}
+              ${courseCard({ scheduled: true })}
             </div>
           </section>
 
@@ -163,18 +184,36 @@ for (const viewport of viewports) {
     expect(primaryBox).not.toBeNull();
     expect(primaryBox.height).toBeGreaterThanOrEqual(viewport.width <= 760 ? 46 : 42);
 
-    const cardRadius = await page.locator(".course-card").first().evaluate((element) => parseFloat(getComputedStyle(element).borderTopLeftRadius));
+    const firstCourse = page.locator(".course-card").first();
+    const courseHeading = firstCourse.locator("h3");
+    const courseDescription = firstCourse.locator(":scope > p");
+    const courseAction = firstCourse.locator(".row-button");
+    await expect(courseHeading).toBeVisible();
+    await expect(courseDescription).toBeVisible();
+    await expect(courseAction).toBeVisible();
+    expect((await courseHeading.innerText()).trim()).toBe("Operational Readiness");
+
+    const headingBox = await courseHeading.boundingBox();
+    expect(headingBox).not.toBeNull();
+    expect(headingBox.height).toBeGreaterThan(20);
+
+    const cardRadius = await firstCourse.evaluate((element) => parseFloat(getComputedStyle(element).borderTopLeftRadius));
     expect(cardRadius).toBeGreaterThanOrEqual(14);
     expect(cardRadius).toBeLessThanOrEqual(20);
 
-    const surfaceBorder = await page.locator(".course-card").first().evaluate((element) => getComputedStyle(element).borderTopColor);
+    const surfaceBorder = await firstCourse.evaluate((element) => getComputedStyle(element).borderTopColor);
     expect(surfaceBorder).not.toBe("rgba(0, 0, 0, 0)");
+
+    const headingColor = await courseHeading.evaluate((element) => getComputedStyle(element).color);
+    expect(channelValue(headingColor)).toBeGreaterThan(150);
 
     const metrics = {
       viewport,
       overflow,
       primaryButtonHeight: primaryBox.height,
       courseCardRadius: cardRadius,
+      courseHeadingHeight: headingBox.height,
+      courseHeadingColor: headingColor,
       surfaceBorder,
     };
 
