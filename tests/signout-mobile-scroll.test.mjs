@@ -9,14 +9,17 @@ const enhancer = read("app/session-scroll-enhancer.tsx");
 const css = read("app/account-scroll-final.css");
 const layout = read("app/layout.tsx");
 
-test("sign out clears persisted session data and has a reload fallback", () => {
+test("sign out clears persisted session data and has a mobile-safe navigation fallback", () => {
   assert.ok(enhancer.includes('"cgv-exams-session-token"'));
   assert.ok(enhancer.includes('"cgv-exams-session-role"'));
   assert.ok(enhancer.includes("window.sessionStorage.removeItem"));
   assert.ok(enhancer.includes("window.localStorage.removeItem"));
   assert.ok(enhancer.includes("keepalive: true"));
   assert.ok(enhancer.includes('!== "sign out"'));
+  assert.ok(enhancer.includes('document.body.classList.remove("cgv-mobile-menu-open")'));
+  assert.ok(enhancer.includes('document.documentElement.classList.remove("cgv-mobile-menu-open")'));
   assert.ok(enhancer.includes("window.location.replace"));
+  assert.ok(enhancer.includes("}, 80);"));
 });
 
 test("mobile viewport uses one document scroller and a measured visual viewport", () => {
