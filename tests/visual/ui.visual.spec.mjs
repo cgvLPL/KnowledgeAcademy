@@ -185,13 +185,15 @@ for (const viewport of viewports) {
     expect(primaryBox.height).toBeGreaterThanOrEqual(viewport.width <= 760 ? 46 : 42);
 
     const firstCourse = page.locator(".course-card").first();
+    await firstCourse.scrollIntoViewIfNeeded();
+
     const courseHeading = firstCourse.locator("h3");
     const courseDescription = firstCourse.locator(":scope > p");
     const courseAction = firstCourse.locator(".row-button");
     await expect(courseHeading).toBeVisible();
     await expect(courseDescription).toBeVisible();
     await expect(courseAction).toBeVisible();
-    expect((await courseHeading.innerText()).trim()).toBe("Operational Readiness");
+    expect((await courseHeading.textContent())?.trim()).toBe("Operational Readiness");
 
     const headingBox = await courseHeading.boundingBox();
     expect(headingBox).not.toBeNull();
@@ -224,6 +226,8 @@ for (const viewport of viewports) {
       const mobileNavPosition = await page.locator(".mobile-nav").evaluate((element) => getComputedStyle(element).position);
       expect(mobileNavPosition).toBe("fixed");
 
+      const participantTable = page.locator(".participants-table-card");
+      await participantTable.scrollIntoViewIfNeeded();
       const labelStyle = await page.locator('.participants-management-table td[data-label="Position"]').first().evaluate((element) => {
         const style = getComputedStyle(element, "::before");
         return {
