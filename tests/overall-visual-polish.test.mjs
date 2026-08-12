@@ -6,16 +6,15 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const layout = read("app/layout.tsx");
-const css = read("app/overall-visual-polish.css");
+const css = read("app/ui-foundation.css");
 
-test("overall visual polish loads after shape and table visibility safeguards", () => {
-  const polish = 'import "./overall-visual-polish.css";';
-  assert.ok(layout.includes(polish));
-  assert.ok(layout.indexOf(polish) > layout.indexOf('import "./shape-system.css";'));
-  assert.ok(layout.indexOf(polish) > layout.indexOf('import "./table-label-visibility.css";'));
+test("canonical visual foundation loads last in the stylesheet cascade", () => {
+  const foundation = 'import "./ui-foundation.css";';
+  assert.ok(layout.includes(foundation));
+  assert.ok(layout.indexOf(foundation) > layout.indexOf('import "./mobile-sidebar-bottom-actions.css";'));
 });
 
-test("visual polish defines a shared surface and depth hierarchy", () => {
+test("visual foundation defines a shared surface and depth hierarchy", () => {
   assert.ok(css.includes("--cgv-visual-surface:"));
   assert.ok(css.includes("--cgv-visual-surface-raised:"));
   assert.ok(css.includes("--cgv-visual-border:"));
