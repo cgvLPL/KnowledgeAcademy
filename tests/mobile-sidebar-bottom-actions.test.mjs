@@ -48,6 +48,14 @@ test("mobile drawer actions remain above fixed navigation and accept touch input
   assert.ok(css.includes("pointer-events: none !important"));
 });
 
+test("mobile outside-tap overlay begins after the drawer and cannot cover footer actions", () => {
+  assert.match(
+    css,
+    /body\.cgv-mobile-menu-open \.button-safety-menu-overlay\s*\{[\s\S]*?left:\s*min\(84vw, 330px\) !important;[\s\S]*?right:\s*0 !important;/,
+  );
+  assert.match(css, /body\.cgv-mobile-menu-open \.button-safety-menu-overlay[\s\S]*?width:\s*auto !important;/);
+});
+
 test("help settings and sign out remain real sidebar buttons", () => {
   assert.match(client, /<CircleHelp size=\{19\} \/> Help centre/);
   assert.match(client, /<Settings size=\{19\} \/> Settings/);
