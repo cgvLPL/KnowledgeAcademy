@@ -48,6 +48,14 @@ performance, certificates, and administrator tools in one cinematic workspace.
   score distributions and question-level answer analysis.
 - Keep archived quizzes in a distinct section that is collapsed by default.
 
+## Version 1.1.3 — Participant Mobile Actions
+
+This patch keeps scheduled-evaluation actions readable and touch-friendly on
+participant phones. The **Add to calendar** and **Not open yet** buttons now
+occupy the full card width instead of collapsing into the icon column.
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history.
+
 ## Version 1.1.2 — Productivity & Insights
 
 This frontend-only release adds practical tools without requiring a new Google
