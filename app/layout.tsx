@@ -9,6 +9,7 @@ import RuntimeFunctionalityEnhancer from "./runtime-functionality-enhancer";
 import SettingsEnhancer from "./settings-enhancer";
 import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
+import LanguageEnhancer from "./language-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -152,6 +153,7 @@ export default function RootLayout({
         <AdminAvatarEnhancer />
         <RuntimeFunctionalityEnhancer />
         <SessionScrollEnhancer />
+        <LanguageEnhancer />
       </body>
     </html>
   );

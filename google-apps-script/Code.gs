@@ -1856,3 +1856,81 @@ function toIso_(value) {
 function clamp_(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
+
+// Account language preferences are stored in the existing Settings sheet so
+// older workbooks do not need a Users-column migration. These routes are kept
+// outside API_ACTIONS to preserve the frozen legacy action table.
+function accountLanguageKey_(userId) {
+  return "account_language:" + String(userId || "");
+}
+
+function normalizeAccountLanguage_(value) {
+  return String(value || "").trim().toLowerCase() === "id" ? "id" : "en";
+}
+
+function accountLanguageForUser_(userId) {
+  const key = accountLanguageKey_(userId);
+  const row = rowsAsObjects_(getSheet_(APP.sheets.settings)).find(function (item) {
+    return String(item.key || "") === key;
+  });
+  return normalizeAccountLanguage_(row && row.value);
+}
+
+function getAccountLanguage_(body) {
+  const context = requireSession_(body.token);
+  return {
+    ok: true,
+    language: accountLanguageForUser_(context.user.user_id),
+  };
+}
+
+function setAccountLanguage_(body) {
+  const context = requireSession_(body.token);
+  const language = normalizeAccountLanguage_(body.language);
+  return withScriptLock_(10000, function () {
+    const sheet = getSheet_(APP.sheets.settings);
+    const key = accountLanguageKey_(context.user.user_id);
+    const existing = rowsAsObjects_(sheet).find(function (item) {
+      return String(item.key || "") === key;
+    });
+    if (existing) {
+      updateObjectRow_(sheet, existing.__row, {
+        value: language,
+        updated_at: new Date(),
+      });
+    } else {
+      appendRow_(sheet, [key, language, new Date()]);
+    }
+    SpreadsheetApp.flush();
+    return {
+      ok: true,
+      language: language,
+      user: Object.assign(publicUser_(context.user), { language: language }),
+    };
+  });
+}
+
+// Final POST router: adds account-language actions while preserving every
+// existing API_ACTIONS route and the standard response envelope.
+function doPost(event) {
+  beginRequest_();
+  try {
+    const body = parseBody_(event);
+    const action = String(body.action || "").trim();
+    let result;
+    if (action === "getAccountLanguage") {
+      result = getAccountLanguage_(body);
+    } else if (action === "setAccountLanguage") {
+      result = setAccountLanguage_(body);
+    } else {
+      if (!Object.prototype.hasOwnProperty.call(API_ACTIONS, action)) {
+        throw new Error("Unsupported action.");
+      }
+      result = API_ACTIONS[action](body);
+    }
+    return json_(withResponseMeta_(result));
+  } catch (error) {
+    logRequestError_(error);
+    return json_(errorResponse_(error));
+  }
+}

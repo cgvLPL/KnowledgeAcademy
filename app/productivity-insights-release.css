@@ -305,6 +305,14 @@
   text-align: right;
 }
 
+@media (max-width: 1120px) and (min-width: 761px) {
+  .participant-home .evaluation-row-actions {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    min-width: 0;
+  }
+}
+
 @media (max-width: 980px) {
   .course-filter-controls,
   .participant-filter-controls {
@@ -398,6 +406,19 @@
   .scoreboard-export-status {
     min-width: 0;
     text-align: left;
+    width: 100% !important;
+  }
+
+  .participant-home .evaluation-row-actions {
+    grid-area: action;
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .participant-home .evaluation-row-actions > button {
+    box-sizing: border-box;
+    min-height: 44px;
+    min-width: 0;
     width: 100% !important;
   }
 

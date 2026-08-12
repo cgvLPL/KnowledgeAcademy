@@ -101,3 +101,19 @@ test("score trend is accessible and the mobile release stylesheet wins the casca
       layout.lastIndexOf('import "./admin-course-card-mobile-fix.css";'),
   );
 });
+
+test("scheduled evaluation actions occupy the full mobile card width", () => {
+  assert.match(client, /className="evaluation-row-actions"/);
+  assert.match(
+    css,
+    /@media \(max-width: 1120px\) and \(min-width: 761px\) \{[\s\S]*?\.participant-home \.evaluation-row-actions \{[\s\S]*?grid-column:\s*3;[\s\S]*?grid-row:\s*1 \/ 4;/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 760px\) \{[\s\S]*?\.participant-home \.evaluation-row-actions \{[\s\S]*?grid-area:\s*action;[\s\S]*?grid-column:\s*1 \/ -1;/,
+  );
+  assert.match(
+    css,
+    /\.participant-home \.evaluation-row-actions > button \{[\s\S]*?min-height:\s*44px;[\s\S]*?min-width:\s*0;[\s\S]*?width:\s*100% !important;/,
+  );
+});
