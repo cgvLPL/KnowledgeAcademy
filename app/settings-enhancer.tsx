@@ -148,7 +148,7 @@ export default function SettingsEnhancer() {
         <span className="cgv-settings-kicker">PREFERENCES</span>
         <h2 id="cgv-settings-title">Settings</h2>
         <p className="cgv-settings-intro">
-          Interface preferences are saved in this browser and apply immediately.
+          Interface preferences apply immediately. Language is saved to your account.
         </p>
 
         <div className="cgv-settings-list">
@@ -163,7 +163,7 @@ export default function SettingsEnhancer() {
           <label className="cgv-settings-row cgv-settings-language-row">
             <span>
               <strong>Language</strong>
-              <small>Choose the interface language for this browser.</small>
+              <small>Choose the interface language for your account.</small>
             </span>
             <select
               aria-label="Language"
