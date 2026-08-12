@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AppInteractionProvider } from "./app-interactions";
 import ButtonSafetyNet from "./button-safety-net";
 import CourseBuilderEnhancer from "./course-builder-enhancer";
 import ResultSyncEnhancer from "./result-sync-enhancer";
@@ -10,7 +11,6 @@ import SettingsEnhancer from "./settings-enhancer";
 import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
 import LanguageEnhancer from "./language-enhancer";
-import MobileSidebarBottomActions from "./mobile-sidebar-bottom-actions";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -70,6 +70,7 @@ import "./visual-stability-release.css";
 import "./admin-course-card-mobile-fix.css";
 import "./productivity-insights-release.css";
 import "./mobile-sidebar-bottom-actions.css";
+import "./app-interactions.css";
 import "./ui-foundation.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
@@ -145,19 +146,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
-        <AppUpdateEnhancer />
-        <SettingsEnhancer />
-        <ButtonSafetyNet />
-        <CourseBuilderEnhancer />
-        <ResultSyncEnhancer />
-        <InteractionPerformanceEnhancer />
-        <AdminFunctionalityEnhancer />
-        <AdminAvatarEnhancer />
-        <RuntimeFunctionalityEnhancer />
-        <SessionScrollEnhancer />
-        <LanguageEnhancer />
-        <MobileSidebarBottomActions />
+        <AppInteractionProvider>
+          {children}
+          <AppUpdateEnhancer />
+          <SettingsEnhancer />
+          <ButtonSafetyNet />
+          <CourseBuilderEnhancer />
+          <ResultSyncEnhancer />
+          <InteractionPerformanceEnhancer />
+          <AdminFunctionalityEnhancer />
+          <AdminAvatarEnhancer />
+          <RuntimeFunctionalityEnhancer />
+          <SessionScrollEnhancer />
+          <LanguageEnhancer />
+        </AppInteractionProvider>
       </body>
     </html>
   );
