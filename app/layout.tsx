@@ -71,6 +71,7 @@ import "./admin-course-card-mobile-fix.css";
 import "./productivity-insights-release.css";
 import "./mobile-sidebar-bottom-actions.css";
 import "./shape-system.css";
+import "./table-label-visibility.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
