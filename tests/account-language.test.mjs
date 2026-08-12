@@ -43,5 +43,5 @@ test("language runtime is mounted after the existing interaction safeguards", ()
   assert.ok(layout.includes('import LanguageEnhancer from "./language-enhancer";'));
   assert.ok(layout.includes("<LanguageEnhancer />"));
   assert.ok(layout.indexOf("<LanguageEnhancer />") > layout.indexOf("<SessionScrollEnhancer />"));
-  assert.ok(layout.includes('"cgv-ui-release": "2026.08.12-account-language-v1"'));
+  assert.ok(layout.includes('"cgv-ui-release": "2026.07.31-knowledge-academy-brand-v1"'));
 });
