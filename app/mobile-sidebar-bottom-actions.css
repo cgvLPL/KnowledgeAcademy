@@ -1,0 +1,35 @@
+/* Mobile sidebar action reliability layer.
+ * Keep drawer actions above the fixed top/bottom navigation and ensure taps are
+ * delivered to the visible Help Centre, Settings, and Sign out controls. */
+
+@media (max-width: 760px) {
+  body.cgv-mobile-menu-open .sidebar {
+    pointer-events: auto !important;
+    touch-action: pan-y !important;
+    z-index: 1000 !important;
+  }
+
+  body.cgv-mobile-menu-open .sidebar-bottom {
+    isolation: isolate;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 4;
+  }
+
+  body.cgv-mobile-menu-open .sidebar-bottom button {
+    min-height: 44px;
+    pointer-events: auto !important;
+    position: relative;
+    touch-action: manipulation !important;
+    z-index: 5;
+  }
+
+  body.cgv-mobile-menu-open .mobile-nav,
+  body.cgv-mobile-menu-open .topbar {
+    pointer-events: none !important;
+  }
+
+  .button-safety-menu-overlay {
+    z-index: 990 !important;
+  }
+}
