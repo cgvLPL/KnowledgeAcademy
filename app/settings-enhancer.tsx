@@ -69,10 +69,12 @@ export default function SettingsEnhancer() {
     restoreFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    setPreferences(readPreferences());
-    setSaved(false);
 
-    const frame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      setPreferences(readPreferences());
+      setSaved(false);
+      closeButtonRef.current?.focus();
+    });
     return () => {
       window.cancelAnimationFrame(frame);
       restoreFocusRef.current?.focus();
