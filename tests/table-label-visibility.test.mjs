@@ -6,14 +6,13 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const layout = read("app/layout.tsx");
-const css = read("app/table-label-visibility.css");
+const css = read("app/ui-foundation.css");
 
-test("table label visibility layer loads after the shared shape system", () => {
-  assert.ok(layout.includes('import "./table-label-visibility.css";'));
-  assert.ok(
-    layout.indexOf('import "./table-label-visibility.css";')
-      > layout.indexOf('import "./shape-system.css";'),
-  );
+test("table label safeguards live in the canonical final UI foundation", () => {
+  assert.ok(layout.includes('import "./ui-foundation.css";'));
+  assert.ok(layout.indexOf('import "./ui-foundation.css";') > layout.indexOf('import "./mobile-sidebar-bottom-actions.css";'));
+  assert.ok(css.indexOf("2. TABLE LABEL VISIBILITY") > css.indexOf("1. SHAPE SYSTEM"));
+  assert.ok(css.indexOf("3. APPLICATION-WIDE VISUAL POLISH") > css.indexOf("2. TABLE LABEL VISIBILITY"));
 });
 
 test("desktop and tablet table headers keep explicit high-contrast labels", () => {
