@@ -18,9 +18,12 @@ test("visual regression suite is wired into pull request verification", () => {
   assert.ok(workflow.includes("test-results/visual-artifacts"));
 });
 
-test("visual regression runner serves the Pages artifact with its base path", () => {
-  assert.ok(config.includes("dist/client/CGV.Exams"));
-  assert.ok(config.includes("python3 -m http.server 4173 --directory dist/client"));
+test("visual regression runner resolves the Pages artifact from the repository root", () => {
+  assert.ok(config.includes('path.resolve(import.meta.dirname, "../..")'));
+  assert.ok(config.includes('path.join(root, "dist/client")'));
+  assert.ok(config.includes('path.join(root, "test-results/visual-artifacts")'));
+  assert.ok(config.includes('ln -sfn . "${dist}/CGV.Exams"'));
+  assert.ok(config.includes("python3 -m http.server 4173 --directory"));
   assert.ok(config.includes("http://127.0.0.1:4173/CGV.Exams/index.html"));
 });
 
