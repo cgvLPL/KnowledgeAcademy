@@ -1,0 +1,153 @@
+/* Unified interface shape system.
+ * Loaded after all historical release layers so CGV Knowledge Academy uses
+ * one predictable radius hierarchy instead of per-feature silhouettes.
+ */
+
+:root {
+  --cgv-shape-hero: 24px;
+  --cgv-shape-panel: 20px;
+  --cgv-shape-card: 16px;
+  --cgv-shape-control: 12px;
+  --cgv-shape-compact: 10px;
+  --cgv-shape-modal: 22px;
+  --cgv-shape-pill: 999px;
+}
+
+/* Major surfaces: spacious but visibly related. */
+.login-card,
+.hero-evaluation,
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.builder-card,
+.result-card,
+.question-card,
+.cgv-settings-panel,
+.cgv-function-modal,
+.cgv-admin-account-modal,
+.confirm-modal,
+.button-safety-dialog {
+  border-radius: var(--cgv-shape-panel) !important;
+}
+
+.hero-evaluation,
+.login-card {
+  border-radius: var(--cgv-shape-hero) !important;
+}
+
+/* Repeating content cards use a tighter radius so dense screens feel orderly. */
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.profile-card,
+.settings-card,
+.detail-card,
+.evaluation-row,
+.question-editor,
+.question-outline,
+.knowledge-card,
+.lesson-card,
+.cgv-account-summary > div,
+.cgv-settings-version,
+.cgv-settings-row {
+  border-radius: var(--cgv-shape-card) !important;
+}
+
+/* Interactive controls share one silhouette across participant/admin views. */
+.primary-button,
+.secondary-button,
+.hero-button,
+.row-button,
+.text-button,
+.select-button,
+.filter-tabs button,
+.role-switch button,
+.sidebar-nav button,
+.sidebar-bottom button,
+.mobile-nav button,
+.question-outline button,
+.question-progress-bars button,
+.answer-list button,
+.add-question-card,
+.certificate-row-button,
+.cgv-settings-actions button,
+.cgv-function-modal button,
+.confirm-modal button {
+  border-radius: var(--cgv-shape-control) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.input-shell,
+.admin-search,
+.top-search,
+.filter-control,
+.search-field {
+  border-radius: var(--cgv-shape-control) !important;
+}
+
+/* Small utility/icon controls remain compact rather than becoming circular by accident. */
+.icon-button,
+.input-action,
+.notification,
+.builder-icon-button,
+.cgv-settings-close,
+.button-safety-dialog-close {
+  border-radius: var(--cgv-shape-compact) !important;
+}
+
+/* Semantic pills stay pills; avatars and progress rings remain intentionally round. */
+.eyebrow,
+.live-pill,
+.outcome-pill,
+.status-pill,
+.participant-status,
+.account-status,
+.badge-active,
+.badge-success,
+.count-badge,
+.evaluation-count,
+.notification-count,
+.cgv-settings-status,
+.sidebar-nav button small {
+  border-radius: var(--cgv-shape-pill) !important;
+}
+
+.avatar,
+.user-chip .avatar,
+.cgv-admin-account-avatar,
+.score-ring,
+.completion-ring,
+.progress-ring,
+.answer-radio {
+  border-radius: 50% !important;
+}
+
+.table-card table,
+.responsive-table table {
+  border-radius: inherit;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --cgv-shape-hero: 20px;
+    --cgv-shape-panel: 18px;
+    --cgv-shape-card: 16px;
+    --cgv-shape-control: 12px;
+    --cgv-shape-modal: 20px;
+  }
+
+  .button-safety-dialog,
+  .cgv-settings-panel,
+  .cgv-function-modal,
+  .confirm-modal,
+  .cgv-admin-account-modal {
+    border-radius: var(--cgv-shape-modal) !important;
+  }
+}
