@@ -113,10 +113,7 @@ const TEXT_TRANSLATIONS: Record<string, string> = {
 const ATTRIBUTE_TRANSLATIONS: Record<string, string> = {
   "Search": "Cari",
   "Find participant": "Cari peserta",
-  "Select evaluation scoreboard": "Pilih papan peringkat evaluasi",
-  "Close settings": "Tutup pengaturan",
-  "Open account": "Buka akun",
-  "Language": "Bahasa"
+  "Select evaluation scoreboard": "Pilih papan peringkat evaluasi"
 };
 
 const reverseText = Object.fromEntries(Object.entries(TEXT_TRANSLATIONS).map(([en, id]) => [id, en]));
@@ -174,11 +171,20 @@ function translateTextNode(node: Text, language: Language) {
 
 function translateElement(element: Element, language: Language) {
   if (element.matches("script, style, code, pre, textarea, [data-cgv-no-translate]")) return;
+
+  if (element instanceof HTMLButtonElement && !element.hasAttribute("aria-label")) {
+    const sourceLabel = (element.textContent || "").replace(/\s+/g, " ").trim();
+    if (TEXT_TRANSLATIONS[sourceLabel] || reverseText[sourceLabel]) {
+      element.setAttribute("aria-label", reverseText[sourceLabel] || sourceLabel);
+      element.dataset.cgvActionLabel = reverseText[sourceLabel] || sourceLabel;
+    }
+  }
+
   Array.from(element.childNodes).forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) translateTextNode(node as Text, language);
   });
 
-  ["aria-label", "title", "placeholder"].forEach((attribute) => {
+  ["title", "placeholder"].forEach((attribute) => {
     const value = element.getAttribute(attribute);
     if (!value) return;
     const table = language === "id" ? ATTRIBUTE_TRANSLATIONS : reverseAttributes;
@@ -235,7 +241,6 @@ export default function LanguageEnhancer() {
             window.requestAnimationFrame(() => translateDocument(accountLanguage));
           }
         } catch {
-          // Login remains owned by the application. English is the safe fallback.
           storeLanguage("en");
           language = "en";
         }
@@ -288,8 +293,7 @@ export default function LanguageEnhancer() {
         const savedLanguage = normalizeLanguage(data.language || next);
         if (savedLanguage !== language) setLanguage(savedLanguage);
       }).catch(() => {
-        // Keep the selected language for this session; the next login reloads
-        // the server-side account preference as the source of truth.
+        // The next login reloads the account preference from Apps Script.
       });
     };
 
