@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -42,6 +42,23 @@ jobs:
 
       - name: Run complete regression suite
         run: node --test tests/*.test.mjs
+
+      - name: Install visual regression browser
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run responsive visual regression suite
+        run: npx playwright test --config tests/visual/playwright.config.mjs
+
+      - name: Upload visual regression artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-${{ github.event.pull_request.number }}
+          path: test-results/visual-artifacts
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Validate Pages artifact
         run: |
