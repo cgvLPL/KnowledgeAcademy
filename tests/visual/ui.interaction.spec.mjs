@@ -31,6 +31,14 @@ async function installBackendStub(page) {
       window.__cgvOpenedUrls.push(String(url));
       return null;
     };
+    window.localStorage.setItem("cgv-exams-auto-refresh", "false");
+    window.localStorage.setItem("cgv-exams-interface-settings-v1", JSON.stringify({
+      compact: false,
+      reducedMotion: false,
+      enhancedContrast: false,
+      autoRefresh: false,
+      language: "en",
+    }));
   });
 
   await page.route("https://file.garden/**", async (route) => {
@@ -49,7 +57,13 @@ async function installBackendStub(page) {
       payload = {};
     }
 
-    let response = { ok: true };
+    let response = {
+      ok: true,
+      courses: [],
+      history: [],
+      lessons: [knowledgeLesson],
+      user: participant,
+    };
     if (payload.action === "login") {
       response = {
         ok: true,
@@ -90,8 +104,11 @@ async function openMobileMenu(page) {
 }
 
 async function openPdfFromKnowledgeCentre(page) {
-  await expect(page.getByText("Cinema operations handbook", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: /Review lesson/i }).click();
+  const centre = page.locator('.knowledge-centre[data-knowledge-centre-role="participant"]');
+  await expect(centre).toBeVisible();
+  const card = centre.locator(".knowledge-card").filter({ hasText: "Cinema operations handbook" });
+  await expect(card).toBeVisible();
+  await card.locator(".knowledge-review-button").click();
   await expect(page.getByRole("dialog", { name: "Cinema operations handbook" })).toBeVisible();
   await page.getByRole("button", { name: /Read PDF/i }).click();
   await expect(page.getByRole("dialog", { name: "Cinema Operations Handbook.pdf" })).toBeVisible();
