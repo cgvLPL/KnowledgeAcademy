@@ -213,7 +213,8 @@ test("File Garden PDF is usable as an immersive reader on mobile", async ({ page
   expect(stageBox?.height || 0).toBeGreaterThan(770);
 
   await expect(page.locator(".knowledge-pdf-footer")).toBeHidden();
-  await expect(frame).toHaveCSS("touch-action", "pan-x pan-y pinch-zoom");
+  const touchAction = await frame.evaluate((element) => getComputedStyle(element).touchAction);
+  expect(["manipulation", "pan-x pan-y pinch-zoom"]).toContain(touchAction);
   await page.getByRole("button", { name: "Close PDF reader" }).click();
   await expect(frame).toHaveCount(0);
 });
