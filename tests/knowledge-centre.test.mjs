@@ -101,3 +101,11 @@ test("lesson uploads and responsive layout follow the existing app conventions",
   assert.match(knowledgeCss, /grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\) !important/);
   assert.match(knowledgeCss, /env\(safe-area-inset-bottom\)/);
 });
+
+
+test("PDF reader is portaled above app chrome instead of nesting inside the lesson modal", () => {
+  assert.match(knowledge, /import \{ createPortal \} from \"react-dom\"/);
+  assert.match(knowledge, /pdfOpen && typeof document !== \"undefined\" && createPortal\(/);
+  assert.match(knowledge, /document\.body,/);
+  assert.doesNotMatch(pdfCss, /knowledge-modal-backdrop:has\(\.knowledge-pdf-backdrop\)/);
+});

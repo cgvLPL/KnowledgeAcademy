@@ -20,6 +20,7 @@ Date: 2026-08-17
 - Desktop PDF viewing now stays inside the main workspace so the persistent sidebar and top header remain visible.
 - Mobile PDF viewing now uses an immersive full-screen document mode instead of squeezing the document between the app header and bottom navigation.
 - The mobile PDF footer is removed in favor of the compact close toolbar, giving the document substantially more vertical reading space.
+- The PDF reader is rendered through a body-level React portal so app headers/navigation cannot intercept its mobile controls.
 - PDF stage/frame touch behavior now explicitly allows panning and pinch zoom while containing overscroll inside the reader.
 
 ## File Garden policy
