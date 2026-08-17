@@ -37,6 +37,29 @@ letters, numbers, dots, underscores, and hyphens.
 Administrator positions are limited to **MoD** and **Cinema Manager**.
 Participant positions can be **Stars** or a custom title of up to 80 characters.
 
+## Knowledge Centre and File Garden sync
+
+Knowledge Centre lessons are stored in the `Lessons` sheet. The Apps Script
+backend is the canonical source for the lesson title, summary, content, topic,
+reading time, visibility, resource label, and resource URL. Both participant
+and administrator workspace responses read from the same sheet, and opening the
+Knowledge Centre refreshes the lesson list from Apps Script.
+
+For PDF resources hosted by File Garden, store the direct
+`https://file.garden/.../document.pdf` URL in `resource_url`. The backend now
+validates that URL as well as the browser UI: File Garden garden-page URLs such
+as `filegarden.com/...` are rejected, while direct `file.garden` PDFs are
+identified in API responses as File Garden PDF resources for the in-app reader.
+CGV.Exams still does **not** upload files to File Garden programmatically; the
+admin uploads the PDF manually and saves the direct URL in the lesson editor.
+
+After replacing an older Apps Script source, you may run
+`syncKnowledgeCentreBackend()` once from the Apps Script editor. It ensures the
+canonical `Lessons` schema exists, trims legacy resource URLs, counts File
+Garden/PDF resources, and reports invalid legacy resource links without
+deleting lesson content. Authenticated administrators can perform the same
+maintenance through the `adminSyncKnowledgeCentre` API action.
+
 ## Apply backend updates
 
 GitHub Pages deploys the frontend automatically, but it cannot replace an
@@ -45,11 +68,13 @@ existing Google Apps Script web-app version. After `Code.gs` changes:
 1. Copy the latest repository `google-apps-script/Code.gs` into the Apps Script
    editor.
 2. Run `setupEvaluationPlatform()` once so new workbook columns are added while
-   existing account and course data is preserved.
-3. Select **Deploy → Manage deployments**.
-4. Edit the existing web-app deployment.
-5. Choose **New version**, then press **Deploy**.
-6. Keep the same `/exec` URL so the website configuration does not need to
+   existing account, course, and lesson data is preserved.
+3. For this Knowledge Centre update, optionally run `syncKnowledgeCentreBackend()`
+   once to audit and normalize existing resource URLs.
+4. Select **Deploy → Manage deployments**.
+5. Edit the existing web-app deployment.
+6. Choose **New version**, then press **Deploy**.
+7. Keep the same `/exec` URL so the website configuration does not need to
    change.
 
 Open the `/exec` URL directly after deployment. The health response must show:
@@ -84,6 +109,8 @@ Participant functions:
 - Sign in and sign out.
 - Load currently available evaluations and score history.
 - Review all published Knowledge Centre lessons and linked resources.
+- Receive File Garden PDF metadata together with the stored resource URL for
+  the internal PDF reader.
 - Start or resume one unfinished attempt for the same course.
 - Respect each course's administrator-defined attempt limit, including unlimited attempts.
 - Submit answers with server-side scoring.
@@ -99,15 +126,18 @@ Administrator functions:
 - Reset passwords and activate or deactivate accounts.
 - Create, inspect, edit, duplicate, publish, complete, archive, restore, or
   delete a course.
-- Create, edit, publish, draft, and delete Knowledge Centre lessons.
+- Create, edit, publish, draft, and delete Knowledge Centre lessons, including
+  direct File Garden PDF URLs.
+- Audit and normalize Knowledge Centre resource URLs through the authenticated
+  `adminSyncKnowledgeCentre` action.
 - Preserve submitted results by archiving courses that already have attempts.
 
 The backend confirms writes only after `SpreadsheetApp.flush()`. Script locks
-protect attempt, answer, course, account, and session writes when multiple
-participants submit at nearly the same time. Capacity-sensitive participant
-writes use a 90-second queue sized for a 30-person burst. Session and ID lookups
-target exact rows instead of scanning whole tabs, and start/submission retries
-remain idempotent.
+protect attempt, answer, course, account, lesson, and session writes when
+multiple participants or administrators act at nearly the same time.
+Capacity-sensitive participant writes use a 90-second queue sized for a
+30-person burst. Session and ID lookups target exact rows instead of scanning
+whole tabs, and start/submission retries remain idempotent.
 
 Each request also reuses spreadsheet, sheet, row, and exact-lookup reads within
 the current execution. Sign-in returns the participant or administrator
@@ -139,7 +169,8 @@ server-side, and administrator actions require an administrator session.
   distribution.
 - `Users` — participant and administrator accounts, including branch and position.
 - `Courses` — course metadata, schedule, status, time limit, passing score, and attempt limit.
-- `Lessons` — Knowledge Centre lesson notes, topic, visibility, reading time, and resource link.
+- `Lessons` — Knowledge Centre title, summary, lesson content, topic, visibility,
+  reading time, resource label, and the canonical resource/File Garden URL.
 - `Questions` — four-option question bank and correct-answer keys.
 - `Attempts` — one row per started or submitted evaluation.
 - `Answers` — participant answer audit trail.
