@@ -14,6 +14,7 @@ const ALLOWED_ACTIONS = new Set([
   "adminSaveCourse",
   "adminSaveLesson",
   "adminDeleteLesson",
+  "adminSyncKnowledgeCentre",
   "adminDuplicateCourse",
   "adminDeleteCourse",
   "adminSetCourseStatus",
