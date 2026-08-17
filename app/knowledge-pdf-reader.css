@@ -75,15 +75,22 @@
   margin-left: auto;
 }
 
+/* The PDF viewer belongs to the main workspace, not the whole viewport.
+ * Keep the persistent desktop sidebar and sticky top header visible while the
+ * document is open instead of placing an inset:0 layer over the entire app.
+ */
 .knowledge-pdf-backdrop {
   align-items: center;
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(16px);
+  bottom: 0;
   display: flex;
-  inset: 0;
   justify-content: center;
+  left: 242px;
   padding: 18px;
   position: fixed;
+  right: 0;
+  top: 82px;
   z-index: 180;
 }
 
@@ -94,11 +101,12 @@
   box-shadow: 0 38px 120px rgba(0, 0, 0, 0.68);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  height: min(92dvh, 920px);
+  height: min(920px, 100%);
+  max-height: 100%;
   max-width: 1180px;
-  min-height: 520px;
+  min-height: 0;
   overflow: hidden;
-  width: min(1180px, calc(100vw - 36px));
+  width: min(1180px, 100%);
 }
 
 .knowledge-pdf-toolbar {
@@ -215,22 +223,27 @@
     margin-left: 0;
   }
 
+  /* Mobile keeps both the safe-area-aware topbar and bottom navigation live.
+     The PDF fills only the content viewport between those two app controls. */
   .knowledge-pdf-backdrop {
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    left: 0;
     padding: 0;
+    top: calc(64px + env(safe-area-inset-top));
   }
 
   .knowledge-pdf-reader {
     border: 0;
     border-radius: 0;
-    height: 100dvh;
-    max-height: none;
+    height: 100%;
+    max-height: 100%;
     min-height: 0;
-    width: 100vw;
+    width: 100%;
   }
 
   .knowledge-pdf-toolbar {
-    min-height: 64px;
-    padding: calc(8px + env(safe-area-inset-top)) 11px 8px 13px;
+    min-height: 58px;
+    padding: 8px 11px 8px 13px;
   }
 
   .knowledge-pdf-toolbar strong {
@@ -241,7 +254,7 @@
     align-items: stretch;
     flex-direction: column;
     gap: 8px;
-    padding: 10px 13px calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 13px;
   }
 
   .knowledge-pdf-footer .secondary-button {
@@ -251,8 +264,12 @@
 }
 
 @media (max-height: 620px) and (min-width: 761px) {
+  .knowledge-pdf-backdrop {
+    padding: 12px;
+  }
+
   .knowledge-pdf-reader {
-    height: calc(100dvh - 24px);
+    height: 100%;
     min-height: 0;
   }
 }
