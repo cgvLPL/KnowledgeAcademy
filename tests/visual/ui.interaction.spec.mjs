@@ -115,7 +115,6 @@ async function openPdfFromKnowledgeCentre(page) {
   const frame = page.locator(".knowledge-pdf-frame");
   await expect(frame).toBeVisible();
   await expect(frame).toHaveAttribute("src", /https:\/\/file\.garden\/qa-cgv-academy\/Cinema%20Operations%20Handbook\.pdf#toolbar=1&navpanes=0&view=FitH/);
-  await expect(page.getByText("The document stays inside CGV Knowledge Academy.", { exact: false })).toBeVisible();
 }
 
 test("mobile menu settings help navigation and sign out stay synchronized", async ({ page }) => {
@@ -195,6 +194,7 @@ test("File Garden PDF stays inside the Knowledge Centre on mobile", async ({ pag
   await page.locator(".mobile-nav button").filter({ hasText: "Learn" }).click();
   await openPdfFromKnowledgeCentre(page);
   await expect(page.locator(".knowledge-pdf-reader")).toHaveCSS("width", "390px");
+  await expect(page.locator(".knowledge-pdf-footer")).toBeHidden();
   await page.getByRole("button", { name: "Close PDF reader" }).click();
   await expect(page.locator(".knowledge-pdf-frame")).toHaveCount(0);
 });
@@ -206,6 +206,7 @@ test("File Garden PDF stays inside the Knowledge Centre on desktop", async ({ pa
 
   await page.locator(".sidebar-nav button").filter({ hasText: "Knowledge centre" }).click();
   await openPdfFromKnowledgeCentre(page);
+  await expect(page.getByText("The document stays inside CGV Knowledge Academy.", { exact: false })).toBeVisible();
   const reader = page.locator(".knowledge-pdf-reader");
   await expect(reader).toBeVisible();
   const box = await reader.boundingBox();
