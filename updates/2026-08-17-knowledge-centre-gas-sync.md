@@ -20,7 +20,7 @@ Date: 2026-08-17
 - Desktop PDF viewing now stays inside the main workspace so the persistent sidebar and top header remain visible.
 - Mobile PDF viewing now uses an immersive full-screen document mode instead of squeezing the document between the app header and bottom navigation.
 - The mobile PDF footer is removed in favor of the compact close toolbar, giving the document substantially more vertical reading space.
-- The PDF reader is rendered through a body-level React portal so app headers/navigation cannot intercept its mobile controls.
+- The PDF reader is rendered directly on `document.body` through a React portal so app headers/navigation cannot intercept its mobile controls.
 - PDF stage/frame touch behavior now explicitly allows panning and pinch zoom while containing overscroll inside the reader.
 
 ## File Garden policy
@@ -32,8 +32,8 @@ Date: 2026-08-17
 ## Verification
 
 - Added `tests/knowledge-centre-gas-sync.test.mjs` to cover Apps Script persistence, File Garden validation, response metadata, workspace synchronization, maintenance sync behavior, and schema enforcement.
-- Extended Knowledge Centre regression coverage for desktop app-chrome preservation and immersive mobile PDF layout.
-- Added a Playwright mobile PDF usability check that requires the reader to occupy the full 390×844 viewport, keep a compact toolbar, hide the desktop footer, preserve touch gestures, and provide more than 770px of document stage height.
+- Extended Knowledge Centre regression coverage for desktop app-chrome preservation, the body-level PDF portal, and immersive mobile PDF layout.
+- Expanded `tests/visual/ui.interaction.spec.mjs` with a real mobile PDF usability check that requires the reader to occupy the full 390×844 viewport, keep a compact toolbar, hide the desktop footer, preserve touch gestures, provide more than 770px of document stage height, and close through a normal pointer click without app chrome intercepting it.
 - Verify the complete application with GitHub Actions before merge.
 
 ## Deployment
