@@ -75,9 +75,8 @@
   margin-left: auto;
 }
 
-/* The PDF viewer belongs to the main workspace, not the whole viewport.
- * Keep the persistent desktop sidebar and sticky top header visible while the
- * document is open instead of placing an inset:0 layer over the entire app.
+/* Desktop/tablet: the reader belongs to the main workspace, not the whole
+ * viewport. Keep the persistent sidebar and sticky top header visible.
  */
 .knowledge-pdf-backdrop {
   align-items: center;
@@ -176,7 +175,9 @@
   background: #303230;
   min-height: 0;
   overflow: hidden;
+  overscroll-behavior: contain;
   position: relative;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .knowledge-pdf-frame {
@@ -184,6 +185,8 @@
   border: 0;
   display: block;
   height: 100%;
+  overscroll-behavior: contain;
+  touch-action: pan-x pan-y pinch-zoom;
   width: 100%;
 }
 
@@ -223,43 +226,74 @@
     margin-left: 0;
   }
 
-  /* Mobile keeps both the safe-area-aware topbar and bottom navigation live.
-     The PDF fills only the content viewport between those two app controls. */
+  /* Phones use an immersive document mode. The app sidebar does not exist at
+     this width, and preserving both the topbar + bottom nav made the actual PDF
+     canvas too short to use. The viewer therefore owns the phone viewport and
+     provides its own compact safe-area-aware close toolbar. */
   .knowledge-pdf-backdrop {
-    bottom: calc(68px + env(safe-area-inset-bottom));
+    background: #090b0a;
+    bottom: 0;
     left: 0;
     padding: 0;
-    top: calc(64px + env(safe-area-inset-top));
+    right: 0;
+    top: 0;
+    z-index: 2200;
   }
 
   .knowledge-pdf-reader {
     border: 0;
     border-radius: 0;
-    height: 100%;
-    max-height: 100%;
+    box-shadow: none;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: none;
     min-height: 0;
-    width: 100%;
+    width: 100vw;
   }
 
   .knowledge-pdf-toolbar {
-    min-height: 58px;
-    padding: 8px 11px 8px 13px;
+    min-height: calc(52px + env(safe-area-inset-top));
+    padding:
+      calc(6px + env(safe-area-inset-top))
+      max(9px, env(safe-area-inset-right))
+      6px
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .knowledge-pdf-toolbar > div {
+    gap: 8px;
+  }
+
+  .knowledge-pdf-icon,
+  .knowledge-pdf-toolbar > button {
+    border-radius: 10px;
+    height: 38px;
+    width: 38px;
+  }
+
+  .knowledge-pdf-toolbar small {
+    font-size: 8px;
   }
 
   .knowledge-pdf-toolbar strong {
-    font-size: 12px;
+    font-size: 11px;
   }
 
+  .knowledge-pdf-stage {
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .knowledge-pdf-frame {
+    min-height: 100%;
+  }
+
+  /* Removing the explanatory desktop footer gives the document roughly an
+     extra 100–130px of vertical room on common phone sizes. Close remains
+     available in the persistent compact toolbar. */
   .knowledge-pdf-footer {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 13px;
-  }
-
-  .knowledge-pdf-footer .secondary-button {
-    justify-content: center;
-    width: 100%;
+    display: none;
   }
 }
 
