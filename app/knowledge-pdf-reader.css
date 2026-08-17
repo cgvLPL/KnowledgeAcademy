@@ -226,6 +226,15 @@
     margin-left: 0;
   }
 
+  /* PdfReader is rendered inside the lesson modal. Lift that parent stacking
+     context above the normal app topbar/mobile navigation so neither can steal
+     taps from the immersive reader's close button. */
+  .knowledge-modal-backdrop:has(.knowledge-pdf-backdrop) {
+    overflow: hidden;
+    padding: 0;
+    z-index: 2190;
+  }
+
   /* Phones use an immersive document mode. The app sidebar does not exist at
      this width, and preserving both the topbar + bottom nav made the actual PDF
      canvas too short to use. The viewer therefore owns the phone viewport and
