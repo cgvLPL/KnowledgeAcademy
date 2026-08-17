@@ -10,6 +10,20 @@ const participant = {
   status: "active",
 };
 
+const knowledgeLesson = {
+  id: "qa-lesson-pdf",
+  title: "Cinema operations handbook",
+  summary: "A test lesson with an internally rendered PDF resource.",
+  content: "Review the operating standards before opening the attached handbook.",
+  category: "Operations",
+  duration: 7,
+  resourceTitle: "Cinema Operations Handbook.pdf",
+  resourceUrl: "https://file.garden/qa-cgv-academy/Cinema%20Operations%20Handbook.pdf",
+  status: "published",
+  createdAt: "2026-08-01T00:00:00.000Z",
+  updatedAt: "2026-08-12T00:00:00.000Z",
+};
+
 async function installBackendStub(page) {
   await page.addInitScript(() => {
     window.__cgvOpenedUrls = [];
@@ -17,6 +31,22 @@ async function installBackendStub(page) {
       window.__cgvOpenedUrls.push(String(url));
       return null;
     };
+    window.localStorage.setItem("cgv-exams-auto-refresh", "false");
+    window.localStorage.setItem("cgv-exams-interface-settings-v1", JSON.stringify({
+      compact: false,
+      reducedMotion: false,
+      enhancedContrast: false,
+      autoRefresh: false,
+      language: "en",
+    }));
+  });
+
+  await page.route("https://file.garden/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/pdf",
+      body: "%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF",
+    });
   });
 
   await page.route("**/exec", async (route) => {
@@ -27,7 +57,13 @@ async function installBackendStub(page) {
       payload = {};
     }
 
-    let response = { ok: true };
+    let response = {
+      ok: true,
+      courses: [],
+      history: [],
+      lessons: [knowledgeLesson],
+      user: participant,
+    };
     if (payload.action === "login") {
       response = {
         ok: true,
@@ -36,7 +72,7 @@ async function installBackendStub(page) {
         workspace: {
           courses: [],
           history: [],
-          lessons: [],
+          lessons: [knowledgeLesson],
         },
       };
     } else if (payload.action === "getAccountLanguage") {
@@ -65,6 +101,21 @@ async function openMobileMenu(page) {
   await expect(page.locator("body")).toHaveClass(/cgv-mobile-menu-open/);
   await expect(page.locator(".sidebar")).toBeVisible();
   await expect(page.getByRole("button", { name: "Close menu" })).toBeVisible();
+}
+
+async function openPdfFromKnowledgeCentre(page) {
+  const centre = page.locator('.knowledge-centre[data-knowledge-centre-role="participant"]');
+  await expect(centre).toBeVisible();
+  const card = centre.locator(".knowledge-card").filter({ hasText: "Cinema operations handbook" });
+  await expect(card).toBeVisible();
+  await card.locator(".knowledge-review-button").click();
+  await expect(page.getByRole("dialog", { name: "Cinema operations handbook" })).toBeVisible();
+  await page.getByRole("button", { name: /Read PDF/i }).click();
+  await expect(page.getByRole("dialog", { name: "Cinema Operations Handbook.pdf" })).toBeVisible();
+  const frame = page.locator(".knowledge-pdf-frame");
+  await expect(frame).toBeVisible();
+  await expect(frame).toHaveAttribute("src", /https:\/\/file\.garden\/qa-cgv-academy\/Cinema%20Operations%20Handbook\.pdf#toolbar=1&navpanes=0&view=FitH/);
+  await expect(page.getByText("The document stays inside CGV Knowledge Academy.", { exact: false })).toBeVisible();
 }
 
 test("mobile menu settings help navigation and sign out stay synchronized", async ({ page }) => {
@@ -134,4 +185,32 @@ test("desktop sidebar actions use the same interaction controller", async ({ pag
 
   await page.locator(".sidebar-bottom button").filter({ hasText: "Sign out" }).click();
   await expect(page.locator(".login-page")).toBeVisible();
+});
+
+test("File Garden PDF stays inside the Knowledge Centre on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installBackendStub(page);
+  await signIn(page);
+
+  await page.locator(".mobile-nav button").filter({ hasText: "Learn" }).click();
+  await openPdfFromKnowledgeCentre(page);
+  await expect(page.locator(".knowledge-pdf-reader")).toHaveCSS("width", "390px");
+  await page.getByRole("button", { name: "Close PDF reader" }).click();
+  await expect(page.locator(".knowledge-pdf-frame")).toHaveCount(0);
+});
+
+test("File Garden PDF stays inside the Knowledge Centre on desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await installBackendStub(page);
+  await signIn(page);
+
+  await page.locator(".sidebar-nav button").filter({ hasText: "Knowledge centre" }).click();
+  await openPdfFromKnowledgeCentre(page);
+  const reader = page.locator(".knowledge-pdf-reader");
+  await expect(reader).toBeVisible();
+  const box = await reader.boundingBox();
+  expect(box?.width || 0).toBeLessThanOrEqual(1180);
+  expect(box?.height || 0).toBeLessThanOrEqual(920);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".knowledge-pdf-frame")).toHaveCount(0);
 });

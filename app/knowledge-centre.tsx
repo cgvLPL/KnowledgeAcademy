@@ -16,7 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 
 export type LessonStatus = "draft" | "published";
 
@@ -43,6 +43,13 @@ type KnowledgeCentreProps = {
   onDelete: (lesson: Lesson) => Promise<string | null>;
 };
 
+type ResourceInfo = {
+  isPdf: boolean;
+  isFileGarden: boolean;
+  isFileGardenPage: boolean;
+  viewerUrl: string;
+};
+
 const ALL_CATEGORIES = "All topics";
 const MAX_IMPORT_BYTES = 256 * 1024;
 
@@ -63,7 +70,94 @@ function lessonSearchText(lesson: Lesson) {
     .toLowerCase();
 }
 
+function resourceInfo(value: string): ResourceInfo {
+  try {
+    const parsed = new URL(value);
+    const hostname = parsed.hostname.toLowerCase();
+    let decodedPath = parsed.pathname;
+    try {
+      decodedPath = decodeURIComponent(parsed.pathname);
+    } catch {
+      decodedPath = parsed.pathname;
+    }
+    const isPdf = decodedPath.toLowerCase().endsWith(".pdf");
+    const isFileGarden = hostname === "file.garden" || hostname.endsWith(".file.garden");
+    const isFileGardenPage = hostname === "filegarden.com" || hostname.endsWith(".filegarden.com");
+    const viewerUrl = isPdf && !parsed.hash
+      ? `${parsed.toString()}#toolbar=1&navpanes=0&view=FitH`
+      : parsed.toString();
+    return { isPdf, isFileGarden, isFileGardenPage, viewerUrl };
+  } catch {
+    return { isPdf: false, isFileGarden: false, isFileGardenPage: false, viewerUrl: "" };
+  }
+}
+
+function PdfReader({
+  title,
+  url,
+  onClose,
+}: {
+  title: string;
+  url: string;
+  onClose: () => void;
+}) {
+  const info = resourceInfo(url);
+
+  useEffect(() => {
+    function keydown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  }, [onClose]);
+
+  return (
+    <div
+      className="knowledge-pdf-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        className="knowledge-pdf-reader"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="knowledge-pdf-title"
+      >
+        <header className="knowledge-pdf-toolbar">
+          <div>
+            <span className="knowledge-pdf-icon"><FileText size={18} /></span>
+            <span>
+              <small>{info.isFileGarden ? "FILE GARDEN PDF" : "PDF DOCUMENT"}</small>
+              <strong id="knowledge-pdf-title">{title}</strong>
+            </span>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close PDF reader">
+            <X size={19} />
+          </button>
+        </header>
+        <div className="knowledge-pdf-stage">
+          <iframe
+            className="knowledge-pdf-frame"
+            src={info.viewerUrl}
+            title={`${title} PDF`}
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <footer className="knowledge-pdf-footer">
+          <span>PDF controls are provided inside the viewer. The document stays inside CGV Knowledge Academy.</span>
+          <button className="secondary-button" type="button" onClick={onClose}>Close PDF</button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void }) {
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const resource = resourceInfo(lesson.resourceUrl);
+
   return (
     <div className="knowledge-modal-backdrop" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
@@ -86,14 +180,33 @@ function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void
         </header>
         <article className="knowledge-reader-body">{lesson.content}</article>
         {lesson.resourceUrl && (
-          <footer className="knowledge-reader-resource">
-            <div><Link2 size={19} /><span><strong>Related resource</strong><small>{lesson.resourceTitle || "Open lesson resource"}</small></span></div>
-            <a href={lesson.resourceUrl} target="_blank" rel="noreferrer noopener">
-              Open resource <ExternalLink size={16} />
-            </a>
+          <footer className="knowledge-reader-resource" data-resource-kind={resource.isPdf ? "pdf" : "link"}>
+            <div>
+              {resource.isPdf ? <FileText size={19} /> : <Link2 size={19} />}
+              <span>
+                <strong>{resource.isPdf ? "PDF resource" : "Related resource"}</strong>
+                <small>{lesson.resourceTitle || (resource.isPdf ? "Lesson PDF" : "Open lesson resource")}</small>
+              </span>
+            </div>
+            {resource.isPdf ? (
+              <button className="knowledge-resource-button" type="button" onClick={() => setPdfOpen(true)}>
+                Read PDF <BookOpen size={16} />
+              </button>
+            ) : (
+              <a href={lesson.resourceUrl} target="_blank" rel="noreferrer noopener">
+                Open resource <ExternalLink size={16} />
+              </a>
+            )}
           </footer>
         )}
       </section>
+      {pdfOpen && (
+        <PdfReader
+          title={lesson.resourceTitle || lesson.title}
+          url={lesson.resourceUrl}
+          onClose={() => setPdfOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -118,6 +231,7 @@ function LessonEditor({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [importedFile, setImportedFile] = useState("");
+  const resource = resourceInfo(resourceUrl.trim());
 
   async function importNotes(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -153,6 +267,10 @@ function LessonEditor({
       try {
         const parsed = new URL(trimmedUrl);
         if (!/^https?:$/u.test(parsed.protocol)) throw new Error("Unsupported protocol");
+        if (resourceInfo(trimmedUrl).isFileGardenPage) {
+          setError("For File Garden, paste the direct https://file.garden/... file link instead of the garden page.");
+          return;
+        }
       } catch {
         setError("Resource links must be valid http or https URLs.");
         return;
@@ -229,12 +347,30 @@ function LessonEditor({
           </div>
           <label className="knowledge-field">
             <span>Resource label <small>optional</small></span>
-            <input value={resourceTitle} onChange={(event) => setResourceTitle(event.target.value)} maxLength={160} placeholder="Guest service playbook" />
+            <input value={resourceTitle} onChange={(event) => setResourceTitle(event.target.value)} maxLength={160} placeholder="Guest service playbook.pdf" />
           </label>
           <label className="knowledge-field">
-            <span>Resource link <small>optional</small></span>
-            <input type="url" value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} maxLength={2048} placeholder="https://…" />
+            <span>PDF / resource link <small>optional</small></span>
+            <input type="url" value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} maxLength={2048} placeholder="https://file.garden/.../document.pdf" />
+            {resourceUrl.trim() && (
+              <small className={`knowledge-resource-hint ${resource.isPdf ? "pdf" : resource.isFileGardenPage ? "warning" : ""}`}>
+                {resource.isFileGardenPage
+                  ? "Use File Garden’s direct file.garden file URL, not the garden page URL."
+                  : resource.isFileGarden && resource.isPdf
+                    ? "File Garden PDF detected — it will open inside CGV Knowledge Academy."
+                    : resource.isPdf
+                      ? "PDF detected — it will open inside CGV Knowledge Academy."
+                      : "Non-PDF resources continue to open as external links."}
+              </small>
+            )}
           </label>
+          <div className="knowledge-filegarden-guide knowledge-field-wide">
+            <FileText size={19} />
+            <span>
+              <strong>Using File Garden for PDFs</strong>
+              <small>Upload the PDF manually in File Garden, copy its direct https://file.garden/.../file.pdf URL, then paste it above. CGV.Exams does not upload files to File Garden automatically.</small>
+            </span>
+          </div>
           <label className="knowledge-field knowledge-field-wide">
             <span>Visibility</span>
             <select value={status} onChange={(event) => setStatus(event.target.value as LessonStatus)}>
@@ -349,6 +485,7 @@ export default function KnowledgeCentre({ role, lessons, onSave, onDelete }: Kno
                 <div className="knowledge-card-meta">
                   <span><Clock3 size={14} /> {lesson.duration} min</span>
                   <span>Updated {lessonDate(lesson.updatedAt)}</span>
+                  {resourceInfo(lesson.resourceUrl).isPdf && <span className="knowledge-card-pdf"><FileText size={13} /> PDF</span>}
                 </div>
               </div>
               <footer>
