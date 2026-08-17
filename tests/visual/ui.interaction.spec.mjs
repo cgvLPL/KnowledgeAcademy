@@ -186,17 +186,36 @@ test("desktop sidebar actions use the same interaction controller", async ({ pag
   await expect(page.locator(".login-page")).toBeVisible();
 });
 
-test("File Garden PDF stays inside the Knowledge Centre on mobile", async ({ page }) => {
+test("File Garden PDF is usable as an immersive reader on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await installBackendStub(page);
   await signIn(page);
 
   await page.locator(".mobile-nav button").filter({ hasText: "Learn" }).click();
   await openPdfFromKnowledgeCentre(page);
-  await expect(page.locator(".knowledge-pdf-reader")).toHaveCSS("width", "390px");
+
+  const backdrop = page.locator(".knowledge-pdf-backdrop");
+  const reader = page.locator(".knowledge-pdf-reader");
+  const toolbar = page.locator(".knowledge-pdf-toolbar");
+  const stage = page.locator(".knowledge-pdf-stage");
+  const frame = page.locator(".knowledge-pdf-frame");
+
+  const backdropBox = await backdrop.boundingBox();
+  expect(backdropBox).toMatchObject({ x: 0, y: 0, width: 390, height: 844 });
+
+  const readerBox = await reader.boundingBox();
+  expect(readerBox).toMatchObject({ x: 0, y: 0, width: 390, height: 844 });
+
+  const toolbarBox = await toolbar.boundingBox();
+  expect(toolbarBox?.height || 999).toBeLessThanOrEqual(64);
+
+  const stageBox = await stage.boundingBox();
+  expect(stageBox?.height || 0).toBeGreaterThan(770);
+
   await expect(page.locator(".knowledge-pdf-footer")).toBeHidden();
+  await expect(frame).toHaveCSS("touch-action", "pan-x pan-y pinch-zoom");
   await page.getByRole("button", { name: "Close PDF reader" }).click();
-  await expect(page.locator(".knowledge-pdf-frame")).toHaveCount(0);
+  await expect(frame).toHaveCount(0);
 });
 
 test("File Garden PDF stays inside the Knowledge Centre on desktop", async ({ page }) => {
