@@ -66,6 +66,7 @@ import "./login-loading-indicator.css";
 import "./archived-courses.css";
 import "./login-static-backdrop.css";
 import "./knowledge-centre.css";
+import "./knowledge-pdf-reader.css";
 import "./visual-stability-release.css";
 import "./admin-course-card-mobile-fix.css";
 import "./productivity-insights-release.css";
