@@ -9,6 +9,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const backend = read("google-apps-script/Code.gs");
 const client = read("app/exam-client.tsx");
 const layout = read("app/layout.tsx");
+const interactions = read("app/app-interactions.tsx");
 const resultSync = read("app/result-sync-enhancer.tsx");
 const runtime = read("app/runtime-functionality-enhancer.tsx");
 const adminTools = read("app/admin-functionality-enhancer.tsx");
@@ -192,18 +193,22 @@ test("remaining global controls have explicit behavior", () => {
   for (const label of [
     "notifications",
     "forgot password?",
-    "help centre",
     "export scoreboard",
     "duplicate question",
   ]) {
     assert.match(safetyNet.toLowerCase(), new RegExp(label.replace(/[?]/g, "\\?")));
+  }
+  for (const label of ["open menu", "help centre", "settings", "sign out"]) {
+    assert.match(interactions.toLowerCase(), new RegExp(label));
   }
   assert.match(adminTools, /\.user-chip/);
 });
 
 test("settings panel persists and applies real interface preferences", () => {
   assert.match(layout, /SettingsEnhancer/);
+  assert.match(layout, /AppInteractionProvider/);
   assert.match(layout, /import "\.\/settings-enhancer\.css";/);
+  assert.match(settings, /useAppInteractions/);
   assert.match(settings, /cgv-exams-interface-settings-v1/);
   assert.match(settings, /cgv-exams-auto-refresh/);
   assert.match(settings, /cgv-density-compact/);

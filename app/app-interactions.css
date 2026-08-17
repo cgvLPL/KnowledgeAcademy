@@ -1,0 +1,7 @@
+/* React-owned interaction controller wrapper.
+ * display: contents keeps the provider out of the visual/layout tree while its
+ * capture handler owns sidebar, settings, help, and sign-out coordination.
+ */
+[data-cgv-interaction-root] {
+  display: contents;
+}

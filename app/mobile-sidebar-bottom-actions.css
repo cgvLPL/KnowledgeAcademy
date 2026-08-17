@@ -29,7 +29,15 @@
     pointer-events: none !important;
   }
 
-  .button-safety-menu-overlay {
+  /* The backdrop is an outside-tap target only. Its left edge starts where the
+     84vw / 330px drawer ends, so it can never intercept taps inside the drawer
+     even when an ancestor creates a separate stacking context. */
+  body.cgv-mobile-menu-open .button-safety-menu-overlay {
+    bottom: 0 !important;
+    left: min(84vw, 330px) !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: auto !important;
     z-index: 990 !important;
   }
 }

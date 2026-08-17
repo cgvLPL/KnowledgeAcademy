@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAppInteractions } from "./app-interactions";
 import { APP_VERSION_LABEL } from "./app-version";
 
 const STORAGE_KEY = "cgv-exams-interface-settings-v1";
@@ -21,14 +22,6 @@ const defaults: Preferences = {
   autoRefresh: true,
   language: "en",
 };
-
-function normalize(value: string | null | undefined) {
-  return (value || "").replace(/\s+/g, " ").trim().toLowerCase();
-}
-
-function buttonLabel(button: HTMLButtonElement) {
-  return normalize(button.getAttribute("aria-label") || button.textContent);
-}
 
 function readPreferences(): Preferences {
   try {
@@ -60,42 +53,34 @@ function applyPreferences(preferences: Preferences) {
 }
 
 export default function SettingsEnhancer() {
-  const [open, setOpen] = useState(false);
+  const { settingsOpen, closeSettings } = useAppInteractions();
   const [preferences, setPreferences] = useState<Preferences>(defaults);
   const [saved, setSaved] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     applyPreferences(readPreferences());
   }, []);
 
   useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      const button = target.closest<HTMLButtonElement>("button");
-      if (!button || button.closest("[data-cgv-settings-panel]")) return;
-      if (!(["settings", "pengaturan"] as string[]).includes(buttonLabel(button))) return;
+    if (!settingsOpen) return;
 
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-      document.body.classList.remove("cgv-mobile-menu-open");
+    restoreFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+
+    const frame = window.requestAnimationFrame(() => {
       setPreferences(readPreferences());
       setSaved(false);
-      setOpen(true);
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("click", onClick, true);
-    document.addEventListener("keydown", onKeyDown);
+      closeButtonRef.current?.focus();
+    });
     return () => {
-      document.removeEventListener("click", onClick, true);
-      document.removeEventListener("keydown", onKeyDown);
+      window.cancelAnimationFrame(frame);
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
     };
-  }, []);
+  }, [settingsOpen]);
 
   function update<K extends keyof Preferences>(key: K, value: Preferences[K]) {
     const next = { ...preferences, [key]: value };
@@ -118,14 +103,14 @@ export default function SettingsEnhancer() {
     window.setTimeout(() => setSaved(false), 1800);
   }
 
-  if (!open) return null;
+  if (!settingsOpen) return null;
 
   return (
     <div
       className="cgv-settings-backdrop"
       data-cgv-settings-panel
       role="presentation"
-      onMouseDown={() => setOpen(false)}
+      onMouseDown={closeSettings}
     >
       <section
         className="cgv-settings-panel"
@@ -135,10 +120,11 @@ export default function SettingsEnhancer() {
         onMouseDown={(event) => event.stopPropagation()}
       >
         <button
+          ref={closeButtonRef}
           type="button"
           className="cgv-settings-close"
           aria-label="Close settings"
-          onClick={() => setOpen(false)}
+          onClick={closeSettings}
         >
           ×
         </button>
@@ -225,7 +211,7 @@ export default function SettingsEnhancer() {
         <div className="cgv-settings-actions">
           <button type="button" className="secondary-button" onClick={reset}>Reset defaults</button>
           <button type="button" className="secondary-button" onClick={refreshNow}>Refresh data now</button>
-          <button type="button" className="primary-button" onClick={() => setOpen(false)}>Done</button>
+          <button type="button" className="primary-button" onClick={closeSettings}>Done</button>
         </div>
 
         <div className="cgv-settings-status" role="status" aria-live="polite">
