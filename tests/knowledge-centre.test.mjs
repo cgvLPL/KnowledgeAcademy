@@ -8,6 +8,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "u
 const client = read("app/exam-client.tsx");
 const knowledge = read("app/knowledge-centre.tsx");
 const knowledgeCss = read("app/knowledge-centre.css");
+const pdfCss = read("app/knowledge-pdf-reader.css");
 const backend = read("google-apps-script/Code.gs");
 const proxy = read("app/api/sheets/route.ts");
 const layout = read("app/layout.tsx");
@@ -49,6 +50,39 @@ test("participants receive published lessons only and can safely review resource
   assert.doesNotMatch(knowledge, /dangerouslySetInnerHTML/);
   assert.match(knowledge, /knowledge-reader-body/);
   assert.match(knowledge, /Review lesson/);
+});
+
+test("File Garden direct PDF links open inside the Knowledge Centre", () => {
+  assert.match(knowledge, /hostname === "file\.garden" \|\| hostname\.endsWith\("\.file\.garden"\)/);
+  assert.match(knowledge, /decodedPath\.toLowerCase\(\)\.endsWith\("\.pdf"\)/);
+  assert.match(knowledge, /#toolbar=1&navpanes=0&view=FitH/);
+  assert.match(knowledge, /className="knowledge-resource-button"/);
+  assert.match(knowledge, /Read PDF/);
+  assert.match(knowledge, /className="knowledge-pdf-frame"/);
+  assert.match(knowledge, /src=\{info\.viewerUrl\}/);
+  assert.match(knowledge, /referrerPolicy="no-referrer"/);
+  assert.match(knowledge, /PDF controls are provided inside the viewer\. The document stays inside CGV Knowledge Academy\./);
+});
+
+test("admin guidance rejects File Garden garden-page URLs and keeps uploads manual", () => {
+  assert.match(knowledge, /hostname === "filegarden\.com" \|\| hostname\.endsWith\("\.filegarden\.com"\)/);
+  assert.match(knowledge, /paste the direct https:\/\/file\.garden\/\.\.\. file link instead of the garden page/);
+  assert.match(knowledge, /placeholder="https:\/\/file\.garden\/\.\.\.\/document\.pdf"/);
+  assert.match(knowledge, /File Garden PDF detected — it will open inside CGV Knowledge Academy\./);
+  assert.match(knowledge, /Upload the PDF manually in File Garden/);
+  assert.match(knowledge, /CGV\.Exams does not upload files to File Garden automatically/);
+  assert.doesNotMatch(knowledge, /fetch\([^\n]*file\.garden/);
+});
+
+test("internal PDF reader stays responsive on desktop and phones", () => {
+  assert.ok(layout.includes('import "./knowledge-pdf-reader.css";'));
+  assert.ok(layout.indexOf('import "./knowledge-pdf-reader.css";') > layout.indexOf('import "./knowledge-centre.css";'));
+  assert.match(pdfCss, /\.knowledge-pdf-reader\s*\{[\s\S]*?height:\s*min\(92dvh, 920px\)/);
+  assert.match(pdfCss, /\.knowledge-pdf-frame\s*\{[\s\S]*?height:\s*100%[\s\S]*?width:\s*100%/);
+  assert.match(pdfCss, /@media \(max-width: 760px\)[\s\S]*?\.knowledge-pdf-reader\s*\{[\s\S]*?height:\s*100dvh/);
+  assert.match(pdfCss, /env\(safe-area-inset-top\)/);
+  assert.match(pdfCss, /env\(safe-area-inset-bottom\)/);
+  assert.match(pdfCss, /@media \(forced-colors: active\)/);
 });
 
 test("lesson uploads and responsive layout follow the existing app conventions", () => {
