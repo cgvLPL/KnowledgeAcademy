@@ -17,6 +17,10 @@ Date: 2026-08-17
 - Existing lesson resource URLs can be trimmed and audited without deleting lesson content.
 - The sync audit reports total lessons, normalized resources, File Garden resources, PDF resources, and invalid legacy lesson IDs.
 - The local Google Sheets API bridge now allows the authenticated Knowledge Centre sync action.
+- Desktop PDF viewing now stays inside the main workspace so the persistent sidebar and top header remain visible.
+- Mobile PDF viewing now uses an immersive full-screen document mode instead of squeezing the document between the app header and bottom navigation.
+- The mobile PDF footer is removed in favor of the compact close toolbar, giving the document substantially more vertical reading space.
+- PDF stage/frame touch behavior now explicitly allows panning and pinch zoom while containing overscroll inside the reader.
 
 ## File Garden policy
 
@@ -27,6 +31,8 @@ Date: 2026-08-17
 ## Verification
 
 - Added `tests/knowledge-centre-gas-sync.test.mjs` to cover Apps Script persistence, File Garden validation, response metadata, workspace synchronization, maintenance sync behavior, and schema enforcement.
+- Extended Knowledge Centre regression coverage for desktop app-chrome preservation and immersive mobile PDF layout.
+- Added a Playwright mobile PDF usability check that requires the reader to occupy the full 390×844 viewport, keep a compact toolbar, hide the desktop footer, preserve touch gestures, and provide more than 770px of document stage height.
 - Verify the complete application with GitHub Actions before merge.
 
 ## Deployment
