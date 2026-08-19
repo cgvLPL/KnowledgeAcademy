@@ -124,7 +124,8 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
   }, []);
 
   useEffect(() => {
-    if (!documentProxy || !canvasRef.current || !stageRef.current) return;
+    const pdfDocument = documentProxy;
+    if (!pdfDocument || !canvasRef.current || !stageRef.current) return;
     let cancelled = false;
     const canvas = canvasRef.current;
     const stage = stageRef.current;
@@ -133,7 +134,7 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
       try {
         setRendering(true);
         renderTaskRef.current?.cancel?.();
-        const page = await documentProxy.getPage(pageNumber);
+        const page = await pdfDocument.getPage(pageNumber);
         if (cancelled) return;
 
         const baseViewport = page.getViewport({ scale: 1 });
