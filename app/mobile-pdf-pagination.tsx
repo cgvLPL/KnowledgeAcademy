@@ -68,12 +68,6 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
     let cancelled = false;
     let loadedDocument: PdfDocument | null = null;
 
-    setLoading(true);
-    setError("");
-    setPageNumber(1);
-    setPageCount(0);
-    setDocumentProxy(null);
-
     async function loadDocument() {
       try {
         const moduleUrl = PDFJS_MODULE_URL;
@@ -98,9 +92,19 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
       }
     }
 
-    void loadDocument();
+    const resetFrame = window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError("");
+      setPageNumber(1);
+      setPageCount(0);
+      setDocumentProxy(null);
+      void loadDocument();
+    });
+
     return () => {
       cancelled = true;
+      window.cancelAnimationFrame(resetFrame);
       renderTaskRef.current?.cancel?.();
       void loadingTaskRef.current?.destroy?.();
       if (loadedDocument) void loadedDocument.destroy?.();
