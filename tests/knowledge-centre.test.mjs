@@ -74,14 +74,19 @@ test("admin guidance rejects File Garden garden-page URLs and keeps uploads manu
   assert.doesNotMatch(knowledge, /fetch\([^\n]*file\.garden/);
 });
 
-test("internal PDF reader stays responsive on desktop and phones", () => {
+test("desktop PDF reader preserves app chrome while mobile uses the full usable viewport", () => {
   assert.ok(layout.includes('import "./knowledge-pdf-reader.css";'));
   assert.ok(layout.indexOf('import "./knowledge-pdf-reader.css";') > layout.indexOf('import "./knowledge-centre.css";'));
-  assert.match(pdfCss, /\.knowledge-pdf-reader\s*\{[\s\S]*?height:\s*min\(92dvh, 920px\)/);
-  assert.match(pdfCss, /\.knowledge-pdf-frame\s*\{[\s\S]*?height:\s*100%[\s\S]*?width:\s*100%/);
-  assert.match(pdfCss, /@media \(max-width: 760px\)[\s\S]*?\.knowledge-pdf-reader\s*\{[\s\S]*?height:\s*100dvh/);
+  assert.match(pdfCss, /\.knowledge-pdf-backdrop\s*\{[\s\S]*?left:\s*242px;[\s\S]*?top:\s*82px;/);
+  assert.match(pdfCss, /\.knowledge-pdf-reader\s*\{[\s\S]*?height:\s*min\(920px, 100%\)/);
+  assert.match(pdfCss, /\.knowledge-pdf-frame\s*\{[\s\S]*?height:\s*100%[\s\S]*?touch-action:\s*pan-x pan-y pinch-zoom;[\s\S]*?width:\s*100%/);
+  assert.match(pdfCss, /@media \(max-width: 760px\)[\s\S]*?\.knowledge-pdf-backdrop\s*\{[\s\S]*?bottom:\s*0;[\s\S]*?left:\s*0;[\s\S]*?right:\s*0;[\s\S]*?top:\s*0;[\s\S]*?z-index:\s*2200;/);
+  assert.match(pdfCss, /@media \(max-width: 760px\)[\s\S]*?\.knowledge-pdf-reader\s*\{[\s\S]*?grid-template-rows:\s*auto minmax\(0, 1fr\);[\s\S]*?height:\s*100dvh;/);
+  assert.match(pdfCss, /@media \(max-width: 760px\)[\s\S]*?\.knowledge-pdf-footer\s*\{[\s\S]*?display:\s*none;/);
   assert.match(pdfCss, /env\(safe-area-inset-top\)/);
-  assert.match(pdfCss, /env\(safe-area-inset-bottom\)/);
+  assert.match(pdfCss, /env\(safe-area-inset-left\)/);
+  assert.match(pdfCss, /env\(safe-area-inset-right\)/);
+  assert.match(pdfCss, /overscroll-behavior:\s*contain/);
   assert.match(pdfCss, /@media \(forced-colors: active\)/);
 });
 
@@ -95,4 +100,12 @@ test("lesson uploads and responsive layout follow the existing app conventions",
   assert.match(knowledgeCss, /@media \(max-width: 760px\)/);
   assert.match(knowledgeCss, /grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\) !important/);
   assert.match(knowledgeCss, /env\(safe-area-inset-bottom\)/);
+});
+
+
+test("PDF reader is portaled above app chrome instead of nesting inside the lesson modal", () => {
+  assert.match(knowledge, /import \{ createPortal \} from \"react-dom\"/);
+  assert.match(knowledge, /pdfOpen && typeof document !== \"undefined\" && createPortal\(/);
+  assert.match(knowledge, /document\.body,/);
+  assert.doesNotMatch(pdfCss, /knowledge-modal-backdrop:has\(\.knowledge-pdf-backdrop\)/);
 });

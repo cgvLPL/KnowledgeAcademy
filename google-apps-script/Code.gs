@@ -70,6 +70,7 @@ const API_ACTIONS = Object.freeze({
   adminSaveCourse: adminSaveCourse_,
   adminSaveLesson: adminSaveLesson_,
   adminDeleteLesson: adminDeleteLesson_,
+  adminSyncKnowledgeCentre: adminSyncKnowledgeCentre_,
   adminDuplicateCourse: adminDuplicateCourse_,
   adminDeleteCourse: adminDeleteCourse_,
   adminSetCourseStatus: adminSetCourseStatus_,
@@ -275,6 +276,7 @@ function getKnowledgeCentre_(body) {
     ok: true,
     user: publicUser_(context.user),
     lessons: lessonsForUser_(context.user),
+    sync: knowledgeCentreSyncMeta_(),
   };
 }
 
@@ -315,6 +317,7 @@ function participantHomeForUser_(user) {
     user: publicUser_(user),
     courses: courses,
     lessons: lessonsForUser_(user),
+    knowledgeCentre: knowledgeCentreSyncMeta_(),
     history: history,
     summary: summarizeAttempts_(history),
   };
@@ -608,6 +611,7 @@ function adminDashboardForUser_(user, courseId) {
       return result;
     }),
     lessons: lessonsForUser_(user),
+    knowledgeCentre: knowledgeCentreSyncMeta_(),
     participants: participants.map(function (user) {
       const result = publicUser_(user);
       const stats = participantStats[user.user_id] || { attempts: 0, scoreTotal: 0 };
@@ -1018,6 +1022,118 @@ function adminDeleteCourse_(body) {
   });
 }
 
+function knowledgeResourceInfo_(value) {
+  const url = String(value || "").trim();
+  const empty = {
+    url: url,
+    valid: !url,
+    type: "",
+    provider: "",
+    isPdf: false,
+    isFileGarden: false,
+    isFileGardenPage: false,
+  };
+  if (!url) return empty;
+  const match = url.match(/^(https?):\/\/([^\/?#]+)([^?#]*)/i);
+  if (!match) return Object.assign({}, empty, { valid: false });
+  const hostname = String(match[2] || "").toLowerCase().replace(/\.$/, "");
+  let pathname = String(match[3] || "");
+  try {
+    pathname = decodeURIComponent(pathname);
+  } catch (error) {
+    // Keep the encoded path; PDF detection still works for normal direct URLs.
+  }
+  const isPdf = /\.pdf$/i.test(pathname);
+  const isFileGarden = hostname === "file.garden" || /\.file\.garden$/i.test(hostname);
+  const isFileGardenPage = hostname === "filegarden.com" || /\.filegarden\.com$/i.test(hostname);
+  return {
+    url: url,
+    valid: true,
+    type: isPdf ? "pdf" : "link",
+    provider: isFileGarden ? "filegarden" : "external",
+    isPdf: isPdf,
+    isFileGarden: isFileGarden,
+    isFileGardenPage: isFileGardenPage,
+  };
+}
+
+function normalizeKnowledgeResourceUrl_(value) {
+  const url = String(value || "").trim();
+  if (!url) return "";
+  if (url.length > 2048) throw new Error("Resource links must be 2,048 characters or fewer.");
+  const resource = knowledgeResourceInfo_(url);
+  if (!resource.valid) throw new Error("Resource links must use http or https.");
+  if (resource.isFileGardenPage) {
+    throw new Error("For File Garden, use the direct https://file.garden/... file URL instead of the garden page.");
+  }
+  return resource.url;
+}
+
+function knowledgeCentreSyncMeta_() {
+  return {
+    backend: "google-apps-script",
+    sheet: APP.sheets.lessons,
+    revision: "2026.08.17-knowledge-centre-filegarden-sync",
+    storesResourceTitle: true,
+    storesResourceUrl: true,
+    fileGardenDirectUrls: true,
+    fileGardenUploadsAreManual: true,
+  };
+}
+
+function syncKnowledgeCentreData_() {
+  const sheet = ensureDataSheet_(activeSpreadsheet_(), APP.sheets.lessons, HEADERS.Lessons);
+  const lessons = rowsAsObjects_(sheet);
+  const invalidLessonIds = [];
+  let normalizedResources = 0;
+  let fileGardenResources = 0;
+  let pdfResources = 0;
+
+  lessons.forEach(function (lesson) {
+    const storedUrl = String(lesson.resource_url || "");
+    const trimmedUrl = storedUrl.trim();
+    if (!trimmedUrl) return;
+    const resource = knowledgeResourceInfo_(trimmedUrl);
+    if (!resource.valid || resource.isFileGardenPage) {
+      invalidLessonIds.push(String(lesson.lesson_id || ""));
+      return;
+    }
+    if (resource.isFileGarden) fileGardenResources += 1;
+    if (resource.isPdf) pdfResources += 1;
+    if (trimmedUrl !== storedUrl) {
+      updateObjectRow_(sheet, lesson.__row, {
+        resource_url: trimmedUrl,
+        updated_at: new Date(),
+      });
+      normalizedResources += 1;
+    }
+  });
+
+  SpreadsheetApp.flush();
+  return {
+    ok: true,
+    lessons: lessons.length,
+    normalizedResources: normalizedResources,
+    fileGardenResources: fileGardenResources,
+    pdfResources: pdfResources,
+    invalidLessonIds: invalidLessonIds,
+    sync: knowledgeCentreSyncMeta_(),
+  };
+}
+
+function adminSyncKnowledgeCentre_(body) {
+  requireSession_(body.token, "admin");
+  return withScriptLock_(30000, syncKnowledgeCentreData_);
+}
+
+// Run once from the Apps Script editor after replacing Code.gs if you want an
+// immediate audit/normalization of existing lesson resource URLs. Normal app
+// traffic also uses the same canonical Lessons sheet and validation helpers.
+function syncKnowledgeCentreBackend() {
+  beginRequest_();
+  return withScriptLock_(30000, syncKnowledgeCentreData_);
+}
+
 function adminSaveLesson_(body) {
   const context = requireSession_(body.token, "admin");
   const input = body.lesson || {};
@@ -1026,7 +1142,7 @@ function adminSaveLesson_(body) {
   const content = String(input.content || "").trim();
   const category = String(input.category || "General").trim() || "General";
   const resourceTitle = String(input.resourceTitle || "").trim();
-  const resourceUrl = String(input.resourceUrl || "").trim();
+  const resourceUrl = normalizeKnowledgeResourceUrl_(input.resourceUrl);
   if (!title) throw new Error("Lesson title is required.");
   if (!summary) throw new Error("Lesson summary is required.");
   if (!content) throw new Error("Lesson content is required.");
@@ -1035,10 +1151,6 @@ function adminSaveLesson_(body) {
   if (content.length > 45000) throw new Error("Lesson content must be 45,000 characters or fewer.");
   if (category.length > 80) throw new Error("Lesson topics must be 80 characters or fewer.");
   if (resourceTitle.length > 160) throw new Error("Resource labels must be 160 characters or fewer.");
-  if (resourceUrl.length > 2048) throw new Error("Resource links must be 2,048 characters or fewer.");
-  if (resourceUrl && !/^https?:\/\//i.test(resourceUrl)) {
-    throw new Error("Resource links must use http or https.");
-  }
   const status = String(input.status || "published").toLowerCase() === "published"
     ? "published"
     : "draft";
@@ -1640,9 +1752,7 @@ function questionsForCourse_(courseId) {
 }
 
 function lessonsSheet_() {
-  const spreadsheet = activeSpreadsheet_();
-  return spreadsheet.getSheetByName(APP.sheets.lessons) ||
-    ensureDataSheet_(spreadsheet, APP.sheets.lessons, HEADERS.Lessons);
+  return ensureDataSheet_(activeSpreadsheet_(), APP.sheets.lessons, HEADERS.Lessons);
 }
 
 function lessonsForUser_(user) {
@@ -1696,6 +1806,7 @@ function publicUser_(user) {
 }
 
 function publicLesson_(lesson) {
+  const resource = knowledgeResourceInfo_(lesson.resource_url);
   return {
     id: lesson.lesson_id,
     title: lesson.title,
@@ -1704,7 +1815,12 @@ function publicLesson_(lesson) {
     category: lesson.category || "General",
     duration: Math.max(1, Number(lesson.duration_min || 5)),
     resourceTitle: lesson.resource_title || "",
-    resourceUrl: lesson.resource_url || "",
+    resourceUrl: resource.url,
+    resourceType: resource.type,
+    resourceProvider: resource.provider,
+    resourceIsPdf: resource.isPdf,
+    resourceIsFileGarden: resource.isFileGarden,
+    resourceValid: !resource.url || (resource.valid && !resource.isFileGardenPage),
     status: String(lesson.status || "draft").toLowerCase() === "published" ? "published" : "draft",
     createdAt: toIso_(lesson.created_at),
     updatedAt: toIso_(lesson.updated_at),

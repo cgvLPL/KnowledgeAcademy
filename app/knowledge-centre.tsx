@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 
 export type LessonStatus = "draft" | "published";
 
@@ -200,12 +201,13 @@ function LessonReader({ lesson, onClose }: { lesson: Lesson; onClose: () => void
           </footer>
         )}
       </section>
-      {pdfOpen && (
+      {pdfOpen && typeof document !== "undefined" && createPortal(
         <PdfReader
           title={lesson.resourceTitle || lesson.title}
           url={lesson.resourceUrl}
           onClose={() => setPdfOpen(false)}
-        />
+        />,
+        document.body,
       )}
     </div>
   );
