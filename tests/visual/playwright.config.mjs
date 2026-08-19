@@ -6,7 +6,7 @@ const dist = path.join(root, "dist/client");
 
 export default defineConfig({
   testDir: ".",
-  testMatch: /ui\.(visual|interaction)\.spec\.mjs/,
+  testMatch: /ui\.(visual|interaction|mobile-pdf)\.spec\.mjs/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
