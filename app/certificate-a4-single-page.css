@@ -1,0 +1,202 @@
+/* Final certificate print sizing guard.
+ *
+ * Keep the certificate as one physical A4 portrait sheet regardless of
+ * viewport size, mobile preview rules, or browser print pagination quirks.
+ * The certificate itself remains exactly 210mm × 297mm; the fixed print root
+ * removes it from normal document flow so Chromium/WebKit cannot create a
+ * phantom second page from rounding at the page boundary.
+ */
+
+@media print {
+  @page {
+    margin: 0;
+    size: 210mm 297mm;
+  }
+
+  html.cgv-certificate-printing,
+  html.cgv-certificate-printing body {
+    background: #ffffff !important;
+    block-size: 297mm !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 0 !important;
+    min-height: 0 !important;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    width: 210mm !important;
+  }
+
+  html.cgv-certificate-printing body {
+    position: relative !important;
+  }
+
+  html.cgv-certificate-printing body > :not(.certificate-backdrop) {
+    display: none !important;
+  }
+
+  html.cgv-certificate-printing .certificate-backdrop {
+    background: #ffffff !important;
+    block-size: 297mm !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    position: fixed !important;
+    width: 210mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-dialog,
+  html.cgv-certificate-printing .certificate-scroll {
+    background: #ffffff !important;
+    block-size: 297mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    width: 210mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-toolbar {
+    display: none !important;
+  }
+
+  html.cgv-certificate-printing .completion-certificate {
+    aspect-ratio: auto !important;
+    block-size: 297mm !important;
+    box-sizing: border-box !important;
+    break-after: avoid-page !important;
+    break-before: avoid-page !important;
+    break-inside: avoid-page !important;
+    box-shadow: none !important;
+    contain: layout paint style !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+    height: 297mm !important;
+    inline-size: 210mm !important;
+    margin: 0 !important;
+    max-block-size: 297mm !important;
+    max-height: 297mm !important;
+    max-inline-size: 210mm !important;
+    max-width: 210mm !important;
+    min-block-size: 297mm !important;
+    min-height: 297mm !important;
+    min-inline-size: 210mm !important;
+    min-width: 210mm !important;
+    overflow: hidden !important;
+    padding: 16mm 17mm 14mm !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    print-color-adjust: exact !important;
+    width: 210mm !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  html.cgv-certificate-printing .completion-certificate::after {
+    inset: 6mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-document-header {
+    min-height: 14mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy {
+    align-self: start !important;
+    margin-top: 24mm !important;
+    max-block-size: 128mm !important;
+    max-height: 128mm !important;
+    max-width: 72% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy h2 {
+    font-size: 11mm !important;
+    line-height: 0.98 !important;
+  }
+
+  html.cgv-certificate-printing .certificate-intro {
+    margin: 8mm 0 2mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy h3 {
+    font-size: min(var(--certificate-name-print-size, 12mm), 12mm) !important;
+    line-height: 1.02 !important;
+    max-block-size: 25mm !important;
+    max-height: 25mm !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-statement {
+    margin: 7mm 0 2mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-copy h4 {
+    font-size: min(var(--certificate-course-print-size, 7.5mm), 7.5mm) !important;
+    line-height: 1.1 !important;
+    max-block-size: 19mm !important;
+    max-height: 19mm !important;
+    overflow: hidden !important;
+  }
+
+  html.cgv-certificate-printing .certificate-details {
+    align-self: end !important;
+    margin-top: 0 !important;
+    min-height: 17mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-details > div {
+    padding: 4mm 3mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-footer {
+    align-self: end !important;
+    gap: 7mm !important;
+    grid-template-columns: 1.3fr 1.1fr auto !important;
+    margin: 0 !important;
+    max-block-size: 31mm !important;
+    max-height: 31mm !important;
+    overflow: hidden !important;
+    padding-top: 7mm !important;
+  }
+
+  html.cgv-certificate-printing .certificate-seal {
+    height: 23mm !important;
+    width: 23mm !important;
+  }
+
+  html.cgv-certificate-printing .completion-certificate,
+  html.cgv-certificate-printing .completion-certificate > * {
+    orphans: 1 !important;
+    widows: 1 !important;
+  }
+}
