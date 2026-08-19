@@ -44,6 +44,7 @@ import "./final-loading-viewport-fix.css";
 import "./admin-header-consistency.css";
 import "./brand-visibility-polish.css";
 import "./certificate.css";
+import "./certificate-visibility-fix.css";
 import "./login-text-placement.css";
 import "./brand-system.css";
 import "./logo-intro-animation.css";
