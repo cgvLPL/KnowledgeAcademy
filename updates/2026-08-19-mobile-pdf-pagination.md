@@ -8,6 +8,7 @@ Date: 2026-08-19
 - Added explicit Previous and Next page controls with a live `current / total` page counter.
 - Added 75%–200% zoom controls for small-screen reading.
 - Hid the app topbar and bottom navigation while the immersive mobile PDF reader is open so they cannot cover document controls.
+- Kept the reader toolbar and page controls inside iPhone safe areas, above Safari/browser chrome where the web viewport permits it.
 - Kept the existing embedded browser PDF viewer on desktop and tablet widths above 760px.
 - Added retry handling plus an emergency browser-open fallback if the PDF host blocks in-app rendering.
 
