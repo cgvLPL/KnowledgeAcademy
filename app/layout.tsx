@@ -11,6 +11,7 @@ import SettingsEnhancer from "./settings-enhancer";
 import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
 import LanguageEnhancer from "./language-enhancer";
+import MobilePdfPagination from "./mobile-pdf-pagination";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -67,6 +68,7 @@ import "./archived-courses.css";
 import "./login-static-backdrop.css";
 import "./knowledge-centre.css";
 import "./knowledge-pdf-reader.css";
+import "./mobile-pdf-pagination.css";
 import "./visual-stability-release.css";
 import "./admin-course-card-mobile-fix.css";
 import "./productivity-insights-release.css";
@@ -160,6 +162,7 @@ export default function RootLayout({
           <RuntimeFunctionalityEnhancer />
           <SessionScrollEnhancer />
           <LanguageEnhancer />
+          <MobilePdfPagination />
         </AppInteractionProvider>
       </body>
     </html>
