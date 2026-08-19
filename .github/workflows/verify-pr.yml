@@ -46,7 +46,7 @@ jobs:
       - name: Install visual regression browser
         run: |
           npm install --no-save --package-lock=false @playwright/test@1.55.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
 
       - name: Run responsive visual regression suite
         run: npx playwright test --config tests/visual/playwright.config.mjs
