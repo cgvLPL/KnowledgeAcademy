@@ -1,0 +1,96 @@
+/* Certificate document colour isolation.
+ * The certificate is a light paper surface inside the dark application. Later
+ * app-wide heading rules intentionally force white text, so the document needs
+ * its own high-specificity palette to prevent those rules from bleeding into
+ * the printable certificate. */
+
+.completion-certificate {
+  color: #2b2d2b !important;
+}
+
+.completion-certificate .certificate-logo-text {
+  color: #111312 !important;
+  -webkit-text-fill-color: #111312 !important;
+}
+
+.completion-certificate .certificate-reference span {
+  color: #6d716c !important;
+  -webkit-text-fill-color: #6d716c !important;
+}
+
+.completion-certificate .certificate-reference strong,
+.completion-certificate .certificate-details strong {
+  color: #292c29 !important;
+  -webkit-text-fill-color: #292c29 !important;
+}
+
+.completion-certificate .certificate-kicker {
+  color: #e83a31 !important;
+  -webkit-text-fill-color: #e83a31 !important;
+}
+
+.completion-certificate .certificate-copy h2 {
+  color: #2b2d2b !important;
+  -webkit-text-fill-color: #2b2d2b !important;
+}
+
+.completion-certificate .certificate-intro {
+  color: #656963 !important;
+  -webkit-text-fill-color: #656963 !important;
+}
+
+.completion-certificate .certificate-copy h3 {
+  color: #252825 !important;
+  -webkit-text-fill-color: #252825 !important;
+}
+
+.completion-certificate .certificate-statement {
+  color: #626660 !important;
+  -webkit-text-fill-color: #626660 !important;
+}
+
+.completion-certificate .certificate-copy h4 {
+  color: #292c29 !important;
+  -webkit-text-fill-color: #292c29 !important;
+}
+
+.completion-certificate .certificate-category {
+  color: #e44033 !important;
+  -webkit-text-fill-color: #e44033 !important;
+}
+
+.completion-certificate .certificate-details span,
+.completion-certificate .certificate-branch span,
+.completion-certificate .certificate-signature small,
+.completion-certificate .certificate-branch small {
+  color: #797d77 !important;
+  -webkit-text-fill-color: #797d77 !important;
+}
+
+.completion-certificate .certificate-signature strong,
+.completion-certificate .certificate-branch strong {
+  color: #2d302d !important;
+  -webkit-text-fill-color: #2d302d !important;
+}
+
+.completion-certificate .certificate-seal,
+.completion-certificate .certificate-seal span,
+.completion-certificate .certificate-seal small,
+.completion-certificate .certificate-seal svg {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+@media print {
+  .completion-certificate .certificate-logo-text,
+  .completion-certificate .certificate-reference strong,
+  .completion-certificate .certificate-copy h2,
+  .completion-certificate .certificate-copy h3,
+  .completion-certificate .certificate-copy h4,
+  .completion-certificate .certificate-details strong,
+  .completion-certificate .certificate-signature strong,
+  .completion-certificate .certificate-branch strong {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
