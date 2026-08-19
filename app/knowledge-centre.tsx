@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock3,
   ExternalLink,
+  Eye,
   FileText,
   FolderOpen,
   GraduationCap,
@@ -437,7 +438,7 @@ export default function KnowledgeCentre({ role, lessons, onSave, onDelete }: Kno
           <span className="eyebrow dark-eyebrow"><GraduationCap size={15} /> KNOWLEDGE CENTRE</span>
           <h2>{role === "admin" ? "Learning library" : "Learn at your own pace"}</h2>
           <p>{role === "admin"
-            ? "Create, publish, and maintain lesson material for every participant."
+            ? "Create, preview, publish, and maintain lesson material for every participant."
             : "Review practical lessons and supporting resources whenever you need them."}</p>
         </div>
         {role === "admin" && (
@@ -491,8 +492,18 @@ export default function KnowledgeCentre({ role, lessons, onSave, onDelete }: Kno
                 </div>
               </div>
               <footer>
-                <button className="knowledge-review-button" type="button" onClick={() => setSelectedLesson(lesson)}>
-                  Review lesson <BookOpen size={16} />
+                <button
+                  className="knowledge-review-button"
+                  type="button"
+                  onClick={() => setSelectedLesson(lesson)}
+                  data-preview-as-participant={role === "admin" ? "true" : undefined}
+                  aria-label={role === "admin" ? `Preview ${lesson.title} as participant` : `Review ${lesson.title}`}
+                >
+                  {role === "admin" ? (
+                    <>Preview as participant <Eye size={16} /></>
+                  ) : (
+                    <>Review lesson <BookOpen size={16} /></>
+                  )}
                 </button>
                 {role === "admin" && (
                   <div className="knowledge-admin-actions">
