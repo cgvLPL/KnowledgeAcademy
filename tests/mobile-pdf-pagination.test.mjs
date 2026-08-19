@@ -12,7 +12,8 @@ const layout = read("app/layout.tsx");
 test("mobile PDFs use app-owned PDF.js pagination instead of Safari iframe navigation", () => {
   assert.match(controller, /PDFJS_VERSION = "5\.4\.296"/);
   assert.match(controller, /pdfjs\.getDocument\(\{ url: active\.url \}\)/);
-  assert.match(controller, /documentProxy\.getPage\(pageNumber\)/);
+  assert.match(controller, /const pdf = documentProxy;/);
+  assert.match(controller, /pdf\.getPage\(pageNumber\)/);
   assert.match(controller, /aria-label="Previous PDF page"/);
   assert.match(controller, /aria-label="Next PDF page"/);
   assert.match(controller, /pageCount \|\| "…"/);
