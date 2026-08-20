@@ -25,7 +25,27 @@ test("mobile PDF zoom is bounded and touch friendly", () => {
   assert.match(controller, /aria-label="Zoom out PDF"/);
   assert.match(controller, /aria-label="Zoom in PDF"/);
   assert.match(css, /\.cgv-mobile-pdf-stage[\s\S]*?overflow:\s*auto;[\s\S]*?touch-action:\s*pan-x pan-y;/);
-  assert.match(css, /\.cgv-mobile-pdf-controls > button[\s\S]*?touch-action:\s*manipulation;/);
+  assert.match(css, /\.cgv-mobile-pdf-control-group > button[\s\S]*?height:\s*44px;[\s\S]*?touch-action:\s*manipulation;[\s\S]*?width:\s*44px;/);
+});
+
+test("mobile PDF controls are grouped and readable on narrow screens", () => {
+  assert.match(controller, /cgv-mobile-pdf-control-group cgv-mobile-pdf-page-controls/);
+  assert.match(controller, /cgv-mobile-pdf-control-group cgv-mobile-pdf-zoom-controls/);
+  assert.match(controller, /<small>Page<\/small>/);
+  assert.match(controller, /<small>Zoom<\/small>/);
+  assert.match(controller, /cgv-mobile-pdf-toolbar-page/);
+  assert.match(css, /\.cgv-mobile-pdf-controls[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/);
+  assert.match(css, /\.cgv-mobile-pdf-heading strong[\s\S]*?font-size:\s*13px/);
+  assert.match(css, /@media \(max-width: 340px\)[\s\S]*?grid-template-columns:\s*44px minmax\(34px, 1fr\) 44px/);
+});
+
+test("mobile PDF stage has document-style framing and clear loading feedback", () => {
+  assert.match(controller, /cgv-mobile-pdf-spinner/);
+  assert.match(controller, /Math\.max\(240, stage\.clientWidth - 32\)/);
+  assert.match(css, /\.cgv-mobile-pdf-stage[\s\S]*?padding:\s*16px/);
+  assert.match(css, /\.cgv-mobile-pdf-canvas[\s\S]*?border-radius:\s*6px;[\s\S]*?box-shadow:/);
+  assert.match(css, /\.cgv-mobile-pdf-loading[\s\S]*?flex-direction:\s*column/);
+  assert.match(css, /\.cgv-mobile-pdf-spinner[\s\S]*?height:\s*28px;[\s\S]*?width:\s*28px/);
 });
 
 test("immersive phone PDF reader cannot be covered by app navigation", () => {

@@ -128,17 +128,43 @@ test("iPhone-sized reader can navigate every PDF page", async ({ page }) => {
   await expect(page.locator(".knowledge-pdf-reader")).toHaveAttribute("aria-hidden", "true");
   await expect(page.locator(".mobile-nav")).toBeHidden();
   await expect(page.locator(".cgv-mobile-pdf-page")).toContainText("1 / 3");
+  await expect(page.locator(".cgv-mobile-pdf-toolbar-page")).toHaveText("1 / 3");
   await expect(canvas).toHaveAttribute("aria-label", "PDF page 1 of 3");
 
   const overlayBox = await page.locator(".cgv-mobile-pdf-overlay").boundingBox();
   expect(overlayBox).toMatchObject({ x: 0, y: 0, width: 390, height: 844 });
 
+  const closeBox = await page.getByRole("button", { name: "Close PDF reader" }).boundingBox();
+  const previousBox = await page.getByRole("button", { name: "Previous PDF page" }).boundingBox();
+  const nextBox = await page.getByRole("button", { name: "Next PDF page" }).boundingBox();
+  const zoomOutBox = await page.getByRole("button", { name: "Zoom out PDF" }).boundingBox();
+  const zoomInBox = await page.getByRole("button", { name: "Zoom in PDF" }).boundingBox();
+  for (const box of [closeBox, previousBox, nextBox, zoomOutBox, zoomInBox]) {
+    expect(box).not.toBeNull();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+
+  const controlGroups = page.locator(".cgv-mobile-pdf-control-group");
+  await expect(controlGroups).toHaveCount(2);
+  const controlsBox = await page.locator(".cgv-mobile-pdf-controls").boundingBox();
+  expect(controlsBox).not.toBeNull();
+  expect(controlsBox.width).toBeLessThanOrEqual(390);
+
+  const stageBox = await page.locator(".cgv-mobile-pdf-stage").boundingBox();
+  const canvasBox = await canvas.boundingBox();
+  expect(stageBox).not.toBeNull();
+  expect(canvasBox).not.toBeNull();
+  expect(canvasBox.width).toBeLessThan(stageBox.width);
+
   await page.getByRole("button", { name: "Next PDF page" }).click();
   await expect(page.locator(".cgv-mobile-pdf-page")).toContainText("2 / 3");
+  await expect(page.locator(".cgv-mobile-pdf-toolbar-page")).toHaveText("2 / 3");
   await expect(canvas).toHaveAttribute("aria-label", "PDF page 2 of 3");
 
   await page.getByRole("button", { name: "Next PDF page" }).click();
   await expect(page.locator(".cgv-mobile-pdf-page")).toContainText("3 / 3");
+  await expect(page.locator(".cgv-mobile-pdf-toolbar-page")).toHaveText("3 / 3");
   await expect(canvas).toHaveAttribute("aria-label", "PDF page 3 of 3");
   await expect(page.getByRole("button", { name: "Next PDF page" })).toBeDisabled();
 
@@ -146,12 +172,42 @@ test("iPhone-sized reader can navigate every PDF page", async ({ page }) => {
   await expect(page.locator(".cgv-mobile-pdf-page")).toContainText("2 / 3");
 
   await page.getByRole("button", { name: "Zoom in PDF" }).click();
-  await expect(page.locator(".cgv-mobile-pdf-zoom")).toHaveText("125%");
+  await expect(page.locator(".cgv-mobile-pdf-zoom")).toContainText("125%");
   await page.getByRole("button", { name: "Zoom out PDF" }).click();
-  await expect(page.locator(".cgv-mobile-pdf-zoom")).toHaveText("100%");
+  await expect(page.locator(".cgv-mobile-pdf-zoom")).toContainText("100%");
 
   await page.getByRole("button", { name: "Close PDF reader" }).click();
   await expect(enhanced).toHaveCount(0);
   await expect(page.locator(".knowledge-pdf-frame")).toHaveCount(0);
   await expect(page.locator(".mobile-nav")).toBeVisible();
+});
+
+test("320px reader keeps both control groups inside the viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await installBackendStub(page);
+  await signIn(page);
+
+  await page.locator(".mobile-nav button").filter({ hasText: "Learn" }).click();
+  const card = page.locator(".knowledge-card").filter({ hasText: "Safety, K3, and Leadership" });
+  await card.locator(".knowledge-review-button").click();
+  await page.getByRole("button", { name: /Read PDF/i }).click();
+
+  await expect(page.locator(".cgv-mobile-pdf-reader")).toBeVisible();
+  const overflow = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+  }));
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.viewport + 1);
+
+  const controlsBox = await page.locator(".cgv-mobile-pdf-controls").boundingBox();
+  expect(controlsBox).not.toBeNull();
+  expect(controlsBox.x).toBeGreaterThanOrEqual(0);
+  expect(controlsBox.x + controlsBox.width).toBeLessThanOrEqual(320);
+
+  for (const name of ["Previous PDF page", "Next PDF page", "Zoom out PDF", "Zoom in PDF"]) {
+    const box = await page.getByRole("button", { name }).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
 });
