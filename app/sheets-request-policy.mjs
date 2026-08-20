@@ -9,10 +9,10 @@ export const BURST_SPREAD_MS = configuredBurstSpreadMs === undefined
 
 export const RETRY_DELAYS_MS = Object.freeze([0, 1_000, 2_000, 4_000, 8_000, 12_000, 18_000]);
 
-// Authentication should feel immediate for normal single-user traffic. The
-// expensive exam-write bursts remain deliberately spread because start/submit
-// are the points most likely to synchronize an entire participant cohort.
-const BURST_SENSITIVE_ACTIONS = new Set(["startAttempt", "submitAttempt"]);
+// Authentication and finishing an evaluation should feel immediate for normal
+// traffic. Starting a synchronized cohort remains deliberately spread because it
+// is the point most likely to create a preventable 50-user execution burst.
+const BURST_SENSITIVE_ACTIONS = new Set(["startAttempt"]);
 const RETRYABLE_ACTIONS = new Set([
   "login",
   "startAttempt",
@@ -61,19 +61,20 @@ export function shouldRetrySheetsResponse(action, response, data) {
 
 /**
  * Runs capacity-sensitive requests with action-specific admission behavior.
- * Login is sent immediately so ordinary authentication is never delayed by the
- * cohort spread window; transient Apps Script capacity failures still use the
- * same bounded retry/backoff path. Synchronized start/submission writes retain
- * the wide first-request spread so a 50-participant event does not immediately
- * consume the Apps Script deployer's 30 simultaneous execution slots.
+ * Login and submitAttempt are sent immediately so ordinary authentication and
+ * the Finish evaluation action are never delayed by an artificial cohort window.
+ * Transient Apps Script capacity failures still use bounded retry/backoff.
+ * startAttempt retains the wide first-request spread so a 50-participant event
+ * does not create an avoidable synchronized start burst.
  *
  * Start and submission are idempotent on the server, so ambiguous timeouts can
- * be retried without creating duplicate attempts or results. The backend
- * contract remains unchanged.
+ * be retried without creating duplicate attempts or results. The backend uses a
+ * short submission lock timeout so busy executions release capacity quickly and
+ * let the client retry instead of holding the UI for up to 90 seconds.
  *
  * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;
  * production deployments leave it unset and therefore use the 30-second window
- * for startAttempt and submitAttempt only.
+ * for startAttempt only.
  */
 export async function fetchSheetsWithRetry(action, fetchRequest, options = {}) {
   const retryable = RETRYABLE_ACTIONS.has(action);
