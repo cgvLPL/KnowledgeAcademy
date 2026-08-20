@@ -665,3 +665,390 @@ body.cgv-reduced-motion *::after {
     box-shadow: none !important;
   }
 }
+
+/* ========================================================================== 
+   4. COHESIVE EXPERIENCE RHYTHM
+   ========================================================================== */
+
+:root {
+  --cgv-space-1: 6px;
+  --cgv-space-2: 10px;
+  --cgv-space-3: 14px;
+  --cgv-space-4: 18px;
+  --cgv-space-5: 24px;
+  --cgv-space-6: 30px;
+  --cgv-panel-padding: clamp(20px, 2vw, 28px);
+  --cgv-card-padding: clamp(18px, 1.5vw, 22px);
+  --cgv-grid-gap: clamp(14px, 1.5vw, 20px);
+  --cgv-copy-measure: 72ch;
+  --cgv-control-height: 44px;
+  --cgv-control-font-size: 0.875rem;
+  --cgv-shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.26);
+  --cgv-shadow-card: 0 10px 28px rgba(0, 0, 0, 0.2);
+}
+
+/* One spacing language across every major workspace. */
+.content > *,
+.builder-content > *,
+.quiz-layout > *,
+.result-layout > * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.metric-grid,
+.course-grid,
+.history-summary,
+.admin-metrics,
+.knowledge-grid,
+.lesson-grid {
+  gap: var(--cgv-grid-gap) !important;
+}
+
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.profile-card,
+.settings-card,
+.detail-card,
+.builder-card,
+.question-card,
+.result-card {
+  padding: var(--cgv-panel-padding) !important;
+}
+
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.evaluation-row,
+.knowledge-card,
+.lesson-card,
+.question-editor,
+.question-outline,
+.cgv-account-summary > div,
+.cgv-settings-row,
+.cgv-settings-version {
+  padding: var(--cgv-card-padding) !important;
+}
+
+.welcome-row,
+.page-intro,
+.section-heading,
+.table-card-header {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.welcome-row > :first-child,
+.page-intro > :first-child,
+.section-heading > :first-child,
+.table-card-header > :first-child {
+  min-width: 0;
+}
+
+.page-title p,
+.welcome-row p,
+.page-intro p,
+.section-heading p,
+.table-card-header p,
+.course-card > p,
+.history-preview-card p,
+.knowledge-card p,
+.lesson-card p,
+.detail-card p,
+.profile-card p {
+  max-width: var(--cgv-copy-measure);
+}
+
+/* A predictable type ladder reduces visual jumps between participant/admin views. */
+.page-title h1 {
+  font-size: clamp(1.15rem, 1vw + 0.85rem, 1.45rem) !important;
+  line-height: 1.1 !important;
+}
+
+.welcome-row h2,
+.page-intro h2 {
+  font-size: clamp(1.55rem, 1.4vw + 1rem, 2.15rem) !important;
+  line-height: 1.08 !important;
+}
+
+.section-heading h3,
+.table-card-header h3,
+.card-heading h3,
+.hero-evaluation h3 {
+  font-size: clamp(1.08rem, 0.55vw + 0.95rem, 1.28rem) !important;
+  line-height: 1.22 !important;
+}
+
+.course-card h3,
+.history-preview-card h3,
+.knowledge-card h3,
+.lesson-card h3,
+.metric-card h3,
+.admin-metrics article h3 {
+  line-height: 1.28 !important;
+  margin-block: 0;
+}
+
+.page-title p,
+.welcome-row p,
+.page-intro p,
+.section-heading p,
+.table-card-header p,
+.course-card > p,
+.history-preview-card p,
+.knowledge-card p,
+.lesson-card p {
+  margin-top: var(--cgv-space-1);
+}
+
+/* Repeating content cards now share internal rhythm and footer alignment. */
+.course-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cgv-space-3) !important;
+}
+
+.course-card > p {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+}
+
+.course-card-top,
+.course-card-footer,
+.course-meta,
+.metric-card,
+.participant-cell {
+  gap: var(--cgv-space-2) !important;
+}
+
+.course-card-footer {
+  margin-top: auto;
+  padding-top: var(--cgv-space-2);
+}
+
+.course-meta {
+  row-gap: var(--cgv-space-1) !important;
+}
+
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.evaluation-row,
+.knowledge-card,
+.lesson-card {
+  box-shadow: var(--cgv-shadow-card) !important;
+}
+
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.profile-card,
+.settings-card,
+.detail-card,
+.builder-card,
+.question-card,
+.result-card {
+  box-shadow: var(--cgv-shadow-panel) !important;
+}
+
+/* Controls feel like one family regardless of where they appear. */
+.primary-button,
+.secondary-button,
+.hero-button,
+.row-button,
+.select-button,
+.filter-tabs button,
+.role-switch button,
+.sidebar-nav button,
+.sidebar-bottom button,
+.cgv-settings-actions button,
+.cgv-function-modal button,
+.confirm-modal button {
+  align-items: center;
+  font-size: var(--cgv-control-font-size) !important;
+  font-weight: 720 !important;
+  justify-content: center;
+  line-height: 1.1;
+  min-height: var(--cgv-control-height);
+  padding-inline: 16px !important;
+}
+
+.icon-button,
+.input-action,
+.builder-icon-button,
+.cgv-settings-close,
+.button-safety-dialog-close {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 42px;
+  min-width: 42px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+.input-shell,
+.admin-search,
+.top-search,
+.filter-control,
+.search-field {
+  min-height: var(--cgv-control-height);
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  font-size: 0.925rem;
+  line-height: 1.35;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid rgba(255, 146, 70, 0.78);
+  outline-offset: 2px;
+}
+
+/* Pills and metadata use the same density instead of shifting between pages. */
+.status-pill,
+.outcome-pill,
+.rank-badge,
+.live-pill,
+.eyebrow,
+.participant-status,
+.account-status,
+.badge-active,
+.badge-success,
+.count-badge,
+.evaluation-count {
+  font-size: 0.72rem !important;
+  font-weight: 780 !important;
+  line-height: 1;
+  min-height: 28px;
+}
+
+/* Section actions wrap cleanly rather than creating one-off layouts. */
+.table-actions,
+.admin-header-actions,
+.toolbar-buttons,
+.inline-actions,
+.result-actions,
+.modal-actions,
+.course-card-actions,
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cgv-space-2) !important;
+}
+
+/* Navigation chrome uses the same spacing and control rhythm as page actions. */
+.sidebar-nav button,
+.sidebar-bottom button {
+  gap: 10px !important;
+}
+
+.mobile-nav button {
+  font-size: 0.74rem !important;
+  font-weight: 720 !important;
+  letter-spacing: 0.005em;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --cgv-panel-padding: 18px;
+    --cgv-card-padding: 16px;
+    --cgv-grid-gap: 12px;
+    --cgv-control-height: 46px;
+  }
+
+  .welcome-row,
+  .page-intro,
+  .section-heading,
+  .table-card-header {
+    gap: var(--cgv-space-3) !important;
+  }
+
+  .section-heading,
+  .table-card-header {
+    align-items: flex-start;
+  }
+
+  .course-card {
+    gap: 12px !important;
+  }
+
+  .table-actions,
+  .admin-header-actions,
+  .toolbar-buttons,
+  .inline-actions,
+  .result-actions,
+  .modal-actions,
+  .course-card-actions {
+    gap: 8px !important;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .hero-button,
+  .row-button,
+  .select-button,
+  .filter-tabs button,
+  .role-switch button {
+    min-height: var(--cgv-control-height);
+  }
+}
+
+@media (forced-colors: active) {
+  .welcome-row,
+  .page-intro,
+  .section-block,
+  .table-card,
+  .analytics-card,
+  .completion-card,
+  .scoreboard-hero,
+  .profile-card,
+  .settings-card,
+  .detail-card,
+  .builder-card,
+  .question-card,
+  .result-card,
+  .metric-card,
+  .admin-metrics article,
+  .course-card,
+  .history-preview-card,
+  .evaluation-row,
+  .knowledge-card,
+  .lesson-card {
+    box-shadow: none !important;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline-color: Highlight;
+  }
+}
