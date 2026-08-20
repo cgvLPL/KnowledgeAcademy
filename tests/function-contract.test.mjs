@@ -84,7 +84,8 @@ test("quiz submissions are durable and safe for concurrent retries", () => {
   assert.match(backend, /existing.*status === "started"/s);
   assert.match(client, /fetchSheetsWithRetry/);
   assert.match(requestPolicy, /RETRY_DELAYS_MS/);
-  assert.match(requestPolicy, /"login", "startAttempt", "submitAttempt"/);
+  assert.match(requestPolicy, /BURST_SENSITIVE_ACTIONS = new Set\(\["startAttempt", "submitAttempt"\]\)/);
+  assert.match(requestPolicy, /RETRYABLE_ACTIONS = new Set\(\[[\s\S]*?"login"[\s\S]*?"startAttempt"[\s\S]*?"submitAttempt"/);
   assert.doesNotMatch(resultSync, /for \(let attempt = 0; attempt < 3;/);
 });
 
