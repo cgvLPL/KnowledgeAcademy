@@ -64,9 +64,9 @@ test("login keeps bounded retry backoff when Apps Script is temporarily busy", a
   assert.deepEqual(sleeps, [1_000]);
 });
 
-test("synchronized exam writes keep the production admission spread", () => {
+test("evaluation start keeps the production admission spread while finish stays immediate", () => {
   assert.equal(BURST_SPREAD_MS, 30_000);
   assert.equal(capacityRequestDelayMs("startAttempt", 0, 0, () => 1), BURST_SPREAD_MS);
-  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), BURST_SPREAD_MS);
+  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), 0);
   assert.equal(capacityRequestDelayMs("adminGetDashboard", 0, 0, () => 1), 0);
 });

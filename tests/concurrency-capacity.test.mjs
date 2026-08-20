@@ -17,19 +17,28 @@ const backend = fs.readFileSync(path.join(root, "google-apps-script/Code.gs"), "
 test("frontend supports a 50-participant event while preserving the 30-slot backend contract", () => {
   const target = Number(backend.match(/targetSimultaneousParticipants:\s*(\d+)/)?.[1]);
   const lockTimeout = Number(backend.match(/writeLockTimeoutMs:\s*(\d+)/)?.[1]);
+  const submissionLockTimeout = Number(backend.match(/submissionLockTimeoutMs:\s*(\d+)/)?.[1]);
 
   assert.equal(EXAM_CAPACITY_TARGET, 50);
   assert.equal(BACKEND_EXECUTION_TARGET, 30);
   assert.equal(target, BACKEND_EXECUTION_TARGET);
   assert.ok(lockTimeout >= target * 2_500, "write queue allows less than 2.5 seconds per backend slot");
+  assert.ok(
+    submissionLockTimeout > 0 && submissionLockTimeout <= 10_000,
+    "submission lock should release busy executions quickly",
+  );
   assert.match(backend, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs/);
+  assert.match(
+    backend,
+    /function submitAttempt_\(body\)[\s\S]*?withScriptLock_\(APP\.capacity\.submissionLockTimeoutMs/,
+  );
   assert.match(backend, /lock\.tryLock\(timeoutMs\)/);
   assert.match(backend, /findObjectByExactValue_\([\s\S]*?createTextFinder/);
   assert.match(backend, /findById_\(APP\.sheets\.attempts, "attempt_id", attemptId, true\)/);
   assert.match(backend, /SpreadsheetApp\.flush\(\)/);
 });
 
-test("exam writes are spread across a 30-second admission window while login stays immediate", () => {
+test("evaluation start is spread while login and finish submission stay immediate", () => {
   const delays = Array.from({ length: EXAM_CAPACITY_TARGET }, (_, index) => (
     capacityRequestDelayMs(
       "startAttempt",
@@ -40,9 +49,9 @@ test("exam writes are spread across a 30-second admission window while login sta
   ));
 
   assert.equal(capacityRequestDelayMs("login", 0, 0, () => 1), 0);
+  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), 0);
   assert.equal(delays[0], 0);
   assert.equal(delays.at(-1), BURST_SPREAD_MS);
-  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), BURST_SPREAD_MS);
   assert.ok(BURST_SPREAD_MS >= 30_000);
 
   const oneSecondBuckets = new Map();

@@ -10,6 +10,7 @@ const APP = Object.freeze({
   capacity: Object.freeze({
     targetSimultaneousParticipants: 30,
     writeLockTimeoutMs: 90000,
+    submissionLockTimeoutMs: 8000,
     sessionPruneIntervalSeconds: 21600,
   }),
   sheets: Object.freeze({
@@ -461,7 +462,7 @@ function submitAttempt_(body) {
   const score = total ? Math.round(earned / total * 100) : 0;
   attemptDurationSeconds_(initialAttempt, now);
 
-  return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {
+  return withScriptLock_(APP.capacity.submissionLockTimeoutMs, function () {
     const current = findById_(APP.sheets.attempts, "attempt_id", attemptId, true);
     if (!current || String(current.user_id) !== String(context.user.user_id)) {
       throw new Error("Attempt not found.");
@@ -1713,15 +1714,31 @@ function deleteRowsMatching_(sheet, key, value) {
   const headers = headersForSheet_(sheet);
   const columnIndex = headers.indexOf(key);
   if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
-  sheet
+  const rows = sheet
     .getRange(2, columnIndex + 1, lastRow - 1, 1)
     .createTextFinder(String(value))
     .matchEntireCell(true)
     .useRegularExpression(false)
     .findAll()
     .map(function (match) { return match.getRow(); })
-    .sort(function (a, b) { return b - a; })
-    .forEach(function (rowNumber) { sheet.deleteRow(rowNumber); });
+    .sort(function (a, b) { return b - a; });
+  if (!rows.length) return;
+
+  let runHigh = rows[0];
+  let runLow = rows[0];
+  function deleteRun_() {
+    sheet.deleteRows(runLow, runHigh - runLow + 1);
+  }
+  for (let index = 1; index < rows.length; index += 1) {
+    if (rows[index] === runLow - 1) {
+      runLow = rows[index];
+      continue;
+    }
+    deleteRun_();
+    runHigh = rows[index];
+    runLow = rows[index];
+  }
+  deleteRun_();
   invalidateSheetCache_(sheet);
 }
 
