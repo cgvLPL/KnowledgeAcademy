@@ -1,7 +1,12 @@
 export const EXAM_CAPACITY_TARGET = 50;
 export const BACKEND_EXECUTION_TARGET = 30;
 export const SHEETS_REQUEST_TIMEOUT_MS = 110_000;
-export const BURST_SPREAD_MS = 30_000;
+
+const configuredBurstSpreadMs = process.env.NEXT_PUBLIC_CAPACITY_SPREAD_MS;
+export const BURST_SPREAD_MS = configuredBurstSpreadMs === undefined
+  ? 30_000
+  : Math.max(0, Number(configuredBurstSpreadMs) || 0);
+
 export const RETRY_DELAYS_MS = Object.freeze([0, 1_000, 2_000, 4_000, 8_000, 12_000, 18_000]);
 
 const BURST_SENSITIVE_ACTIONS = new Set(["login", "startAttempt", "submitAttempt"]);
@@ -58,6 +63,9 @@ export function shouldRetrySheetsResponse(action, response, data) {
  * Retries then use bounded backoff for transient quota, network, and lock
  * pressure. Start and submission are idempotent on the server, so ambiguous
  * timeouts can be retried without creating duplicate attempts or results.
+ *
+ * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;
+ * production deployments leave it unset and therefore use the 30-second window.
  */
 export async function fetchSheetsWithRetry(action, fetchRequest, options = {}) {
   const retryable = RETRYABLE_ACTIONS.has(action);
