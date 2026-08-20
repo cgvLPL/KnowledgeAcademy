@@ -12,6 +12,7 @@ Improved the frontend request policy for events with up to 50 participants and o
 - Added retry support for read-only administrator dashboard requests so the monitoring admin can recover from temporary execution pressure without being intentionally delayed.
 - Added regression coverage for 50 participants plus one admin, including simulated 30-execution pressure and ambiguous post-commit submission responses.
 - Kept start and submission retry behavior idempotent; no backend schema or scoring contract changes were introduced.
+- Added a build-only `NEXT_PUBLIC_CAPACITY_SPREAD_MS=0` override to the pull-request verification workflow so mocked Playwright sign-ins remain deterministic. The production Pages workflow does not set this override, so deployed clients retain the full 30-second admission window.
 
 ## Google Apps Script
 
@@ -23,4 +24,4 @@ During a synchronized event, participant login, start, and submit requests are i
 
 ## Verification
 
-The GitHub Actions **Verify application** workflow must pass before merge, including TypeScript/lint, production build, complete Node regressions, responsive visual checks, and Pages artifact validation.
+The GitHub Actions **Verify application** workflow must pass before merge, including TypeScript/lint, production build, complete Node regressions, responsive visual checks, and Pages artifact validation. The Node capacity regressions run against the production-default 30-second spread; only the static browser fixture build disables that delay.
