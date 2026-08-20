@@ -29,18 +29,20 @@ test("frontend supports a 50-participant event while preserving the 30-slot back
   assert.match(backend, /SpreadsheetApp\.flush\(\)/);
 });
 
-test("capacity-sensitive requests are spread across a 30-second admission window", () => {
+test("exam writes are spread across a 30-second admission window while login stays immediate", () => {
   const delays = Array.from({ length: EXAM_CAPACITY_TARGET }, (_, index) => (
     capacityRequestDelayMs(
-      "login",
+      "startAttempt",
       0,
       0,
       () => index / (EXAM_CAPACITY_TARGET - 1),
     )
   ));
 
+  assert.equal(capacityRequestDelayMs("login", 0, 0, () => 1), 0);
   assert.equal(delays[0], 0);
   assert.equal(delays.at(-1), BURST_SPREAD_MS);
+  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), BURST_SPREAD_MS);
   assert.ok(BURST_SPREAD_MS >= 30_000);
 
   const oneSecondBuckets = new Map();
