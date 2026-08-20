@@ -1,0 +1,233 @@
+name: Patch faster finish evaluation
+
+on:
+  push:
+    branches:
+      - agent/faster-finish-evaluation
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/faster-finish-evaluation
+          fetch-depth: 0
+
+      - name: Apply finish evaluation performance patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"Expected source block not found in {path}: {old[:80]!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          policy = Path("app/sheets-request-policy.mjs")
+          text = policy.read_text()
+          text = text.replace(
+              '// Authentication should feel immediate for normal single-user traffic. The\n// expensive exam-write bursts remain deliberately spread because start/submit\n// are the points most likely to synchronize an entire participant cohort.\nconst BURST_SENSITIVE_ACTIONS = new Set(["startAttempt", "submitAttempt"]);',
+              '// Authentication and finishing an evaluation should feel immediate for normal\n// traffic. Starting a synchronized cohort remains deliberately spread because it\n// is the point most likely to create a preventable 50-user execution burst.\nconst BURST_SENSITIVE_ACTIONS = new Set(["startAttempt"]);',
+          )
+          text = text.replace(
+              ' * Login is sent immediately so ordinary authentication is never delayed by the\n * cohort spread window; transient Apps Script capacity failures still use the\n * same bounded retry/backoff path. Synchronized start/submission writes retain\n * the wide first-request spread so a 50-participant event does not immediately\n * consume the Apps Script deployer\'s 30 simultaneous execution slots.\n *\n * Start and submission are idempotent on the server, so ambiguous timeouts can\n * be retried without creating duplicate attempts or results. The backend\n * contract remains unchanged.\n *\n * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;\n * production deployments leave it unset and therefore use the 30-second window\n * for startAttempt and submitAttempt only.',
+              ' * Login and submitAttempt are sent immediately so ordinary authentication and\n * the Finish evaluation action are never delayed by an artificial cohort window.\n * Transient Apps Script capacity failures still use bounded retry/backoff.\n * startAttempt retains the wide first-request spread so a 50-participant event\n * does not create an avoidable synchronized start burst.\n *\n * Start and submission are idempotent on the server, so ambiguous timeouts can\n * be retried without creating duplicate attempts or results. The backend uses a\n * short submission lock timeout so busy executions release capacity quickly and\n * let the client retry instead of holding the UI for up to 90 seconds.\n *\n * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;\n * production deployments leave it unset and therefore use the 30-second window\n * for startAttempt only.',
+          )
+          policy.write_text(text)
+
+          code = Path("google-apps-script/Code.gs")
+          text = code.read_text()
+          text = text.replace(
+              '    writeLockTimeoutMs: 90000,\n    sessionPruneIntervalSeconds: 21600,',
+              '    writeLockTimeoutMs: 90000,\n    submissionLockTimeoutMs: 8000,\n    sessionPruneIntervalSeconds: 21600,',
+              1,
+          )
+          submit_marker = '  attemptDurationSeconds_(initialAttempt, now);\n\n  return withScriptLock_(APP.capacity.writeLockTimeoutMs, function () {'
+          if submit_marker not in text:
+              raise SystemExit('submitAttempt lock marker not found')
+          text = text.replace(
+              submit_marker,
+              '  attemptDurationSeconds_(initialAttempt, now);\n\n  return withScriptLock_(APP.capacity.submissionLockTimeoutMs, function () {',
+              1,
+          )
+          old_delete = '''function deleteRowsMatching_(sheet, key, value) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  const headers = headersForSheet_(sheet);
+  const columnIndex = headers.indexOf(key);
+  if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
+  sheet
+    .getRange(2, columnIndex + 1, lastRow - 1, 1)
+    .createTextFinder(String(value))
+    .matchEntireCell(true)
+    .useRegularExpression(false)
+    .findAll()
+    .map(function (match) { return match.getRow(); })
+    .sort(function (a, b) { return b - a; })
+    .forEach(function (rowNumber) { sheet.deleteRow(rowNumber); });
+  invalidateSheetCache_(sheet);
+}'''
+          new_delete = '''function deleteRowsMatching_(sheet, key, value) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  const headers = headersForSheet_(sheet);
+  const columnIndex = headers.indexOf(key);
+  if (columnIndex < 0) throw new Error('Missing column "' + key + '" in sheet "' + sheet.getName() + '".');
+  const rows = sheet
+    .getRange(2, columnIndex + 1, lastRow - 1, 1)
+    .createTextFinder(String(value))
+    .matchEntireCell(true)
+    .useRegularExpression(false)
+    .findAll()
+    .map(function (match) { return match.getRow(); })
+    .sort(function (a, b) { return b - a; });
+  if (!rows.length) return;
+
+  let runHigh = rows[0];
+  let runLow = rows[0];
+  function deleteRun_() {
+    sheet.deleteRows(runLow, runHigh - runLow + 1);
+  }
+  for (let index = 1; index < rows.length; index += 1) {
+    if (rows[index] === runLow - 1) {
+      runLow = rows[index];
+      continue;
+    }
+    deleteRun_();
+    runHigh = rows[index];
+    runLow = rows[index];
+  }
+  deleteRun_();
+  invalidateSheetCache_(sheet);
+}'''
+          if old_delete not in text:
+              raise SystemExit('deleteRowsMatching_ source block not found')
+          text = text.replace(old_delete, new_delete, 1)
+          code.write_text(text)
+
+          concurrency = Path("tests/concurrency-capacity.test.mjs")
+          text = concurrency.read_text()
+          text = text.replace(
+              'test("exam writes are spread across a 30-second admission window while login stays immediate", () => {',
+              'test("evaluation start is spread while login and finish submission stay immediate", () => {',
+              1,
+          )
+          text = text.replace(
+              '  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), BURST_SPREAD_MS);',
+              '  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), 0);',
+              1,
+          )
+          concurrency.write_text(text)
+
+          finish_test = Path("tests/finish-evaluation-performance.test.mjs")
+          finish_test.write_text('''import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+import {
+  capacityRequestDelayMs,
+  fetchSheetsWithRetry,
+} from "../app/sheets-request-policy.mjs";
+
+const root = path.resolve(import.meta.dirname, "..");
+const backend = fs.readFileSync(path.join(root, "google-apps-script/Code.gs"), "utf8");
+
+test("finish evaluation submits immediately on the first request", async () => {
+  assert.equal(capacityRequestDelayMs("submitAttempt", 0, 0, () => 1), 0);
+  const sleeps = [];
+  const response = await fetchSheetsWithRetry(
+    "submitAttempt",
+    async () => Response.json({ ok: true, result: { score: 100 } }),
+    {
+      random: () => 1,
+      sleep: async (delay) => sleeps.push(delay),
+      timeoutMs: 1_000,
+    },
+  );
+  assert.equal((await response.json()).ok, true);
+  assert.deepEqual(sleeps, []);
+});
+
+test("finish evaluation retries temporary backend pressure without duplicate client submission", async () => {
+  const sleeps = [];
+  let calls = 0;
+  const response = await fetchSheetsWithRetry(
+    "submitAttempt",
+    async () => {
+      calls += 1;
+      if (calls === 1) {
+        return Response.json(
+          { ok: false, error: "The exam service is temporarily busy. Please try again." },
+          { status: 503 },
+        );
+      }
+      return Response.json({ ok: true, alreadySubmitted: true, result: { score: 88 } });
+    },
+    {
+      random: () => 0,
+      sleep: async (delay) => sleeps.push(delay),
+      timeoutMs: 1_000,
+    },
+  );
+  const data = await response.json();
+  assert.equal(data.ok, true);
+  assert.equal(calls, 2);
+  assert.deepEqual(sleeps, [1_000]);
+});
+
+test("backend submission path fails fast under lock pressure and keeps retry-safe writes", () => {
+  const timeout = Number(backend.match(/submissionLockTimeoutMs:\\s*(\\d+)/)?.[1]);
+  assert.ok(timeout > 0 && timeout <= 10_000, "submission lock should release busy executions quickly");
+  assert.match(
+    backend,
+    /function submitAttempt_\\(body\\)[\\s\\S]*?withScriptLock_\\(APP\\.capacity\\.submissionLockTimeoutMs/,
+  );
+  assert.match(backend, /if \\(current\\.status === "submitted"\\) return existingAttemptResult_/);
+  assert.match(backend, /deleteRowsMatching_\\(answersSheet, "attempt_id", attemptId\\)/);
+  assert.match(backend, /answersSheet[\\s\\S]*?\\.setValues\\(answerRows\\)/);
+  assert.match(backend, /function deleteRowsMatching_[\\s\\S]*?sheet\\.deleteRows\\(runLow, runHigh - runLow \\+ 1\\)/);
+});
+''')
+
+          changelog = Path("updates/2026-08-20-faster-finish-evaluation.md")
+          changelog.write_text('''# Faster Finish Evaluation response
+
+Date: 2026-08-20
+
+## Summary
+
+- Send `submitAttempt` immediately when a participant confirms **Finish evaluation**, removing the artificial 0–30 second first-request wait.
+- Keep `submitAttempt` retryable with bounded backoff so temporary Apps Script concurrency pressure recovers automatically.
+- Keep the 30-second admission spread on `startAttempt`, where synchronized cohort starts can still create a preventable burst.
+- Add a dedicated 8-second Apps Script submission lock timeout so busy submit executions release capacity quickly instead of waiting behind the general 90-second write lock.
+- Preserve idempotent submission handling so retries return an existing submitted result instead of creating duplicates.
+- Batch contiguous row deletion in the backend cleanup helper to reduce Spreadsheet service calls when recovering from partial writes.
+- Add regression coverage for immediate finish submission, transient-capacity retry behavior, and the new backend lock contract.
+
+## Backend deployment note
+
+This update changes `google-apps-script/Code.gs`. Deploy the updated Apps Script web app version before expecting the production site to receive the backend-side submission improvements.
+''')
+
+          workflow = Path(".github/workflows/patch-faster-finish-evaluation.yml")
+          if workflow.exists():
+              workflow.unlink()
+          PY
+
+      - name: Commit and push patched files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "perf: speed up finish evaluation submission"
+          git push origin HEAD:agent/faster-finish-evaluation
