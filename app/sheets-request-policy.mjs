@@ -9,7 +9,10 @@ export const BURST_SPREAD_MS = configuredBurstSpreadMs === undefined
 
 export const RETRY_DELAYS_MS = Object.freeze([0, 1_000, 2_000, 4_000, 8_000, 12_000, 18_000]);
 
-const BURST_SENSITIVE_ACTIONS = new Set(["login", "startAttempt", "submitAttempt"]);
+// Authentication should feel immediate for normal single-user traffic. The
+// expensive exam-write bursts remain deliberately spread because start/submit
+// are the points most likely to synchronize an entire participant cohort.
+const BURST_SENSITIVE_ACTIONS = new Set(["startAttempt", "submitAttempt"]);
 const RETRYABLE_ACTIONS = new Set([
   "login",
   "startAttempt",
@@ -57,15 +60,20 @@ export function shouldRetrySheetsResponse(action, response, data) {
 }
 
 /**
- * Runs capacity-sensitive requests with a wide first-request spread so a
- * 50-participant event does not immediately consume the Apps Script deployer's
- * 30 simultaneous execution slots. The backend contract remains unchanged.
- * Retries then use bounded backoff for transient quota, network, and lock
- * pressure. Start and submission are idempotent on the server, so ambiguous
- * timeouts can be retried without creating duplicate attempts or results.
+ * Runs capacity-sensitive requests with action-specific admission behavior.
+ * Login is sent immediately so ordinary authentication is never delayed by the
+ * cohort spread window; transient Apps Script capacity failures still use the
+ * same bounded retry/backoff path. Synchronized start/submission writes retain
+ * the wide first-request spread so a 50-participant event does not immediately
+ * consume the Apps Script deployer's 30 simultaneous execution slots.
+ *
+ * Start and submission are idempotent on the server, so ambiguous timeouts can
+ * be retried without creating duplicate attempts or results. The backend
+ * contract remains unchanged.
  *
  * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;
- * production deployments leave it unset and therefore use the 30-second window.
+ * production deployments leave it unset and therefore use the 30-second window
+ * for startAttempt and submitAttempt only.
  */
 export async function fetchSheetsWithRetry(action, fetchRequest, options = {}) {
   const retryable = RETRYABLE_ACTIONS.has(action);
