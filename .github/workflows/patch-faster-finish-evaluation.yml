@@ -1,3 +1,4 @@
+# One-shot branch patch; removed automatically after successful execution.
 name: Patch faster finish evaluation
 
 on:
@@ -24,13 +25,6 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          def replace_once(path, old, new):
-              file = Path(path)
-              text = file.read_text()
-              if old not in text:
-                  raise SystemExit(f"Expected source block not found in {path}: {old[:80]!r}")
-              file.write_text(text.replace(old, new, 1))
-
           policy = Path("app/sheets-request-policy.mjs")
           text = policy.read_text()
           text = text.replace(
@@ -41,6 +35,8 @@ jobs:
               ' * Login is sent immediately so ordinary authentication is never delayed by the\n * cohort spread window; transient Apps Script capacity failures still use the\n * same bounded retry/backoff path. Synchronized start/submission writes retain\n * the wide first-request spread so a 50-participant event does not immediately\n * consume the Apps Script deployer\'s 30 simultaneous execution slots.\n *\n * Start and submission are idempotent on the server, so ambiguous timeouts can\n * be retried without creating duplicate attempts or results. The backend\n * contract remains unchanged.\n *\n * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;\n * production deployments leave it unset and therefore use the 30-second window\n * for startAttempt and submitAttempt only.',
               ' * Login and submitAttempt are sent immediately so ordinary authentication and\n * the Finish evaluation action are never delayed by an artificial cohort window.\n * Transient Apps Script capacity failures still use bounded retry/backoff.\n * startAttempt retains the wide first-request spread so a 50-participant event\n * does not create an avoidable synchronized start burst.\n *\n * Start and submission are idempotent on the server, so ambiguous timeouts can\n * be retried without creating duplicate attempts or results. The backend uses a\n * short submission lock timeout so busy executions release capacity quickly and\n * let the client retry instead of holding the UI for up to 90 seconds.\n *\n * NEXT_PUBLIC_CAPACITY_SPREAD_MS may be set by deterministic browser-test builds;\n * production deployments leave it unset and therefore use the 30-second window\n * for startAttempt only.',
           )
+          if 'const BURST_SENSITIVE_ACTIONS = new Set(["startAttempt"]);' not in text:
+              raise SystemExit('request policy patch did not apply')
           policy.write_text(text)
 
           code = Path("google-apps-script/Code.gs")
@@ -127,8 +123,7 @@ jobs:
           )
           concurrency.write_text(text)
 
-          finish_test = Path("tests/finish-evaluation-performance.test.mjs")
-          finish_test.write_text('''import assert from "node:assert/strict";
+          Path("tests/finish-evaluation-performance.test.mjs").write_text('''import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
@@ -146,17 +141,13 @@ test("finish evaluation submits immediately on the first request", async () => {
   const response = await fetchSheetsWithRetry(
     "submitAttempt",
     async () => Response.json({ ok: true, result: { score: 100 } }),
-    {
-      random: () => 1,
-      sleep: async (delay) => sleeps.push(delay),
-      timeoutMs: 1_000,
-    },
+    { random: () => 1, sleep: async (delay) => sleeps.push(delay), timeoutMs: 1_000 },
   );
   assert.equal((await response.json()).ok, true);
   assert.deepEqual(sleeps, []);
 });
 
-test("finish evaluation retries temporary backend pressure without duplicate client submission", async () => {
+test("finish evaluation retries temporary backend pressure", async () => {
   const sleeps = [];
   let calls = 0;
   const response = await fetchSheetsWithRetry(
@@ -171,14 +162,9 @@ test("finish evaluation retries temporary backend pressure without duplicate cli
       }
       return Response.json({ ok: true, alreadySubmitted: true, result: { score: 88 } });
     },
-    {
-      random: () => 0,
-      sleep: async (delay) => sleeps.push(delay),
-      timeoutMs: 1_000,
-    },
+    { random: () => 0, sleep: async (delay) => sleeps.push(delay), timeoutMs: 1_000 },
   );
-  const data = await response.json();
-  assert.equal(data.ok, true);
+  assert.equal((await response.json()).ok, true);
   assert.equal(calls, 2);
   assert.deepEqual(sleeps, [1_000]);
 });
@@ -186,10 +172,7 @@ test("finish evaluation retries temporary backend pressure without duplicate cli
 test("backend submission path fails fast under lock pressure and keeps retry-safe writes", () => {
   const timeout = Number(backend.match(/submissionLockTimeoutMs:\\s*(\\d+)/)?.[1]);
   assert.ok(timeout > 0 && timeout <= 10_000, "submission lock should release busy executions quickly");
-  assert.match(
-    backend,
-    /function submitAttempt_\\(body\\)[\\s\\S]*?withScriptLock_\\(APP\\.capacity\\.submissionLockTimeoutMs/,
-  );
+  assert.match(backend, /function submitAttempt_\\(body\\)[\\s\\S]*?withScriptLock_\\(APP\\.capacity\\.submissionLockTimeoutMs/);
   assert.match(backend, /if \\(current\\.status === "submitted"\\) return existingAttemptResult_/);
   assert.match(backend, /deleteRowsMatching_\\(answersSheet, "attempt_id", attemptId\\)/);
   assert.match(backend, /answersSheet[\\s\\S]*?\\.setValues\\(answerRows\\)/);
@@ -197,8 +180,7 @@ test("backend submission path fails fast under lock pressure and keeps retry-saf
 });
 ''')
 
-          changelog = Path("updates/2026-08-20-faster-finish-evaluation.md")
-          changelog.write_text('''# Faster Finish Evaluation response
+          Path("updates/2026-08-20-faster-finish-evaluation.md").write_text('''# Faster Finish Evaluation response
 
 Date: 2026-08-20
 
@@ -217,9 +199,7 @@ Date: 2026-08-20
 This update changes `google-apps-script/Code.gs`. Deploy the updated Apps Script web app version before expecting the production site to receive the backend-side submission improvements.
 ''')
 
-          workflow = Path(".github/workflows/patch-faster-finish-evaluation.yml")
-          if workflow.exists():
-              workflow.unlink()
+          Path(".github/workflows/patch-faster-finish-evaluation.yml").unlink()
           PY
 
       - name: Commit and push patched files
