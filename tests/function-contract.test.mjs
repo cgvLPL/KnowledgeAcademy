@@ -78,13 +78,14 @@ test("Apps Script registers every participant and administrator action", () => {
 test("quiz submissions are durable and safe for concurrent retries", () => {
   assert.match(backend, /function submitAttempt_\(body\)/);
   assert.match(backend, /targetSimultaneousParticipants:\s*30/);
-  assert.match(backend, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs/);
+  assert.match(backend, /submissionLockTimeoutMs:\s*8000/);
+  assert.match(backend, /function submitAttempt_\(body\)[\s\S]*?withScriptLock_\(APP\.capacity\.submissionLockTimeoutMs/);
   assert.match(backend, /SpreadsheetApp\.flush\(\)/);
   assert.match(backend, /alreadySubmitted:\s*true/);
   assert.match(backend, /existing.*status === "started"/s);
   assert.match(client, /fetchSheetsWithRetry/);
   assert.match(requestPolicy, /RETRY_DELAYS_MS/);
-  assert.match(requestPolicy, /BURST_SENSITIVE_ACTIONS = new Set\(\["startAttempt", "submitAttempt"\]\)/);
+  assert.match(requestPolicy, /BURST_SENSITIVE_ACTIONS = new Set\(\["startAttempt"\]\)/);
   assert.match(requestPolicy, /RETRYABLE_ACTIONS = new Set\(\[[\s\S]*?"login"[\s\S]*?"startAttempt"[\s\S]*?"submitAttempt"/);
   assert.doesNotMatch(resultSync, /for \(let attempt = 0; attempt < 3;/);
 });
