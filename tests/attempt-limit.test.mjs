@@ -23,7 +23,7 @@ test("attempt limits are enforced inside the concurrent start and submit locks",
   const start = backend.slice(backend.indexOf("function startAttempt_"), backend.indexOf("function existingAttemptResult_"));
   const submit = backend.slice(backend.indexOf("function submitAttempt_"), backend.indexOf("function submittedAttemptCountForCourse_"));
   assert.match(start, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs[\s\S]*assertAttemptLimitAvailable_/);
-  assert.match(submit, /withScriptLock_\(APP\.capacity\.writeLockTimeoutMs[\s\S]*assertAttemptLimitAvailable_/);
+  assert.match(submit, /withScriptLock_\(APP\.capacity\.submissionLockTimeoutMs[\s\S]*assertAttemptLimitAvailable_/);
   assert.match(backend, /isSubmittedAttempt_\(attempt\)/);
   assert.match(backend, /You have reached the " \+ attemptLimit \+ "-attempt limit/);
 });
