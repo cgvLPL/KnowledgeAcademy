@@ -1,0 +1,118 @@
+/* Mobile home CTA and bottom-navigation containment fix.
+ * Keeps the active navigation tile fully inset inside the outer capsule and
+ * balances the participant Start evaluation CTA on narrow phones.
+ */
+
+@media (max-width: 760px) {
+  .participant-home .hero-button {
+    box-sizing: border-box !important;
+    display: flex !important;
+    font-size: clamp(0.95rem, 4vw, 1.05rem) !important;
+    font-weight: 780 !important;
+    justify-content: center !important;
+    min-height: 60px !important;
+    padding: 0 68px 0 20px !important;
+    position: relative !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .participant-home .hero-button > span {
+    align-items: center !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border: 1px solid rgba(255, 255, 255, 0.68) !important;
+    border-radius: 50% !important;
+    color: #ff5d28 !important;
+    display: inline-flex !important;
+    height: 44px !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    position: absolute !important;
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 44px !important;
+  }
+
+  .participant-home .hero-button:disabled > span {
+    color: #8e918d !important;
+  }
+
+  .mobile-nav {
+    align-items: stretch !important;
+    border: 1px solid rgba(255, 255, 255, 0.11) !important;
+    border-radius: 999px !important;
+    bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box !important;
+    display: grid !important;
+    gap: 4px !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    height: auto !important;
+    left: max(10px, env(safe-area-inset-left)) !important;
+    overflow: visible !important;
+    padding: 7px !important;
+    right: max(10px, env(safe-area-inset-right)) !important;
+    width: auto !important;
+  }
+
+  .mobile-nav button {
+    box-sizing: border-box !important;
+    inline-size: 100% !important;
+    margin: 0 !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    min-height: 58px !important;
+    padding: 7px 3px !important;
+    position: relative !important;
+    width: 100% !important;
+  }
+
+  .mobile-nav button.active,
+  .mobile-nav button[aria-current="page"] {
+    border-radius: 14px !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.19),
+      0 8px 22px rgba(226, 58, 31, 0.24) !important;
+    transform: none !important;
+  }
+
+  .mobile-nav button svg {
+    flex: 0 0 auto !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .mobile-nav {
+    gap: 2px !important;
+    left: max(6px, env(safe-area-inset-left)) !important;
+    padding: 6px !important;
+    right: max(6px, env(safe-area-inset-right)) !important;
+  }
+
+  .mobile-nav button {
+    font-size: 0.68rem !important;
+    min-height: 56px !important;
+    padding-inline: 2px !important;
+  }
+
+  .participant-home .hero-button {
+    min-height: 58px !important;
+    padding-left: 16px !important;
+    padding-right: 62px !important;
+  }
+
+  .participant-home .hero-button > span {
+    height: 42px !important;
+    right: 8px !important;
+    width: 42px !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .mobile-nav,
+  .mobile-nav button.active,
+  .participant-home .hero-button > span {
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+}
