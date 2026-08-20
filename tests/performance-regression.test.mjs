@@ -11,6 +11,8 @@ const resultSync = read("app/result-sync-enhancer.tsx");
 const performance = read("app/interaction-performance-enhancer.tsx");
 const requestPolicy = read("app/sheets-request-policy.mjs");
 const backend = read("google-apps-script/Code.gs");
+const verifyWorkflow = read(".github/workflows/verify-pr.yml");
+const deployWorkflow = read(".github/workflows/deploy-pages.yml");
 
 test("the optimized Apps Script backend remains valid JavaScript", () => {
   assert.doesNotThrow(() => new Function(backend));
@@ -28,10 +30,15 @@ test("the login waits for the branded intro while low-power devices keep a short
   assert.match(client, /if \(booting\) return <BootScreen onComplete=\{\(\) => setBooting\(false\)\} \/>/);
 });
 
-test("capacity retry protection adds no more than 300ms to a healthy first request", () => {
-  const spread = requestPolicy.match(/BURST_SPREAD_MS\s*=\s*(\d+)/);
-  assert.ok(spread, "Missing the burst-spread limit");
-  assert.ok(Number(spread[1]) <= 300, "Healthy exam requests are spread for more than 300ms");
+test("production capacity admission keeps the 30-second spread while CI mocks stay immediate", () => {
+  assert.match(requestPolicy, /NEXT_PUBLIC_CAPACITY_SPREAD_MS/);
+  assert.match(requestPolicy, /configuredBurstSpreadMs === undefined\s*\?\s*30_000/);
+  assert.match(verifyWorkflow, /NEXT_PUBLIC_CAPACITY_SPREAD_MS:\s*["']0["']/);
+  assert.doesNotMatch(
+    deployWorkflow,
+    /NEXT_PUBLIC_CAPACITY_SPREAD_MS/,
+    "Production Pages deployment must not disable participant admission spreading",
+  );
 });
 
 test("sign-in returns the initial workspace without a second backend round trip", () => {
