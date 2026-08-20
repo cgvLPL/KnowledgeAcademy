@@ -143,7 +143,7 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
         if (cancelled) return;
 
         const baseViewport = page.getViewport({ scale: 1 });
-        const availableWidth = Math.max(260, stage.clientWidth - 20);
+        const availableWidth = Math.max(240, stage.clientWidth - 32);
         const fitScale = availableWidth / Math.max(1, baseViewport.width);
         const viewport = page.getViewport({ scale: fitScale * zoom });
         const outputScale = Math.min(window.devicePixelRatio || 1, 2);
@@ -199,10 +199,12 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
         aria-labelledby="cgv-mobile-pdf-title"
       >
         <header className="cgv-mobile-pdf-toolbar">
-          <span className="cgv-mobile-pdf-icon"><FileText size={18} /></span>
           <span className="cgv-mobile-pdf-heading">
             <small>PDF DOCUMENT</small>
-            <strong id="cgv-mobile-pdf-title">{active.title}</strong>
+            <strong id="cgv-mobile-pdf-title" title={active.title}>{active.title}</strong>
+          </span>
+          <span className="cgv-mobile-pdf-toolbar-page" aria-hidden="true">
+            {pageCount ? `${pageNumber} / ${pageCount}` : "…"}
           </span>
           <button type="button" onClick={onClose} aria-label="Close PDF reader">
             <X size={20} />
@@ -212,7 +214,7 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
         <div ref={stageRef} className="cgv-mobile-pdf-stage" aria-busy={loading || rendering}>
           {error ? (
             <div className="cgv-mobile-pdf-error" role="alert">
-              <FileText size={32} />
+              <div className="cgv-mobile-pdf-error-icon"><FileText size={30} /></div>
               <strong>PDF preview unavailable</strong>
               <span>{error}</span>
               <div>
@@ -229,7 +231,8 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
               />
               {(loading || rendering) && (
                 <div className="cgv-mobile-pdf-loading" role="status" aria-live="polite">
-                  {loading ? "Loading PDF…" : `Rendering page ${pageNumber}…`}
+                  <span className="cgv-mobile-pdf-spinner" aria-hidden="true" />
+                  <span>{loading ? "Loading PDF…" : `Rendering page ${pageNumber}…`}</span>
                 </div>
               )}
             </>
@@ -237,23 +240,31 @@ function MobilePdfSurface({ active, onClose }: { active: ActivePdf; onClose: () 
         </div>
 
         <nav className="cgv-mobile-pdf-controls" aria-label="PDF page controls">
-          <button type="button" aria-label="Previous PDF page" onClick={previousPage} disabled={pageNumber <= 1 || !pageCount}>
-            <ChevronLeft size={20} />
-          </button>
-          <span className="cgv-mobile-pdf-page" aria-live="polite">
-            <strong>{pageNumber}</strong><span aria-hidden="true"> / </span>{pageCount || "…"}
-          </span>
-          <button type="button" aria-label="Next PDF page" onClick={nextPage} disabled={!pageCount || pageNumber >= pageCount}>
-            <ChevronRight size={20} />
-          </button>
-          <i aria-hidden="true" />
-          <button type="button" aria-label="Zoom out PDF" onClick={zoomOut} disabled={zoom <= 0.75}>
-            <Minus size={18} />
-          </button>
-          <span className="cgv-mobile-pdf-zoom">{Math.round(zoom * 100)}%</span>
-          <button type="button" aria-label="Zoom in PDF" onClick={zoomIn} disabled={zoom >= 2}>
-            <Plus size={18} />
-          </button>
+          <div className="cgv-mobile-pdf-control-group cgv-mobile-pdf-page-controls">
+            <button type="button" aria-label="Previous PDF page" onClick={previousPage} disabled={pageNumber <= 1 || !pageCount}>
+              <ChevronLeft size={20} />
+            </button>
+            <span className="cgv-mobile-pdf-page" aria-live="polite">
+              <small>Page</small>
+              <strong>{pageNumber}<span aria-hidden="true"> / </span>{pageCount || "…"}</strong>
+            </span>
+            <button type="button" aria-label="Next PDF page" onClick={nextPage} disabled={!pageCount || pageNumber >= pageCount}>
+              <ChevronRight size={20} />
+            </button>
+          </div>
+
+          <div className="cgv-mobile-pdf-control-group cgv-mobile-pdf-zoom-controls">
+            <button type="button" aria-label="Zoom out PDF" onClick={zoomOut} disabled={zoom <= 0.75}>
+              <Minus size={18} />
+            </button>
+            <span className="cgv-mobile-pdf-zoom">
+              <small>Zoom</small>
+              <strong>{Math.round(zoom * 100)}%</strong>
+            </span>
+            <button type="button" aria-label="Zoom in PDF" onClick={zoomIn} disabled={zoom >= 2}>
+              <Plus size={18} />
+            </button>
+          </div>
         </nav>
       </section>
     </div>
