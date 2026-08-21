@@ -1,3 +1,4 @@
+# synchronization marker for the existing repository verification workflow
 name: Apply participant reporting exclusion
 
 on:
@@ -147,7 +148,7 @@ jobs:
           text = replace_once(
               text,
               '  sheet.getRange("E6").setFormula(\'=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted"),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)\');',
-              '  sheet.getRange("E6").setFormula(\'=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)\');',
+              '  sheet.getRange("E6").setFormula(\'=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),">="&XLOOKUP($B$3,Courses!B:B,Courses!A:A))/A6,0)\');',
               "dashboard pass rate formula",
           )
           text = replace_once(
