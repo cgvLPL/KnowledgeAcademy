@@ -25,6 +25,7 @@ const INVALIDATING_ACTIONS = new Set([
   "adminSaveUser",
   "adminSetUserPosition",
   "adminSetUserStatus",
+  "adminSetUserReportingExclusion",
   "adminResetPassword",
   "submitAttempt",
   "logout",

@@ -138,6 +138,7 @@ type ParticipantRow = {
   attempts: number;
   average: number;
   status: string;
+  excludedFromReporting: boolean;
 };
 
 type AuthUser = {
@@ -2081,7 +2082,7 @@ function ParticipantsView({
                 <td><div className="participant-cell"><Initials name={person.name} size="sm" /><div><strong>{person.name}</strong><span>@{person.username}</span></div></div></td>
                 <td data-label="Position">{person.position || "—"}</td><td data-label="Branch">{person.branch || "—"}</td><td data-label="Attempts">{person.attempts}</td><td data-label="Average"><strong className="table-score">{person.average}%</strong></td>
                 <td data-label="Status"><span className={`outcome-pill ${person.status === "Active" ? "pass" : "neutral"}`}>{person.status}</span></td>
-                <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-position={person.position} data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
+                <td><button type="button" className="icon-button" aria-label={`Manage ${person.name}`} aria-haspopup="dialog" data-participant-actions="true" data-participant-id={person.id} data-participant-name={person.name} data-participant-username={person.username} data-participant-position={person.position} data-participant-branch={person.branch} data-participant-status={person.status} data-participant-reporting-excluded={person.excludedFromReporting ? "true" : "false"}><MoreHorizontal size={18} /><span className="participants-action-label">Manage participant</span></button></td>
               </tr>
               ))}
               {!visibleParticipants.length && (
@@ -2645,6 +2646,9 @@ export default function ExamClient() {
               branch: String(detail.user?.branch ?? item.branch),
               position: String(detail.user?.position ?? item.position),
               status: String(detail.user?.status || "active").toLowerCase() === "active" ? "Active" : "Inactive",
+              excludedFromReporting: detail.user?.excludedFromReporting === undefined
+                ? item.excludedFromReporting
+                : detail.user.excludedFromReporting === true,
             }
           : item
       )));
@@ -2800,6 +2804,7 @@ export default function ExamClient() {
             attempts: Number(item.attempts || 0),
             average: Number(item.average || 0),
             status: String(item.status || "active") === "active" ? "Active" : "Inactive",
+            excludedFromReporting: item.excludedFromReporting === true,
           };
         }));
       }
@@ -3058,6 +3063,7 @@ export default function ExamClient() {
         attempts: 0,
         average: 0,
         status: "Active",
+        excludedFromReporting: false,
       }, ...items]);
       return null;
     } catch (error) {
