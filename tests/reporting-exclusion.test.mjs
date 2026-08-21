@@ -11,6 +11,11 @@ const admin = read("app/admin-functionality-enhancer.tsx");
 const proxy = read("app/api/sheets/route.ts");
 const performance = read("app/interaction-performance-enhancer.tsx");
 
+const reportingExclusionAction = backend.slice(
+  backend.indexOf("function adminSetUserReportingExclusion_"),
+  backend.indexOf("function adminResetPassword_"),
+);
+
 test("participant reporting exclusion is persisted and exposed by Apps Script", () => {
   assert.match(backend, /"excluded_from_reporting"/);
   assert.match(backend, /adminSetUserReportingExclusion: adminSetUserReportingExclusion_/);
@@ -36,5 +41,7 @@ test("administrators can toggle reporting eligibility without deleting participa
   assert.match(admin, /keeps all attempts and personal results/);
   assert.match(client, /excludedFromReporting: boolean/);
   assert.match(client, /data-participant-reporting-excluded/);
-  assert.doesNotMatch(backend, /adminSetUserReportingExclusion_[\s\S]*?deleteRowsMatching_\(getSheet_\(APP\.sheets\.attempts\)/);
+  assert.ok(reportingExclusionAction.startsWith("function adminSetUserReportingExclusion_"));
+  assert.doesNotMatch(reportingExclusionAction, /deleteRowsMatching_\(getSheet_\(APP\.sheets\.attempts\)/);
+  assert.doesNotMatch(reportingExclusionAction, /\.deleteRow\(/);
 });
