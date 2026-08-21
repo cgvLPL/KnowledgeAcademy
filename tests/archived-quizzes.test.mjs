@@ -31,7 +31,10 @@ test("archived executive reports retain submitted and legacy completed results",
   assert.match(backend, /function isSubmittedAttempt_\(attempt\)/);
   assert.match(backend, /status === "submitted"\) return true/);
   assert.match(backend, /status !== "started" && Boolean\(toIso_\(attempt && attempt\.submitted_at\)\)/);
-  assert.match(backend, /function adminGetExecutiveReport_\(body\)[\s\S]*String\(attempt\.course_id\) === courseId && isSubmittedAttempt_\(attempt\)/);
+  assert.match(
+    backend,
+    /function adminGetExecutiveReport_\(body\)[\s\S]*String\(attempt\.course_id\) === courseId &&[\s\S]*isSubmittedAttempt_\(attempt\) &&[\s\S]*!booleanSetting_\(participant\.excluded_from_reporting\)/,
+  );
   assert.match(backend, /const allSubmitted = rowsAsObjects_[\s\S]*\.filter\(isSubmittedAttempt_\)/);
   assert.match(client, /Preparing preserved results for this archived quiz/);
   assert.match(client, /item\.status === "Archived" \? " — Archived"/);
