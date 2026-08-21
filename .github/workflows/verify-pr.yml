@@ -6,32 +6,9 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-reporting-exclusion:
-    if: github.head_ref == 'agent/exclude-participants-reporting'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout reporting exclusion branch
-        uses: actions/checkout@v6
-        with:
-          ref: agent/exclude-participants-reporting
-          fetch-depth: 0
-
-      - name: Run staged reporting exclusion patch
-        run: python scripts/apply-reporting-exclusion.py
-
-      - name: Commit and push feature patch
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "feat: exclude participants from reporting"
-          git push origin HEAD:agent/exclude-participants-reporting
-
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
