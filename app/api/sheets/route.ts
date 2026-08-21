@@ -22,6 +22,7 @@ const ALLOWED_ACTIONS = new Set([
   "adminSaveUser",
   "adminSetUserPosition",
   "adminSetUserStatus",
+  "adminSetUserReportingExclusion",
   "adminResetPassword",
 ]);
 

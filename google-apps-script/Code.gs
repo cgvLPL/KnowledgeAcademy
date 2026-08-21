@@ -31,6 +31,7 @@ const HEADERS = Object.freeze({
   Users: [
     "user_id", "email", "full_name", "branch", "password_hash", "salt",
     "role", "status", "created_at", "last_login", "username", "position",
+    "excluded_from_reporting",
   ],
   Courses: [
     "course_id", "title", "description", "category", "passing_score",
@@ -79,6 +80,7 @@ const API_ACTIONS = Object.freeze({
   adminSaveUser: adminSaveUser_,
   adminSetUserPosition: adminSetUserPosition_,
   adminSetUserStatus: adminSetUserStatus_,
+  adminSetUserReportingExclusion: adminSetUserReportingExclusion_,
   adminResetPassword: adminResetPassword_,
 });
 
@@ -556,12 +558,16 @@ function adminDashboardForUser_(user, courseId) {
   const courses = rowsAsObjects_(getSheet_(APP.sheets.courses));
   const users = rowsAsObjects_(getSheet_(APP.sheets.users));
   const participants = users.filter(function (user) { return user.role === "participant"; });
+  const userMap = indexBy_(users, "user_id");
   const allSubmitted = rowsAsObjects_(getSheet_(APP.sheets.attempts))
     .filter(isSubmittedAttempt_);
+  const reportableSubmitted = allSubmitted.filter(function (attempt) {
+    const participant = userMap[attempt.user_id] || {};
+    return !booleanSetting_(participant.excluded_from_reporting);
+  });
   const attempts = courseId
-    ? allSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
-    : allSubmitted;
-  const userMap = indexBy_(users, "user_id");
+    ? reportableSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
+    : reportableSubmitted;
   const courseMap = indexBy_(courses, "course_id");
   const questionCounts = questionCountsByCourse_();
   const participantStats = allSubmitted.reduce(function (stats, attempt) {
@@ -570,7 +576,7 @@ function adminDashboardForUser_(user, courseId) {
     stats[attempt.user_id].scoreTotal += Number(attempt.score || 0);
     return stats;
   }, {});
-  const courseStats = allSubmitted.reduce(function (stats, attempt) {
+  const courseStats = reportableSubmitted.reduce(function (stats, attempt) {
     if (!stats[attempt.course_id]) stats[attempt.course_id] = { participants: {}, total: 0, count: 0 };
     stats[attempt.course_id].participants[attempt.user_id] = true;
     stats[attempt.course_id].total += Number(attempt.score || 0);
@@ -623,7 +629,7 @@ function adminDashboardForUser_(user, courseId) {
     admins: users.filter(function (user) { return user.role === "admin"; }).map(publicUser_),
     scoreboard: scoreboard,
     summary: {
-      participants: participants.length,
+      participants: participants.filter(function (participant) { return !booleanSetting_(participant.excluded_from_reporting); }).length,
       submitted: scoreboard.length,
       average: scoreboard.length
         ? Math.round(scoreboard.reduce(function (sum, item) { return sum + item.score; }, 0) / scoreboard.length)
@@ -647,7 +653,10 @@ function adminGetExecutiveReport_(body) {
   const userMap = indexBy_(users, "user_id");
   const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
     .filter(function (attempt) {
-      return String(attempt.course_id) === courseId && isSubmittedAttempt_(attempt);
+      const participant = userMap[attempt.user_id] || {};
+      return String(attempt.course_id) === courseId &&
+        isSubmittedAttempt_(attempt) &&
+        !booleanSetting_(participant.excluded_from_reporting);
     });
   const answersByQuestion = {};
   const attemptsNeedingAnswerRows = {};
@@ -1275,6 +1284,25 @@ function adminSetUserStatus_(body) {
   });
 }
 
+function adminSetUserReportingExclusion_(body) {
+  requireSession_(body.token, "admin");
+  const userId = String(body.userId || "").trim();
+  if (!userId) throw new Error("Account ID is required.");
+  const excluded = booleanSetting_(body.excluded);
+  return withScriptLock_(10000, function () {
+    const sheet = ensureDataSheet_(activeSpreadsheet_(), APP.sheets.users, HEADERS.Users);
+    const user = findObjectByExactValue_(sheet, "user_id", userId, true);
+    if (!user) throw new Error("Account not found.");
+    if (user.role !== "participant") throw new Error("Only participant accounts can be excluded from reporting.");
+    updateObjectRow_(sheet, user.__row, { excluded_from_reporting: excluded });
+    SpreadsheetApp.flush();
+    return {
+      ok: true,
+      user: publicUser_(Object.assign({}, user, { excluded_from_reporting: excluded })),
+    };
+  });
+}
+
 function adminResetPassword_(body) {
   requireSession_(body.token, "admin");
   const userId = String(body.userId || "").trim();
@@ -1341,6 +1369,7 @@ function createUserInternal_(input) {
     last_login: "",
     username: username,
     position: normalizeUserPosition_(input.position, input.role === "admin" ? "admin" : "participant"),
+    excluded_from_reporting: false,
   };
   appendObject_(getSheet_(APP.sheets.users), record);
   return record;
@@ -1412,16 +1441,16 @@ function buildDashboard_() {
   sheet.getRange("A5:H5").setValues([[
     "Participants", "", "Average score", "", "Pass rate", "", "Top score", "",
   ]]).setFontWeight("bold");
-  sheet.getRange("A6").setFormula('=IFERROR(COUNTA(UNIQUE(FILTER(Attempts!C2:C,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted"))),0)');
-  sheet.getRange("C6").setFormula('=IFERROR(AVERAGE(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted")),0)');
-  sheet.getRange("E6").setFormula('=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted"),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)');
-  sheet.getRange("G6").setFormula('=IFERROR(MAX(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted")),0)');
+  sheet.getRange("A6").setFormula('=IFERROR(COUNTA(UNIQUE(FILTER(Attempts!C2:C,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE))),0)');
+  sheet.getRange("C6").setFormula('=IFERROR(AVERAGE(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE)),0)');
+  sheet.getRange("E6").setFormula('=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)');
+  sheet.getRange("G6").setFormula('=IFERROR(MAX(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE)),0)');
   sheet.getRange("A6:H6").setFontSize(24).setFontWeight("bold");
   sheet.getRange("E6").setNumberFormat("0.0%");
   sheet.getRange("A8:G8").setValues([[
     "Rank", "Participant", "Branch", "Score", "Correct", "Time", "Completed",
   ]]).setBackground("#101110").setFontColor("#ffffff").setFontWeight("bold");
-  sheet.getRange("A9").setFormula('=IFERROR(LET(courseId,XLOOKUP($B$3,Courses!B:B,Courses!A:A),rows,FILTER(Attempts!A2:J,Attempts!B2:B=courseId,Attempts!F2:F="submitted"),sorted,SORT(HSTACK(XLOOKUP(INDEX(rows,,3),Users!A:A,Users!C:C),XLOOKUP(INDEX(rows,,3),Users!A:A,Users!D:D),INDEX(rows,,7),INDEX(rows,,8)&"/"&INDEX(rows,,9),INDEX(rows,,10),INDEX(rows,,5)),3,FALSE,5,TRUE),HSTACK(SEQUENCE(ROWS(sorted)),sorted)),"No submitted attempts yet")');
+  sheet.getRange("A9").setFormula('=IFERROR(LET(courseId,XLOOKUP($B$3,Courses!B:B,Courses!A:A),rows,FILTER(Attempts!A2:J,Attempts!B2:B=courseId,Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),sorted,SORT(HSTACK(XLOOKUP(INDEX(rows,,3),Users!A:A,Users!C:C),XLOOKUP(INDEX(rows,,3),Users!A:A,Users!D:D),INDEX(rows,,7),INDEX(rows,,8)&"/"&INDEX(rows,,9),INDEX(rows,,10),INDEX(rows,,5)),3,FALSE,5,TRUE),HSTACK(SEQUENCE(ROWS(sorted)),sorted)),"No submitted attempts yet")');
   sheet.getRange("D9:D").setNumberFormat("0");
   sheet.getRange("F9:F").setNumberFormat("[mm]:ss");
   sheet.getRange("G9:G").setNumberFormat("dd-mmm-yy hh:mm");
@@ -1817,6 +1846,7 @@ function publicUser_(user) {
     position: user.position || "",
     role: user.role,
     status: user.status,
+    excludedFromReporting: user.role === "participant" && booleanSetting_(user.excluded_from_reporting),
     createdAt: toIso_(user.created_at),
     lastLogin: toIso_(user.last_login),
   };

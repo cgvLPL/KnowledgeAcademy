@@ -45,6 +45,7 @@ const requiredActions = [
   "adminSaveUser",
   "adminSetUserPosition",
   "adminSetUserStatus",
+  "adminSetUserReportingExclusion",
   "adminResetPassword",
 ];
 

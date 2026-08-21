@@ -18,6 +18,7 @@ type ApiUser = {
   position?: string;
   role?: string;
   status?: string;
+  excludedFromReporting?: boolean;
 };
 
 type PositionChoice = "MoD" | "Cinema Manager" | "Stars" | "Custom";
@@ -167,6 +168,10 @@ function updateUserRow(user: ApiUser) {
     pill.className = `outcome-pill ${active ? "pass" : "neutral"}`;
   }
   if (position && user.position !== undefined) position.textContent = user.position || "—";
+  const actionButton = row?.querySelector<HTMLButtonElement>('[data-participant-actions="true"]');
+  if (actionButton && user.excludedFromReporting !== undefined) {
+    actionButton.dataset.participantReportingExcluded = user.excludedFromReporting ? "true" : "false";
+  }
 }
 
 export default function AdminFunctionalityEnhancer() {
@@ -227,6 +232,7 @@ export default function AdminFunctionalityEnhancer() {
           position: actionButton.dataset.participantPosition || "",
           role: "participant",
           status: normalize(actionButton.dataset.participantStatus) || "active",
+          excludedFromReporting: actionButton.dataset.participantReportingExcluded === "true",
         };
       }
       const username = usernameFromRow(element);
@@ -587,6 +593,28 @@ export default function AdminFunctionalityEnhancer() {
     }
   }
 
+  async function setUserReportingExclusion(user: ApiUser, excluded: boolean) {
+    if (!user.id) return;
+    setBusy(true);
+    setError("");
+    try {
+      const data = await api<{ user: ApiUser }>("adminSetUserReportingExclusion", {
+        userId: user.id,
+        excluded,
+      });
+      updateUserRow(data.user);
+      announceParticipantChange(data.user);
+      toast(excluded
+        ? "Participant excluded from ranking and executive reports."
+        : "Participant included in ranking and executive reports.");
+      setModal({ type: "userActions", user: data.user });
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to update reporting eligibility.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function resetUserPassword(user: ApiUser) {
     if (!user.id || resetPassword.length < 8) {
       setError("Enter a new password containing at least eight characters.");
@@ -755,7 +783,18 @@ export default function AdminFunctionalityEnhancer() {
                 <div className="cgv-action-grid">
                   <button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button>
                   <button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button>
+                  <button
+                    disabled={busy}
+                    onClick={() => void setUserReportingExclusion(modal.user, !modal.user.excludedFromReporting)}
+                  >
+                    {modal.user.excludedFromReporting ? "Include in ranking & report" : "Exclude from ranking & report"}
+                  </button>
                 </div>
+                <p className="cgv-reporting-note">
+                  {modal.user.excludedFromReporting
+                    ? "This participant keeps all attempts and personal results, but is currently omitted from rankings and executive-report analytics."
+                    : "This participant is included in rankings and executive-report analytics."}
+                </p>
                 <div className="cgv-position-editor">
                   <label className="field-label">Position<select value={positionChoice} onChange={(event) => setPositionChoice(event.target.value as PositionChoice)}><option value="Stars">Stars</option><option value="Custom">Custom</option></select></label>
                   {positionChoice === "Custom" && <label className="field-label">Custom position<input value={customPosition} onChange={(event) => setCustomPosition(event.target.value)} placeholder="Enter participant position" maxLength={80} required /></label>}
