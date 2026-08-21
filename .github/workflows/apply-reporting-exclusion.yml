@@ -1,0 +1,384 @@
+name: Apply participant reporting exclusion
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'agent/exclude-participants-reporting' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/exclude-participants-reporting
+          fetch-depth: 0
+
+      - name: Apply reporting exclusion feature
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(text, old, new, label):
+              if old not in text:
+                  raise SystemExit(f"missing patch marker: {label}")
+              return text.replace(old, new, 1)
+
+          # Apps Script backend -------------------------------------------------
+          path = Path("google-apps-script/Code.gs")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '    "role", "status", "created_at", "last_login", "username", "position",\n',
+              '    "role", "status", "created_at", "last_login", "username", "position",\n    "excluded_from_reporting",\n',
+              "Users reporting header",
+          )
+          text = replace_once(
+              text,
+              '  adminSetUserStatus: adminSetUserStatus_,\n  adminResetPassword: adminResetPassword_,',
+              '  adminSetUserStatus: adminSetUserStatus_,\n  adminSetUserReportingExclusion: adminSetUserReportingExclusion_,\n  adminResetPassword: adminResetPassword_,',
+              "API action",
+          )
+
+          old_dashboard = '''  const participants = users.filter(function (user) { return user.role === "participant"; });
+  const allSubmitted = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(isSubmittedAttempt_);
+  const attempts = courseId
+    ? allSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
+    : allSubmitted;
+  const userMap = indexBy_(users, "user_id");
+  const courseMap = indexBy_(courses, "course_id");'''
+          new_dashboard = '''  const participants = users.filter(function (user) { return user.role === "participant"; });
+  const userMap = indexBy_(users, "user_id");
+  const allSubmitted = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(isSubmittedAttempt_);
+  const reportableSubmitted = allSubmitted.filter(function (attempt) {
+    const participant = userMap[attempt.user_id] || {};
+    return !booleanSetting_(participant.excluded_from_reporting);
+  });
+  const attempts = courseId
+    ? reportableSubmitted.filter(function (attempt) { return String(attempt.course_id) === courseId; })
+    : reportableSubmitted;
+  const courseMap = indexBy_(courses, "course_id");'''
+          text = replace_once(text, old_dashboard, new_dashboard, "dashboard reportable attempts")
+          text = replace_once(
+              text,
+              '  const courseStats = allSubmitted.reduce(function (stats, attempt) {',
+              '  const courseStats = reportableSubmitted.reduce(function (stats, attempt) {',
+              "course reporting stats",
+          )
+          text = replace_once(
+              text,
+              '      participants: participants.length,\n      submitted: scoreboard.length,',
+              '      participants: participants.filter(function (participant) { return !booleanSetting_(participant.excluded_from_reporting); }).length,\n      submitted: scoreboard.length,',
+              "dashboard summary participant count",
+          )
+
+          old_report_filter = '''  const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(function (attempt) {
+      return String(attempt.course_id) === courseId && isSubmittedAttempt_(attempt);
+    });'''
+          new_report_filter = '''  const attempts = rowsAsObjects_(getSheet_(APP.sheets.attempts))
+    .filter(function (attempt) {
+      const participant = userMap[attempt.user_id] || {};
+      return String(attempt.course_id) === courseId &&
+        isSubmittedAttempt_(attempt) &&
+        !booleanSetting_(participant.excluded_from_reporting);
+    });'''
+          text = replace_once(text, old_report_filter, new_report_filter, "executive report exclusion")
+
+          exclusion_function = '''function adminSetUserReportingExclusion_(body) {
+  requireSession_(body.token, "admin");
+  const userId = String(body.userId || "").trim();
+  if (!userId) throw new Error("Account ID is required.");
+  const excluded = booleanSetting_(body.excluded);
+  return withScriptLock_(10000, function () {
+    const sheet = ensureDataSheet_(activeSpreadsheet_(), APP.sheets.users, HEADERS.Users);
+    const user = findObjectByExactValue_(sheet, "user_id", userId, true);
+    if (!user) throw new Error("Account not found.");
+    if (user.role !== "participant") throw new Error("Only participant accounts can be excluded from reporting.");
+    updateObjectRow_(sheet, user.__row, { excluded_from_reporting: excluded });
+    SpreadsheetApp.flush();
+    return {
+      ok: true,
+      user: publicUser_(Object.assign({}, user, { excluded_from_reporting: excluded })),
+    };
+  });
+}
+
+'''
+          text = replace_once(
+              text,
+              'function adminResetPassword_(body) {',
+              exclusion_function + 'function adminResetPassword_(body) {',
+              "reporting exclusion action function",
+          )
+          text = replace_once(
+              text,
+              '    position: normalizeUserPosition_(input.position, input.role === "admin" ? "admin" : "participant"),\n  };',
+              '    position: normalizeUserPosition_(input.position, input.role === "admin" ? "admin" : "participant"),\n    excluded_from_reporting: false,\n  };',
+              "new user reporting default",
+          )
+          text = replace_once(
+              text,
+              '    status: user.status,\n    createdAt: toIso_(user.created_at),',
+              '    status: user.status,\n    excludedFromReporting: user.role === "participant" && booleanSetting_(user.excluded_from_reporting),\n    createdAt: toIso_(user.created_at),',
+              "public user reporting flag",
+          )
+
+          # Keep the generated workbook scoreboard aligned with the app scoreboard.
+          text = replace_once(
+              text,
+              '  sheet.getRange("A6").setFormula(\'=IFERROR(COUNTA(UNIQUE(FILTER(Attempts!C2:C,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted"))),0)\');',
+              '  sheet.getRange("A6").setFormula(\'=IFERROR(COUNTA(UNIQUE(FILTER(Attempts!C2:C,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE))),0)\');',
+              "dashboard participants formula",
+          )
+          text = replace_once(
+              text,
+              '  sheet.getRange("C6").setFormula(\'=IFERROR(AVERAGE(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted")),0)\');',
+              '  sheet.getRange("C6").setFormula(\'=IFERROR(AVERAGE(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE)),0)\');',
+              "dashboard average formula",
+          )
+          text = replace_once(
+              text,
+              '  sheet.getRange("E6").setFormula(\'=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted"),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)\');',
+              '  sheet.getRange("E6").setFormula(\'=IFERROR(COUNTIF(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),">="&XLOOKUP($B$3,Courses!B:B,Courses!E:E))/A6,0)\');',
+              "dashboard pass rate formula",
+          )
+          text = replace_once(
+              text,
+              '  sheet.getRange("G6").setFormula(\'=IFERROR(MAX(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted")),0)\');',
+              '  sheet.getRange("G6").setFormula(\'=IFERROR(MAX(FILTER(Attempts!G2:G,Attempts!B2:B=XLOOKUP($B$3,Courses!B:B,Courses!A:A),Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE)),0)\');',
+              "dashboard top score formula",
+          )
+          text = replace_once(
+              text,
+              '  sheet.getRange("A9").setFormula(\'=IFERROR(LET(courseId,XLOOKUP($B$3,Courses!B:B,Courses!A:A),rows,FILTER(Attempts!A2:J,Attempts!B2:B=courseId,Attempts!F2:F="submitted"),sorted,SORT(HSTACK(XLOOKUP(INDEX(rows,,3),Users!A:A,Users!C:C),XLOOKUP(INDEX(rows,,3),Users!A:A,Users!D:D),INDEX(rows,,7),INDEX(rows,,8)&"/"&INDEX(rows,,9),INDEX(rows,,10),INDEX(rows,,5)),3,FALSE,5,TRUE),HSTACK(SEQUENCE(ROWS(sorted)),sorted)),"No submitted attempts yet")\');',
+              '  sheet.getRange("A9").setFormula(\'=IFERROR(LET(courseId,XLOOKUP($B$3,Courses!B:B,Courses!A:A),rows,FILTER(Attempts!A2:J,Attempts!B2:B=courseId,Attempts!F2:F="submitted",XLOOKUP(Attempts!C2:C,Users!A:A,Users!M:M,FALSE)<>TRUE),sorted,SORT(HSTACK(XLOOKUP(INDEX(rows,,3),Users!A:A,Users!C:C),XLOOKUP(INDEX(rows,,3),Users!A:A,Users!D:D),INDEX(rows,,7),INDEX(rows,,8)&"/"&INDEX(rows,,9),INDEX(rows,,10),INDEX(rows,,5)),3,FALSE,5,TRUE),HSTACK(SEQUENCE(ROWS(sorted)),sorted)),"No submitted attempts yet")\');',
+              "dashboard ranking formula",
+          )
+          path.write_text(text)
+
+          # API proxy -----------------------------------------------------------
+          path = Path("app/api/sheets/route.ts")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '  "adminSetUserStatus",\n  "adminResetPassword",',
+              '  "adminSetUserStatus",\n  "adminSetUserReportingExclusion",\n  "adminResetPassword",',
+              "proxy allowed action",
+          )
+          path.write_text(text)
+
+          # Request cache invalidation -----------------------------------------
+          path = Path("app/interaction-performance-enhancer.tsx")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '  "adminSetUserStatus",\n  "adminResetPassword",',
+              '  "adminSetUserStatus",\n  "adminSetUserReportingExclusion",\n  "adminResetPassword",',
+              "cache invalidation action",
+          )
+          path.write_text(text)
+
+          # Admin action modal --------------------------------------------------
+          path = Path("app/admin-functionality-enhancer.tsx")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '  status?: string;\n};',
+              '  status?: string;\n  excludedFromReporting?: boolean;\n};',
+              "ApiUser reporting flag",
+          )
+          text = replace_once(
+              text,
+              '          status: normalize(actionButton.dataset.participantStatus) || "active",\n        };',
+              '          status: normalize(actionButton.dataset.participantStatus) || "active",\n          excludedFromReporting: actionButton.dataset.participantReportingExcluded === "true",\n        };',
+              "fast participant lookup reporting flag",
+          )
+          text = replace_once(
+              text,
+              '  if (position && user.position !== undefined) position.textContent = user.position || "—";\n}',
+              '  if (position && user.position !== undefined) position.textContent = user.position || "—";\n  const actionButton = row?.querySelector<HTMLButtonElement>(\'[data-participant-actions="true"]\');\n  if (actionButton && user.excludedFromReporting !== undefined) {\n    actionButton.dataset.participantReportingExcluded = user.excludedFromReporting ? "true" : "false";\n  }\n}',
+              "participant row reporting state",
+          )
+
+          exclusion_handler = '''  async function setUserReportingExclusion(user: ApiUser, excluded: boolean) {
+    if (!user.id) return;
+    setBusy(true);
+    setError("");
+    try {
+      const data = await api<{ user: ApiUser }>("adminSetUserReportingExclusion", {
+        userId: user.id,
+        excluded,
+      });
+      updateUserRow(data.user);
+      announceParticipantChange(data.user);
+      toast(excluded
+        ? "Participant excluded from ranking and executive reports."
+        : "Participant included in ranking and executive reports.");
+      setModal({ type: "userActions", user: data.user });
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Unable to update reporting eligibility.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+'''
+          text = replace_once(
+              text,
+              '  async function resetUserPassword(user: ApiUser) {',
+              exclusion_handler + '  async function resetUserPassword(user: ApiUser) {',
+              "reporting exclusion UI handler",
+          )
+          old_actions = '''                <div className="cgv-action-grid">
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button>
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button>
+                </div>
+                <div className="cgv-position-editor">'''
+          new_actions = '''                <div className="cgv-action-grid">
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "active")}>Activate account</button>
+                  <button disabled={busy} onClick={() => void setUserStatus(modal.user, "inactive")}>Deactivate account</button>
+                  <button
+                    disabled={busy}
+                    onClick={() => void setUserReportingExclusion(modal.user, !modal.user.excludedFromReporting)}
+                  >
+                    {modal.user.excludedFromReporting ? "Include in ranking & report" : "Exclude from ranking & report"}
+                  </button>
+                </div>
+                <p className="cgv-reporting-note">
+                  {modal.user.excludedFromReporting
+                    ? "This participant keeps all attempts and personal results, but is currently omitted from rankings and executive-report analytics."
+                    : "This participant is included in rankings and executive-report analytics."}
+                </p>
+                <div className="cgv-position-editor">'''
+          text = replace_once(text, old_actions, new_actions, "participant reporting controls")
+          path.write_text(text)
+
+          # Main React participant state ---------------------------------------
+          path = Path("app/exam-client.tsx")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '  average: number;\n  status: string;\n};',
+              '  average: number;\n  status: string;\n  excludedFromReporting: boolean;\n};',
+              "ParticipantRow reporting field",
+          )
+          text = replace_once(
+              text,
+              '              status: String(detail.user?.status || "active").toLowerCase() === "active" ? "Active" : "Inactive",\n            }',
+              '              status: String(detail.user?.status || "active").toLowerCase() === "active" ? "Active" : "Inactive",\n              excludedFromReporting: detail.user?.excludedFromReporting === undefined\n                ? item.excludedFromReporting\n                : detail.user.excludedFromReporting === true,\n            }',
+              "participant change reporting sync",
+          )
+          text = replace_once(
+              text,
+              '            average: Number(item.average || 0),\n            status: String(item.status || "active") === "active" ? "Active" : "Inactive",\n          };',
+              '            average: Number(item.average || 0),\n            status: String(item.status || "active") === "active" ? "Active" : "Inactive",\n            excludedFromReporting: item.excludedFromReporting === true,\n          };',
+              "dashboard participant mapping",
+          )
+          text = replace_once(
+              text,
+              '        average: 0,\n        status: "Active",\n      }, ...items]);',
+              '        average: 0,\n        status: "Active",\n        excludedFromReporting: false,\n      }, ...items]);',
+              "new participant reporting default",
+          )
+          text = replace_once(
+              text,
+              'data-participant-branch={person.branch} data-participant-status={person.status}><MoreHorizontal',
+              'data-participant-branch={person.branch} data-participant-status={person.status} data-participant-reporting-excluded={person.excludedFromReporting ? "true" : "false"}><MoreHorizontal',
+              "participant reporting data attribute",
+          )
+          path.write_text(text)
+
+          # Existing action contract should include the new backend route.
+          path = Path("tests/function-contract.test.mjs")
+          text = path.read_text()
+          text = replace_once(
+              text,
+              '  "adminSetUserStatus",\n  "adminResetPassword",',
+              '  "adminSetUserStatus",\n  "adminSetUserReportingExclusion",\n  "adminResetPassword",',
+              "function contract action",
+          )
+          path.write_text(text)
+
+          Path("tests/reporting-exclusion.test.mjs").write_text('''import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+
+const root = path.resolve(import.meta.dirname, "..");
+const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
+const backend = read("google-apps-script/Code.gs");
+const client = read("app/exam-client.tsx");
+const admin = read("app/admin-functionality-enhancer.tsx");
+const proxy = read("app/api/sheets/route.ts");
+const performance = read("app/interaction-performance-enhancer.tsx");
+
+test("participant reporting exclusion is persisted and exposed by Apps Script", () => {
+  assert.match(backend, /"excluded_from_reporting"/);
+  assert.match(backend, /adminSetUserReportingExclusion: adminSetUserReportingExclusion_/);
+  assert.match(backend, /function adminSetUserReportingExclusion_\(body\)/);
+  assert.match(backend, /excluded_from_reporting: excluded/);
+  assert.match(backend, /excludedFromReporting: user\.role === "participant"/);
+  assert.match(proxy, /"adminSetUserReportingExclusion"/);
+  assert.match(performance, /"adminSetUserReportingExclusion"/);
+});
+
+test("ranking and executive-report analytics omit excluded participants", () => {
+  assert.match(backend, /const reportableSubmitted = allSubmitted\.filter/);
+  assert.match(backend, /!booleanSetting_\(participant\.excluded_from_reporting\)/);
+  assert.match(backend, /const courseStats = reportableSubmitted\.reduce/);
+  assert.match(backend, /function adminGetExecutiveReport_[\s\S]*?!booleanSetting_\(participant\.excluded_from_reporting\)/);
+  assert.match(backend, /Users!M:M,FALSE\)<>TRUE/);
+});
+
+test("administrators can toggle reporting eligibility without deleting participant results", () => {
+  assert.match(admin, /Exclude from ranking & report/);
+  assert.match(admin, /Include in ranking & report/);
+  assert.match(admin, /adminSetUserReportingExclusion/);
+  assert.match(admin, /keeps all attempts and personal results/);
+  assert.match(client, /excludedFromReporting: boolean/);
+  assert.match(client, /data-participant-reporting-excluded/);
+  assert.doesNotMatch(backend, /adminSetUserReportingExclusion_[\s\S]*?deleteRowsMatching_\(getSheet_\(APP\.sheets\.attempts\)/);
+});
+''')
+
+          Path("updates/2026-08-21-participant-reporting-exclusions.md").write_text('''# Participant ranking and executive-report exclusions
+
+Date: 2026-08-21
+
+## Summary
+
+- Add an administrator option on each participant account to exclude or re-include that participant in rankings and executive reports.
+- Preserve the participant account, evaluation attempts, scores, certificates, and personal history when excluded.
+- Persist reporting eligibility in the Google Sheets `Users` data through the new `excluded_from_reporting` field.
+- Remove excluded participant attempts from the app scoreboard, ranking positions, course-level reporting averages, and scoreboard summary metrics.
+- Remove excluded participant attempts and answers from executive-report participant lists, score distributions, pass-rate metrics, duration metrics, and question analytics.
+- Keep the generated Google Sheets Dashboard ranking and KPI formulas aligned with the same exclusion rule.
+- Invalidate cached dashboard/report reads immediately when reporting eligibility changes.
+- Add regression coverage for persistence, ranking filtering, executive-report filtering, and the reversible admin control.
+
+## Backend deployment note
+
+This update changes `google-apps-script/Code.gs`. Deploy the updated Apps Script web app version after merge so the reporting exclusion is enforced in production.
+''')
+
+          # The one-shot patch workflow removes itself from the resulting branch.
+          Path(".github/workflows/apply-reporting-exclusion.yml").unlink()
+          PY
+
+      - name: Commit and push feature
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: exclude participants from reporting"
+          git push origin HEAD:agent/exclude-participants-reporting
