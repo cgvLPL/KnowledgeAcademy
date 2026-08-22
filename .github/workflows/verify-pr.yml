@@ -28,7 +28,11 @@ jobs:
       - name: Validate Apps Script syntax
         run: |
           cp google-apps-script/Code.gs /tmp/cgv-code.js
+          cp google-apps-script/ZZLiveQuiz.gs /tmp/cgv-live-quiz.js
+          cat google-apps-script/Code.gs google-apps-script/ZZLiveQuiz.gs > /tmp/cgv-apps-script.js
           node --check /tmp/cgv-code.js
+          node --check /tmp/cgv-live-quiz.js
+          node --check /tmp/cgv-apps-script.js
 
       - name: Validate TypeScript and lint rules
         run: |
