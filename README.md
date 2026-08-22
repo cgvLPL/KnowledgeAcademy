@@ -40,6 +40,9 @@ performance, certificates, and administrator tools in one cinematic workspace.
 ### Administrators
 
 - Monitor workspace activity, KPIs, recent results, and top performers.
+- Monitor participants taking quizzes with near-real-time Active, Idle,
+  Disconnected, and Completed status, question progress, answered count, session
+  duration, branch, position, evaluation filters, search, and sorting.
 - Create, edit, duplicate, schedule, publish, complete, archive, and restore quizzes.
 - Configure passing scores, timers, attempt limits, and answer randomization.
 - Build four-choice questions with a responsive question outline.
@@ -50,6 +53,34 @@ performance, certificates, and administrator tools in one cinematic workspace.
 - Review a quiz-specific live scoreboard and download executive PDF reports with
   score distributions and question-level answer analysis.
 - Keep archived quizzes in a distinct section that is collapsed by default.
+
+## Version 1.2.0 — Live Quiz Monitoring
+
+Version 1.2.0 adds production-ready participant activity monitoring for
+administrators while keeping quiz answers private.
+
+- Participant browsers send a heartbeat every 15 seconds while an evaluation is
+  open; Admin refreshes live activity every 10 seconds.
+- Status is derived from server timestamps: Active through 30 seconds, Idle from
+  31–120 seconds, and Disconnected after 120 seconds. Submitted attempts are
+  Completed.
+- Reconnects reuse the same attempt/activity row instead of creating duplicates.
+- Admin can search participants and filter by evaluation, branch, position, or
+  status, then sort by latest activity, progress, session duration, participant,
+  or status.
+- The monitor shows current question, answered count, session duration, relative
+  activity time, and an exact activity timestamp on hover.
+- Heartbeat writes are authenticated, course/attempt ownership is validated,
+  question totals come from the server, and duplicate heartbeat bursts are
+  throttled.
+- Stale completed and disconnected activity rows are automatically pruned.
+- The `LiveActivity` worksheet is created safely by the monitoring extension;
+  existing workbook data does not need to be reset or edited manually.
+- Live monitoring never returns answer selections, correct-answer keys, question
+  text, or pre-submission scores to the Admin monitor.
+
+The frontend feature requires the matching Apps Script `ZZLiveQuiz.gs` extension
+to be deployed with the current backend source.
 
 ## Version 1.1.2 — Productivity & Insights
 
@@ -79,7 +110,7 @@ English remains the default for accounts that have not selected a language yet.
 
 | Role | Available positions | Access |
 | --- | --- | --- |
-| Administrator | `MoD` or `Cinema Manager` | Content, accounts, reports, settings, and scoreboards |
+| Administrator | `MoD` or `Cinema Manager` | Content, accounts, reports, settings, scoreboards, and live quiz monitoring |
 | Participant | `Stars` or a custom title up to 80 characters | Published lessons, available quizzes, history, and certificates |
 
 The authenticated account determines the workspace; users do not select a role
@@ -93,14 +124,14 @@ on the sign-in screen.
 | Data and API | Google Sheets with Google Apps Script |
 | Reports | jsPDF executive reports, safe CSV exports, calendar events, and browser-printable certificates |
 | Delivery | GitHub Pages and GitHub Actions |
-| Quality | ESLint, TypeScript checks, production builds, and Node regression tests |
+| Quality | ESLint, TypeScript checks, production builds, Node regression tests, and responsive visual regression |
 
 ## Repository structure
 
 - `app/` — application interface, responsive styles, and the server-side Sheets proxy.
 - `public/` — CGV brand assets, icons, and web manifest.
 - `google-apps-script/` — spreadsheet schema, authentication, scoring API,
-  account-language preferences, workbook setup, and dashboard generator.
+  live-activity extension, account-language preferences, workbook setup, and dashboard generator.
 - `tests/` — functional, visual, security, performance, and capacity regressions.
 - `audit/` — functional and 30-participant concurrency audits.
 - `scripts/` — verified build and artifact-validation utilities.
@@ -138,39 +169,45 @@ Follow [the backend setup guide](google-apps-script/README.md) to:
 
 1. Create the spreadsheet and Apps Script project.
 2. Configure the initial administrator through Script Properties.
-3. Run `setupEvaluationPlatform()`.
-4. Deploy the project as a Web App.
-5. Connect its `/exec` URL to the frontend.
+3. Add both `Code.gs` and `ZZLiveQuiz.gs` to the Apps Script project.
+4. Run `setupEvaluationPlatform()` and `setupLiveQuizMonitoring()`.
+5. Deploy the project as a Web App.
+6. Connect its `/exec` URL to the frontend.
 
 The application has no offline or demo accounts. Authentication, lessons,
-evaluations, attempts, results, and account-language preferences come from the
-connected spreadsheet. `setupEvaluationPlatform()` preserves existing data and
-adds required columns. Use `resetEvaluationPlatformToAdminOnly()` only when an
-intentional clean reset is required.
+evaluations, attempts, results, account-language preferences, and live activity
+come from the connected spreadsheet. `setupEvaluationPlatform()` preserves
+existing data and adds required columns. `setupLiveQuizMonitoring()` safely
+ensures the `LiveActivity` worksheet exists and can be re-run. Use
+`resetEvaluationPlatformToAdminOnly()` only when an intentional clean reset is
+required.
 
 ## Deployment
 
 Every pull request targeting `main` runs the **Verify application** workflow:
 Apps Script syntax validation, TypeScript, lint, a static production build, the
-complete regression suite, and Pages artifact checks.
+complete regression suite, responsive visual regression, and Pages artifact
+checks.
 
 After a verified pull request is merged, **Publish CGV Knowledge Academy site**
 builds and deploys the frontend to GitHub Pages automatically.
 
-Google Apps Script versions are deployed separately. When
-`google-apps-script/Code.gs` changes, copy the latest file into the Apps Script
-editor and publish a new version of the existing Web App deployment. Keep the
-same `/exec` URL. The detailed update and health-check procedure is in
+Google Apps Script versions are deployed separately. When files under
+`google-apps-script/` change, copy the latest `Code.gs` and extension `.gs` files
+into the Apps Script editor, run the non-destructive setup helpers, and publish a
+new version of the existing Web App deployment. Keep the same `/exec` URL. The
+detailed update and health-check procedure is in
 [google-apps-script/README.md](google-apps-script/README.md).
 
 ## Data model
 
 The workbook uses separate tabs for settings, users, courses, lessons, questions,
-attempts, answers, sessions, and the dashboard. Account language is stored as a
-per-user key in the existing Settings tab, avoiding a destructive Users-sheet
-migration. Passwords are salted and hashed, session tokens are stored as hashes,
-correct answers are never sent to participants, and scores are calculated
-server-side.
+attempts, answers, sessions, live activity, and the dashboard. Account language
+is stored as a per-user key in the existing Settings tab, avoiding a destructive
+Users-sheet migration. Live activity stores only attempt/session metadata needed
+for monitoring; it does not duplicate selected answers or correct-answer keys.
+Passwords are salted and hashed, session tokens are stored as hashes, correct
+answers are never sent to participants, and scores are calculated server-side.
 
 ## Participant capacity
 
@@ -178,7 +215,8 @@ The exam write path is designed and regression-tested for 30 participants
 signing in, starting, and submitting in the same burst. Capacity-sensitive
 requests are spread slightly and retried with bounded backoff, while the Apps
 Script backend serializes spreadsheet writes with a 90-second lock queue and
-keeps start and submission retries idempotent.
+keeps start and submission retries idempotent. Live heartbeats are additionally
+throttled when a client repeats the same snapshot too quickly.
 
 See [the 30-participant capacity audit](audit/concurrency-audit-2026-08-09.md)
 for the verification boundary and the required Apps Script deployment step.
