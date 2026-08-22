@@ -14,9 +14,18 @@ test("dark application tables override the generic light table-header cells", ()
   assert.match(fix, /-webkit-text-fill-color:\s*#e6ebe4\s*!important/);
 });
 
-test("table visibility lock loads after the canonical UI foundation", () => {
+test("runner-up podium rank badges keep dark text on light medal surfaces", () => {
+  assert.match(fix, /\.podium-2 \.podium-rank/);
+  assert.match(fix, /background:\s*#e2e6e3\s*!important/);
+  assert.match(fix, /color:\s*#303532\s*!important/);
+  assert.match(fix, /\.podium-3 \.podium-rank/);
+  assert.match(fix, /background:\s*#efc5aa\s*!important/);
+  assert.match(fix, /color:\s*#63361f\s*!important/);
+});
+
+test("visibility lock loads after the canonical UI foundation", () => {
   const foundation = layout.indexOf('import "./ui-foundation.css";');
   const visibilityFix = layout.indexOf('import "./table-header-visibility-fix.css";');
   assert.ok(foundation >= 0, "UI foundation import is missing");
-  assert.ok(visibilityFix > foundation, "table header visibility fix must load after UI foundation");
+  assert.ok(visibilityFix > foundation, "visibility fix must load after UI foundation");
 });
