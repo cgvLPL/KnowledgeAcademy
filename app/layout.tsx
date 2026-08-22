@@ -80,6 +80,8 @@ import "./ui-foundation.css";
 import "./certificate-a4-single-page.css";
 import "./live-quiz-monitor.css";
 import "./table-header-visibility-fix.css";
+import "./podium-leaderboard.css";
+import "./visual-cohesion-system.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
