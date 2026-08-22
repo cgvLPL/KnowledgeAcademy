@@ -14,9 +14,11 @@ type AttemptState = {
   totalQuestions: number;
 };
 
+type LiveRole = "participant" | "admin";
+
 type LiveSession = {
   token: string;
-  role: "participant" | "admin";
+  role: LiveRole;
   endpoint: string;
 };
 
@@ -94,6 +96,7 @@ export default function LiveQuizMonitorEnhancer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
+  const [sessionRole, setSessionRole] = useState<LiveRole | null>(null);
   const refreshingRef = useRef(false);
   const sessionRef = useRef<LiveSession | null>(null);
 
@@ -167,6 +170,7 @@ export default function LiveQuizMonitorEnhancer() {
               role,
               endpoint: endpointFromInput(input),
             };
+            setSessionRole(role);
             if (role === "admin") window.setTimeout(() => void refreshAdmin(), 0);
           }
         } catch {
@@ -204,6 +208,7 @@ export default function LiveQuizMonitorEnhancer() {
 
       if (payload.action === "logout") {
         sessionRef.current = null;
+        setSessionRole(null);
         saveAttempt(null);
         setParticipants([]);
         setError("");
@@ -264,7 +269,7 @@ export default function LiveQuizMonitorEnhancer() {
     };
   }, [refreshAdmin]);
 
-  if (!mountNode || sessionRef.current?.role !== "admin") return null;
+  if (!mountNode || sessionRole !== "admin") return null;
   return createPortal(
     <LiveQuizMonitor
       participants={participants}
