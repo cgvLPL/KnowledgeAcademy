@@ -61,7 +61,7 @@ function quizProgress(attempt: AttemptState) {
 async function postAction(endpoint: string, payload: Record<string, unknown>, fetcher: typeof fetch = window.fetch.bind(window)) {
   const response = await fetcher(endpoint, {
     method: "POST",
-    headers: { "content-type": endpoint.includes("script.google.com") ? "text/plain;charset=utf-8" : "application/json" },
+    headers: { "content-type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
     cache: "no-store",
   });
@@ -170,8 +170,11 @@ export default function LiveQuizMonitorEnhancer() {
       if (document.visibilityState === "visible") void refreshAdmin();
     }, ADMIN_REFRESH_MS);
 
+    let observedMount: Element | null = null;
     const syncMount = () => {
       const node = document.querySelector(".admin-overview");
+      if (node === observedMount) return;
+      observedMount = node;
       setMountNode(node);
       if (node && sessionStorage.getItem(ROLE_KEY) === "admin") void refreshAdmin();
     };
