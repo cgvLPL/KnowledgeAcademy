@@ -1,0 +1,57 @@
+ .premium-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 20px;
+}
+
+.premium-podium-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  padding: 24px 18px 0;
+  text-align: center;
+  border-radius: 24px;
+  background: rgba(255,255,255,.06);
+}
+
+.premium-podium-card > *:not(.premium-podium-base) {
+  position: relative;
+  z-index: 2;
+}
+
+.premium-podium-avatar {
+  width: 72px;
+  height: 72px;
+  margin: 18px auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.podium-rank-1 { min-height: 520px; }
+.podium-rank-2 { min-height: 470px; }
+.podium-rank-3 { min-height: 430px; }
+
+.premium-podium-base {
+  margin: auto -18px 0;
+  height: 70px;
+}
+
+.podium-rank-1 .premium-podium-base { background: #d9b84c; }
+.podium-rank-2 .premium-podium-base { background: #cfd5d2; }
+.podium-rank-3 .premium-podium-base { background: #d9a27e; }
+
+@media (max-width: 768px) {
+  .premium-podium {
+    grid-template-columns: 1fr;
+  }
+
+  .podium-rank-1,
+  .podium-rank-2,
+  .podium-rank-3 {
+    min-height: 360px;
+  }
+}
