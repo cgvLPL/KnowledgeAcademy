@@ -49,21 +49,30 @@ function saveAttempt(value: AttemptState | null) {
 }
 
 function quizProgress(attempt: AttemptState) {
-  const raw = document.querySelector<HTMLElement>(".progress-number strong")?.textContent || "0";
-  const percent = Math.min(100, Math.max(0, Number.parseInt(raw, 10) || 0));
+  const progressButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".question-progress-bars button"));
+  const currentButton = document.querySelector<HTMLButtonElement>(".question-progress-bars button.current");
+  const currentIndex = currentButton ? progressButtons.indexOf(currentButton) : -1;
   const currentQuestion = attempt.totalQuestions
-    ? Math.min(attempt.totalQuestions, Math.max(1, Math.round((percent / 100) * attempt.totalQuestions)))
+    ? Math.min(attempt.totalQuestions, Math.max(1, currentIndex >= 0 ? currentIndex + 1 : 1))
     : 0;
-  const selected = document.querySelectorAll(".quiz-layout input:checked, .quiz-layout [aria-pressed='true']").length;
-  return { currentQuestion, answeredCount: Math.max(0, selected) };
+  const previouslyAnswered = document.querySelectorAll(".question-progress-bars button.answered").length;
+  const currentAnswered = document.querySelector(".answer-list button.selected") ? 1 : 0;
+  const answeredCount = Math.min(attempt.totalQuestions, Math.max(0, previouslyAnswered + currentAnswered));
+  return { currentQuestion, answeredCount };
 }
 
-async function postAction(endpoint: string, payload: Record<string, unknown>, fetcher: typeof fetch = window.fetch.bind(window)) {
+async function postAction(
+  endpoint: string,
+  payload: Record<string, unknown>,
+  fetcher: typeof fetch = window.fetch.bind(window),
+  keepalive = false,
+) {
   const response = await fetcher(endpoint, {
     method: "POST",
     headers: { "content-type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
     cache: "no-store",
+    keepalive,
   });
   const data = await response.json() as { ok?: boolean; error?: string; activity?: ParticipantActivity[]; now?: string };
   if (!response.ok || data.ok === false) throw new Error(data.error || "Live quiz request failed.");
@@ -102,7 +111,10 @@ export default function LiveQuizMonitorEnhancer() {
     const nativeFetch = window.fetch;
     const originalFetch = nativeFetch.bind(window);
 
-    async function sendHeartbeat(status: "active" | "idle" | "disconnected" | "completed" = "active") {
+    async function sendHeartbeat(
+      status: "active" | "idle" | "disconnected" | "completed" = "active",
+      keepalive = false,
+    ) {
       if (sessionStorage.getItem(ROLE_KEY) !== "participant") return;
       const attempt = loadAttempt();
       const token = sessionStorage.getItem(TOKEN_KEY);
@@ -120,7 +132,7 @@ export default function LiveQuizMonitorEnhancer() {
           totalQuestions: attempt.totalQuestions,
           answeredCount: progress.answeredCount,
           clientStatus: status,
-        }, originalFetch);
+        }, originalFetch, keepalive);
       } catch {
         // Heartbeats are best-effort and must never interrupt the quiz.
       }
@@ -140,7 +152,7 @@ export default function LiveQuizMonitorEnhancer() {
               courseId: String(payload.courseId || ""),
               totalQuestions: Array.isArray(data.questions) ? data.questions.length : 0,
             });
-            window.setTimeout(() => void sendHeartbeat("active"), 0);
+            window.setTimeout(() => void sendHeartbeat("active"), 250);
           }
         } catch {
           // The main app owns start-attempt error handling.
@@ -190,7 +202,15 @@ export default function LiveQuizMonitorEnhancer() {
       }
     };
     const onFocus = () => void refreshAdmin();
+    const onPageHide = () => void sendHeartbeat("disconnected", true);
+    const onPageShow = () => void sendHeartbeat("active");
+    const onOffline = () => void sendHeartbeat("disconnected", true);
+    const onOnline = () => void sendHeartbeat("active");
     window.addEventListener("focus", onFocus);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
@@ -199,6 +219,10 @@ export default function LiveQuizMonitorEnhancer() {
       window.clearInterval(adminTimer);
       observer.disconnect();
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [refreshAdmin]);
