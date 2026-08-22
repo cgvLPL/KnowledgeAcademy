@@ -67,7 +67,7 @@ test("Apps Script live activity routes require the correct session roles and att
   assert.match(update, /requireSession_\(body\.token, "participant"\)/);
   assert.match(update, /String\(attempt\.user_id\) !== String\(context\.user\.user_id\)/);
   assert.match(update, /requestedCourseId && requestedCourseId !== courseId/);
-  assert.match(update, /questionCountsByCourse_/);
+  assert.match(backend, /function liveQuizExpectedTotal_\(attempt\)[\s\S]*questionCountsByCourse_/);
   assert.match(update, /serverTotalQuestions/);
   assert.doesNotMatch(update, /total_questions:\s*Number\(body\.totalQuestions/);
   assert.match(backend, /requireSession_\(body\.token, "admin"\)/);
