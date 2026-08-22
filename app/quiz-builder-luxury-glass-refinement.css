@@ -1,0 +1,40 @@
+/* CGV Quiz Builder — darker luxury glass refinement */
+
+.quiz-builder-glass,
+.quiz-builder-panel,
+.builder-card {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.045), transparent 42%),
+    rgba(12,14,13,.92);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.38),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(18px);
+}
+
+.quiz-builder-glass input,
+.quiz-builder-glass select,
+.quiz-builder-glass textarea {
+  background: rgba(255,255,255,.035);
+  border-color: rgba(255,255,255,.12);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.quiz-builder-glass input:focus,
+.quiz-builder-glass select:focus,
+.quiz-builder-glass textarea:focus {
+  background: rgba(255,177,31,.045);
+  border-color: rgba(255,177,31,.45);
+  box-shadow: 0 0 0 3px rgba(255,177,31,.14);
+}
+
+.quiz-builder-settings {
+  border-radius: 20px;
+  background: rgba(255,255,255,.028);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.quiz-builder-accent {
+  color: #ffd28a;
+}
