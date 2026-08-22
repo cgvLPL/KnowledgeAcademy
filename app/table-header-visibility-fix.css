@@ -1,0 +1,39 @@
+/* Final dark-theme table header visibility lock.
+ * globals.css gives generic <th> cells a light background. In dark admin tables
+ * that cell background covers the darker <thead> surface and leaves the muted
+ * labels with insufficient contrast. Keep the fix scoped to application tables.
+ */
+
+.table-card thead th,
+.responsive-table thead th,
+.course-management-table thead th,
+.participants-management-table thead th,
+.history-results-table thead th {
+  background: #181a18 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.14) !important;
+  color: #e6ebe4 !important;
+  -webkit-text-fill-color: #e6ebe4 !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
+}
+
+.table-card thead tr,
+.responsive-table thead tr,
+.course-management-table thead tr,
+.participants-management-table thead tr,
+.history-results-table thead tr {
+  background: #181a18 !important;
+}
+
+@media (forced-colors: active) {
+  .table-card thead th,
+  .responsive-table thead th,
+  .course-management-table thead th,
+  .participants-management-table thead th,
+  .history-results-table thead th {
+    background: Canvas !important;
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText !important;
+    text-shadow: none;
+  }
+}
