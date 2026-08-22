@@ -1,0 +1,432 @@
+/*
+ * CGV Knowledge Academy — canonical visual cohesion layer.
+ *
+ * This stylesheet is intentionally imported last. It does not change product
+ * logic; it reconciles the accumulated UI layers around a single surface,
+ * typography, spacing, control, table, scoreboard, and accessibility system.
+ */
+
+:root {
+  --cgv-cohesion-bg: #090a09;
+  --cgv-cohesion-surface: rgba(17, 19, 18, 0.96);
+  --cgv-cohesion-surface-raised: rgba(23, 25, 24, 0.97);
+  --cgv-cohesion-surface-soft: rgba(255, 255, 255, 0.055);
+  --cgv-cohesion-border: rgba(255, 255, 255, 0.105);
+  --cgv-cohesion-border-strong: rgba(255, 255, 255, 0.17);
+  --cgv-cohesion-text: #f6f7f4;
+  --cgv-cohesion-secondary: #bac0ba;
+  --cgv-cohesion-muted: #929a93;
+  --cgv-cohesion-accent: #ff6a22;
+  --cgv-cohesion-accent-warm: #ffb11f;
+  --cgv-cohesion-accent-hot: #e6322f;
+  --cgv-cohesion-focus: #ffb11f;
+  --cgv-cohesion-success: #8ee6b2;
+  --cgv-cohesion-warning: #f5c66a;
+  --cgv-cohesion-danger: #f19a9a;
+  --cgv-cohesion-info: #a9c0ff;
+  --cgv-cohesion-gold: #d9b84c;
+  --cgv-cohesion-silver: #cfd5d2;
+  --cgv-cohesion-bronze: #d9a27e;
+  --cgv-cohesion-radius-hero: 24px;
+  --cgv-cohesion-radius-panel: 20px;
+  --cgv-cohesion-radius-card: 16px;
+  --cgv-cohesion-radius-control: 12px;
+  --cgv-cohesion-radius-pill: 999px;
+  --cgv-cohesion-shadow: 0 18px 46px rgba(0, 0, 0, 0.28);
+  --cgv-cohesion-shadow-raised: 0 24px 62px rgba(0, 0, 0, 0.38);
+  --cgv-cohesion-ring: 0 0 0 3px rgba(255, 177, 31, 0.24);
+}
+
+html,
+body,
+.app-shell,
+.main-shell {
+  background-color: var(--cgv-cohesion-bg);
+}
+
+body {
+  color: var(--cgv-cohesion-text);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
+  text-rendering: optimizeLegibility;
+}
+
+/* One typography hierarchy across participant and admin views. */
+.page-title h1,
+.welcome-row h2,
+.page-intro h2,
+.scoreboard-hero h1 {
+  color: var(--cgv-cohesion-text) !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.06 !important;
+}
+
+.section-heading h3,
+.table-card-header h3,
+.card-heading h3,
+.live-quiz-monitor__header h3,
+.premium-podium-card h3 {
+  color: var(--cgv-cohesion-text) !important;
+  font-weight: 740 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.page-title p,
+.welcome-row p,
+.page-intro p,
+.section-heading p,
+.table-card-header p,
+.live-quiz-monitor__header p,
+.premium-podium-card p {
+  color: var(--cgv-cohesion-secondary) !important;
+  line-height: 1.55 !important;
+}
+
+.card-kicker,
+.workspace-label,
+.live-quiz-monitor__filters label > span {
+  color: var(--cgv-cohesion-muted) !important;
+  font-weight: 760 !important;
+  letter-spacing: 0.09em !important;
+}
+
+/* Canonical panel hierarchy. */
+.welcome-row,
+.page-intro,
+.section-block,
+.table-card,
+.analytics-card,
+.completion-card,
+.scoreboard-hero,
+.builder-card,
+.question-card,
+.result-card,
+.profile-card,
+.settings-card,
+.detail-card,
+.live-quiz-monitor,
+.cgv-settings-panel,
+.cgv-function-modal,
+.cgv-admin-account-modal,
+.confirm-modal,
+.button-safety-dialog {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.028), transparent 44%),
+    var(--cgv-cohesion-surface) !important;
+  border: 1px solid var(--cgv-cohesion-border) !important;
+  border-radius: var(--cgv-cohesion-radius-panel) !important;
+  box-shadow: var(--cgv-cohesion-shadow) !important;
+}
+
+.hero-evaluation,
+.login-card {
+  border-radius: var(--cgv-cohesion-radius-hero) !important;
+}
+
+.metric-card,
+.admin-metrics article,
+.course-card,
+.history-preview-card,
+.evaluation-row,
+.knowledge-card,
+.lesson-card,
+.question-editor,
+.question-outline,
+.premium-podium-card,
+.live-quiz-monitor__summary button,
+.cgv-account-summary > div,
+.cgv-settings-row,
+.cgv-settings-version {
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.035), transparent 50%),
+    var(--cgv-cohesion-surface-raised) !important;
+  border: 1px solid var(--cgv-cohesion-border) !important;
+  border-radius: var(--cgv-cohesion-radius-card) !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Keep interaction treatment consistent without making every element flashy. */
+@media (hover: hover) and (pointer: fine) {
+  .course-card,
+  .history-preview-card,
+  .evaluation-row,
+  .knowledge-card,
+  .lesson-card,
+  .premium-podium-card {
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  }
+
+  .course-card:hover,
+  .history-preview-card:hover,
+  .evaluation-row:hover,
+  .knowledge-card:hover,
+  .lesson-card:hover,
+  .premium-podium-card:hover {
+    border-color: rgba(255, 137, 67, 0.24) !important;
+    box-shadow: var(--cgv-cohesion-shadow-raised) !important;
+    transform: translateY(-2px);
+  }
+}
+
+/* Unified controls. */
+.primary-button,
+.hero-button,
+.row-button:not(:disabled) {
+  background: linear-gradient(105deg, var(--cgv-cohesion-accent-warm), var(--cgv-cohesion-accent) 56%, var(--cgv-cohesion-accent-hot)) !important;
+  border: 1px solid rgba(255, 151, 75, 0.25) !important;
+  border-radius: var(--cgv-cohesion-radius-control) !important;
+  color: #fff !important;
+  font-weight: 750 !important;
+  min-height: 44px;
+}
+
+.secondary-button,
+.select-button,
+.icon-button,
+.filter-tabs button,
+.live-filter-reset,
+.live-quiz-monitor__summary button,
+.cgv-settings-actions button {
+  background: var(--cgv-cohesion-surface-soft) !important;
+  border: 1px solid var(--cgv-cohesion-border) !important;
+  border-radius: var(--cgv-cohesion-radius-control) !important;
+  color: var(--cgv-cohesion-text) !important;
+  min-height: 42px;
+}
+
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.input-shell,
+.admin-search,
+.top-search,
+.filter-control,
+.search-field,
+.live-quiz-monitor__filters input,
+.live-quiz-monitor__filters select {
+  background: rgba(255, 255, 255, 0.047) !important;
+  border: 1px solid var(--cgv-cohesion-border) !important;
+  border-radius: var(--cgv-cohesion-radius-control) !important;
+  color: var(--cgv-cohesion-text) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--cgv-cohesion-muted) !important;
+  opacity: 1;
+}
+
+/* Semantic status colors stay consistent across tables, monitor, and cards. */
+.status-pill,
+.participant-status,
+.account-status,
+.live-status,
+.outcome-pill,
+.badge-active,
+.badge-success,
+.count-badge,
+.evaluation-count,
+.cgv-settings-status {
+  border-radius: var(--cgv-cohesion-radius-pill) !important;
+}
+
+.live-status--active { color: var(--cgv-cohesion-success) !important; }
+.live-status--idle { color: var(--cgv-cohesion-warning) !important; }
+.live-status--disconnected { color: var(--cgv-cohesion-danger) !important; }
+.live-status--completed { color: var(--cgv-cohesion-info) !important; }
+
+/* Tables use one dark header treatment and quiet row rhythm. */
+.table-card thead,
+.responsive-table thead,
+.course-management-table thead,
+.participants-management-table thead,
+.history-results-table thead,
+.live-quiz-monitor thead {
+  background: rgba(255, 255, 255, 0.052) !important;
+}
+
+.table-card thead th,
+.responsive-table thead th,
+.course-management-table thead th,
+.participants-management-table thead th,
+.history-results-table thead th,
+.live-quiz-monitor thead th {
+  background: transparent !important;
+  border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+  color: #dce2db !important;
+  -webkit-text-fill-color: #dce2db !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.055em !important;
+  text-transform: uppercase;
+}
+
+.table-card tbody tr,
+.responsive-table tbody tr,
+.live-quiz-monitor tbody tr {
+  border-color: rgba(255, 255, 255, 0.075) !important;
+}
+
+.table-card tbody td,
+.responsive-table tbody td,
+.live-quiz-monitor tbody td {
+  color: var(--cgv-cohesion-secondary);
+}
+
+/* Scoreboard and podium share the same award language. */
+.scoreboard-kpis div {
+  border-radius: var(--cgv-cohesion-radius-card) !important;
+}
+
+.premium-podium {
+  gap: clamp(12px, 2vw, 20px);
+}
+
+.premium-podium-card {
+  display: flex;
+  flex-direction: column;
+  color: var(--cgv-cohesion-text);
+  isolation: isolate;
+}
+
+.premium-podium-medal {
+  align-items: center;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--cgv-cohesion-border);
+  border-radius: var(--cgv-cohesion-radius-pill);
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 44px;
+  padding: 6px 11px;
+}
+
+.premium-podium-avatar {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--cgv-cohesion-border-strong);
+  color: var(--cgv-cohesion-text);
+}
+
+.podium-rank-1 .premium-podium-medal { color: #f5d66f; }
+.podium-rank-2 .premium-podium-medal { color: #e8ece9; }
+.podium-rank-3 .premium-podium-medal { color: #e5b18f; }
+.podium-rank-1 .premium-podium-base { background: linear-gradient(180deg, #ecd36e, var(--cgv-cohesion-gold)) !important; }
+.podium-rank-2 .premium-podium-base { background: linear-gradient(180deg, #eef1ef, var(--cgv-cohesion-silver)) !important; }
+.podium-rank-3 .premium-podium-base { background: linear-gradient(180deg, #e8bd9f, var(--cgv-cohesion-bronze)) !important; }
+
+/* Navigation should look like the same product as the content area. */
+.sidebar,
+.topbar {
+  border-color: var(--cgv-cohesion-border) !important;
+}
+
+.sidebar-nav button,
+.sidebar-bottom button,
+.mobile-nav button {
+  border-radius: var(--cgv-cohesion-radius-control) !important;
+}
+
+.sidebar-nav button.active,
+.mobile-nav button.active {
+  background: linear-gradient(135deg, rgba(255, 177, 31, 0.16), rgba(255, 106, 34, 0.12)) !important;
+  color: #ffd28a !important;
+}
+
+/* One visible keyboard-focus language everywhere. */
+:where(
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
+  outline: 2px solid var(--cgv-cohesion-focus) !important;
+  outline-offset: 3px !important;
+  box-shadow: var(--cgv-cohesion-ring) !important;
+}
+
+/* Empty/error states should read as intentional surfaces rather than leftovers. */
+.empty-state,
+.empty-table-row td,
+.live-quiz-monitor__empty {
+  color: var(--cgv-cohesion-muted) !important;
+}
+
+.live-quiz-monitor__error,
+.login-error {
+  border-color: rgba(241, 154, 154, 0.28) !important;
+  color: #ffc2c2 !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --cgv-cohesion-radius-hero: 20px;
+    --cgv-cohesion-radius-panel: 18px;
+  }
+
+  .content,
+  .builder-content,
+  .quiz-layout,
+  .result-layout {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+
+  .live-quiz-monitor,
+  .table-card,
+  .section-block,
+  .scoreboard-hero {
+    border-radius: var(--cgv-cohesion-radius-panel) !important;
+  }
+
+  .premium-podium {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-podium-card,
+  .podium-rank-1,
+  .podium-rank-2,
+  .podium-rank-3 {
+    min-height: 320px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .table-card thead th,
+  .responsive-table thead th,
+  .live-quiz-monitor thead th,
+  .premium-podium-medal {
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText !important;
+    border-color: CanvasText !important;
+  }
+
+  :where(button, a, input, textarea, select, [role="button"]):focus-visible {
+    outline-color: Highlight !important;
+    box-shadow: none !important;
+  }
+}
+
+@media print {
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

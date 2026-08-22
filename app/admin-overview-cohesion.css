@@ -1,0 +1,272 @@
+/*
+ * Admin Overview cohesion pass.
+ * Keeps dashboard modules on one spacing, surface, density, and emphasis system.
+ */
+
+.admin-overview {
+  --admin-overview-gap: clamp(16px, 1.8vw, 22px);
+  --admin-overview-pad: clamp(18px, 2vw, 24px);
+  gap: var(--admin-overview-gap) !important;
+}
+
+.admin-overview > * {
+  min-width: 0;
+}
+
+/* Welcome/header panel and section headers share one vertical rhythm. */
+.admin-overview .welcome-row,
+.admin-overview .page-intro {
+  padding: clamp(22px, 2.4vw, 30px) !important;
+}
+
+.admin-overview .section-heading,
+.admin-overview .table-card-header,
+.live-quiz-monitor__header {
+  align-items: center;
+  gap: 14px;
+  margin: 0 !important;
+}
+
+.admin-overview .section-heading h3,
+.admin-overview .table-card-header h3,
+.live-quiz-monitor__header h3 {
+  margin: 0 !important;
+}
+
+.admin-overview .section-heading p,
+.admin-overview .table-card-header p,
+.live-quiz-monitor__header p {
+  margin-top: 5px !important;
+  max-width: 68ch;
+}
+
+/* KPI cards: same height, spacing and muted icon treatment. */
+.admin-overview .admin-metrics {
+  align-items: stretch;
+  gap: 14px !important;
+}
+
+.admin-overview .admin-metrics article,
+.admin-overview .metric-card {
+  min-height: 132px;
+  padding: 18px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+.admin-overview .admin-metrics article strong,
+.admin-overview .metric-card strong {
+  font-size: clamp(1.45rem, 2vw, 1.85rem) !important;
+  line-height: 1 !important;
+}
+
+.admin-overview .admin-metrics article p,
+.admin-overview .metric-card p {
+  margin: 8px 0 0 !important;
+  color: var(--cgv-cohesion-secondary) !important;
+}
+
+.admin-overview .metric-icon,
+.admin-overview .evaluation-icon,
+.admin-overview .course-icon {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+/* Table modules and the monitor use the same shell treatment. */
+.admin-overview .table-card,
+.admin-overview .section-block,
+.admin-overview .analytics-card,
+.admin-overview .live-quiz-monitor {
+  overflow: hidden;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22) !important;
+}
+
+.admin-overview .table-card-header,
+.live-quiz-monitor__header {
+  padding: var(--admin-overview-pad) var(--admin-overview-pad) 16px !important;
+}
+
+.admin-overview .table-card-header + .responsive-table,
+.admin-overview .table-card-header + .table-wrap {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.admin-overview .table-card table,
+.admin-overview .responsive-table table,
+.live-quiz-monitor table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-overview .table-card thead th,
+.admin-overview .responsive-table thead th,
+.live-quiz-monitor thead th {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+.admin-overview .table-card tbody td,
+.admin-overview .responsive-table tbody td,
+.live-quiz-monitor tbody td {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+  vertical-align: middle;
+}
+
+.admin-overview .table-card tbody tr:last-child td,
+.live-quiz-monitor tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+/* Live Quiz Monitor should feel native to the dashboard, not bolted on. */
+.admin-overview .live-quiz-monitor {
+  margin-top: 0 !important;
+  padding: 0 !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.024), transparent 42%),
+    var(--cgv-cohesion-surface) !important;
+}
+
+.live-quiz-monitor__summary,
+.live-quiz-monitor__filters,
+.live-quiz-monitor__error {
+  margin-left: var(--admin-overview-pad) !important;
+  margin-right: var(--admin-overview-pad) !important;
+}
+
+.live-quiz-monitor__summary {
+  gap: 10px !important;
+  margin-bottom: 14px !important;
+}
+
+.live-quiz-monitor__summary button {
+  min-height: 68px !important;
+  padding: 12px 14px !important;
+  box-shadow: none !important;
+}
+
+.live-quiz-monitor__summary button.is-selected {
+  background: linear-gradient(135deg, rgba(255, 177, 31, 0.12), rgba(255, 106, 34, 0.08)) !important;
+  border-color: rgba(255, 159, 70, 0.25) !important;
+}
+
+.live-quiz-monitor__filters {
+  padding: 14px 0 16px;
+  margin-bottom: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.live-quiz-monitor__table-wrap {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.live-quiz-monitor footer {
+  margin: 0 !important;
+  padding: 13px var(--admin-overview-pad) 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  color: var(--cgv-cohesion-muted) !important;
+}
+
+/* Actions use consistent scale and avoid competing with card content. */
+.admin-overview .section-heading .secondary-button,
+.admin-overview .table-card-header .secondary-button,
+.live-quiz-monitor__header .secondary-button {
+  min-height: 40px !important;
+  padding-inline: 15px !important;
+  white-space: nowrap;
+}
+
+/* Top performers and rank surfaces use restrained award accents. */
+.admin-overview .premium-podium-card {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.admin-overview .podium-rank-1 {
+  border-color: rgba(217, 184, 76, 0.22) !important;
+}
+
+.admin-overview .podium-rank-2 {
+  border-color: rgba(207, 213, 210, 0.17) !important;
+}
+
+.admin-overview .podium-rank-3 {
+  border-color: rgba(217, 162, 126, 0.2) !important;
+}
+
+/* Keep empty states aligned with real rows instead of oversized blank blocks. */
+.admin-overview .empty-table-row td,
+.admin-overview .empty-state,
+.live-quiz-monitor__empty {
+  min-height: 96px;
+  padding: 28px var(--admin-overview-pad) !important;
+}
+
+@media (max-width: 900px) {
+  .admin-overview .admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-overview {
+    --admin-overview-gap: 14px;
+    --admin-overview-pad: 16px;
+  }
+
+  .admin-overview .welcome-row,
+  .admin-overview .page-intro {
+    padding: 20px 18px !important;
+  }
+
+  .admin-overview .admin-metrics {
+    gap: 10px !important;
+  }
+
+  .admin-overview .admin-metrics article,
+  .admin-overview .metric-card {
+    min-height: 116px;
+    padding: 15px !important;
+  }
+
+  .admin-overview .section-heading,
+  .admin-overview .table-card-header,
+  .live-quiz-monitor__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-overview .section-heading .secondary-button,
+  .admin-overview .table-card-header .secondary-button,
+  .live-quiz-monitor__header .secondary-button {
+    width: 100%;
+  }
+
+  .live-quiz-monitor__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .admin-overview .admin-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-overview .admin-metrics article,
+  .admin-overview .metric-card {
+    min-height: 104px;
+  }
+}
+
+@media (forced-colors: active) {
+  .admin-overview .table-card,
+  .admin-overview .live-quiz-monitor,
+  .admin-overview .admin-metrics article {
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+}
