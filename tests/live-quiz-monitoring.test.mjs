@@ -7,6 +7,7 @@ const monitor = readFileSync(new URL("../app/live-quiz-monitor.tsx", import.meta
 const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const bridge = readFileSync(new URL("../app/api/sheets/route.ts", import.meta.url), "utf8");
 const backend = readFileSync(new URL("../google-apps-script/ZZLiveQuiz.gs", import.meta.url), "utf8");
+const workflow = readFileSync(new URL("../.github/workflows/verify-pr.yml", import.meta.url), "utf8");
 
 function section(start, end) {
   const startIndex = backend.indexOf(start);
@@ -25,6 +26,18 @@ test("participant quiz activity is captured from the existing attempt flow", () 
   assert.match(enhancer, /\.question-progress-bars button\.current/);
   assert.match(enhancer, /\.question-progress-bars button\.answered/);
   assert.match(enhancer, /\.answer-list button\.selected/);
+});
+
+test("live monitoring captures the authenticated app session in memory", () => {
+  assert.match(enhancer, /payload\.action === "login"/);
+  assert.match(enhancer, /sessionRef\.current = \{/);
+  assert.match(enhancer, /token: String\(data\.token\)/);
+  assert.match(enhancer, /endpoint: endpointFromInput\(input\)/);
+  assert.match(enhancer, /sessionRef\.current\?\.role === "admin"/);
+  assert.match(enhancer, /session\?\.role !== "participant"/);
+  assert.doesNotMatch(enhancer, /cgv-exams-session-token/);
+  assert.doesNotMatch(enhancer, /cgv-exams-session-role/);
+  assert.doesNotMatch(enhancer, /cgv-exams-api-endpoint/);
 });
 
 test("participant lifecycle reports idle, disconnect, reconnect, and page exit", () => {
@@ -123,4 +136,11 @@ test("live activity responses do not expose quiz answers or question content", (
 test("server bridge allows live quiz actions", () => {
   assert.match(bridge, /"updateAttemptActivity"/);
   assert.match(bridge, /"adminGetLiveQuizActivity"/);
+});
+
+test("CI validates both Apps Script files and their combined global program", () => {
+  assert.match(workflow, /cp google-apps-script\/Code\.gs \/tmp\/cgv-code\.js/);
+  assert.match(workflow, /cp google-apps-script\/ZZLiveQuiz\.gs \/tmp\/cgv-live-quiz\.js/);
+  assert.match(workflow, /cat google-apps-script\/Code\.gs google-apps-script\/ZZLiveQuiz\.gs/);
+  assert.match(workflow, /node --check \/tmp\/cgv-apps-script\.js/);
 });
