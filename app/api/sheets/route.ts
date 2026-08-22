@@ -8,6 +8,8 @@ const ALLOWED_ACTIONS = new Set([
   "getKnowledgeCentre",
   "startAttempt",
   "submitAttempt",
+  "updateAttemptActivity",
+  "adminGetLiveQuizActivity",
   "adminGetDashboard",
   "adminGetExecutiveReport",
   "adminGetCourse",

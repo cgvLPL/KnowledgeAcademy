@@ -12,6 +12,7 @@ import AppUpdateEnhancer from "./app-update-enhancer";
 import SessionScrollEnhancer from "./session-scroll-enhancer";
 import LanguageEnhancer from "./language-enhancer";
 import MobilePdfPagination from "./mobile-pdf-pagination";
+import LiveQuizMonitorEnhancer from "./live-quiz-monitor-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -77,6 +78,7 @@ import "./mobile-sidebar-bottom-actions.css";
 import "./app-interactions.css";
 import "./ui-foundation.css";
 import "./certificate-a4-single-page.css";
+import "./live-quiz-monitor.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
@@ -158,6 +160,7 @@ export default function RootLayout({
           <ButtonSafetyNet />
           <CourseBuilderEnhancer />
           <ResultSyncEnhancer />
+          <LiveQuizMonitorEnhancer />
           <InteractionPerformanceEnhancer />
           <AdminFunctionalityEnhancer />
           <AdminAvatarEnhancer />

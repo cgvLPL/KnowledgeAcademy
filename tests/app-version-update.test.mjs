@@ -14,8 +14,8 @@ const packageJson = JSON.parse(read("package.json"));
 const appVersion = read("app/app-version.ts");
 
 test("settings displays the exact running application version", () => {
-  assert.equal(packageJson.version, "1.1.2");
-  assert.match(appVersion, /1\.1\.2\+development/);
+  assert.equal(packageJson.version, "1.2.0");
+  assert.match(appVersion, /1\.2\.0\+development/);
   assert.match(settings, /APP_VERSION_LABEL/);
   assert.match(settings, /App version/);
   assert.match(settings, /checks automatically for a newer release/);
