@@ -1,0 +1,67 @@
+/* Final dark-theme visibility locks.
+ * globals.css gives generic <th> cells a light background. In dark admin tables
+ * that cell background covers the darker <thead> surface and leaves the muted
+ * labels with insufficient contrast. The scoreboard runner-up badges also need
+ * explicit foreground colors because the dark theme otherwise inherits white
+ * text onto their light medal surfaces.
+ */
+
+.table-card thead th,
+.responsive-table thead th,
+.course-management-table thead th,
+.participants-management-table thead th,
+.history-results-table thead th {
+  background: #181a18 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.14) !important;
+  color: #e6ebe4 !important;
+  -webkit-text-fill-color: #e6ebe4 !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
+}
+
+.table-card thead tr,
+.responsive-table thead tr,
+.course-management-table thead tr,
+.participants-management-table thead tr,
+.history-results-table thead tr {
+  background: #181a18 !important;
+}
+
+/* Keep #2 and #3 readable on the light runner-up medal badges. */
+.admin-scoreboard .podium-2 .podium-rank,
+.podium-grid .podium-2 .podium-rank {
+  background: #e2e6e3 !important;
+  border: 1px solid rgba(55, 61, 57, 0.16) !important;
+  color: #303532 !important;
+  -webkit-text-fill-color: #303532 !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+.admin-scoreboard .podium-3 .podium-rank,
+.podium-grid .podium-3 .podium-rank {
+  background: #efc5aa !important;
+  border: 1px solid rgba(102, 55, 32, 0.18) !important;
+  color: #63361f !important;
+  -webkit-text-fill-color: #63361f !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+@media (forced-colors: active) {
+  .table-card thead th,
+  .responsive-table thead th,
+  .course-management-table thead th,
+  .participants-management-table thead th,
+  .history-results-table thead th,
+  .podium-grid .podium-2 .podium-rank,
+  .podium-grid .podium-3 .podium-rank {
+    background: Canvas !important;
+    border-color: CanvasText !important;
+    color: CanvasText !important;
+    -webkit-text-fill-color: CanvasText !important;
+    text-shadow: none;
+  }
+}
