@@ -1,0 +1,23 @@
+/* Final accessibility guard for cohesive controls on touch-sized viewports. */
+@media (max-width: 760px) {
+  .primary-button,
+  .hero-button,
+  .row-button:not(:disabled),
+  .secondary-button,
+  .select-button,
+  .filter-tabs button,
+  .live-filter-reset,
+  .live-quiz-monitor__summary button {
+    min-height: 46px !important;
+  }
+
+  .icon-button,
+  .input-action,
+  .notification,
+  .builder-icon-button,
+  .cgv-settings-close,
+  .button-safety-dialog-close {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
