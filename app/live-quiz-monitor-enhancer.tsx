@@ -4,9 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import LiveQuizMonitor, { type ParticipantActivity } from "./live-quiz-monitor";
 
-const TOKEN_KEY = "cgv-exams-session-token";
-const ROLE_KEY = "cgv-exams-session-role";
-const ENDPOINT_KEY = "cgv-exams-api-endpoint";
 const ACTIVE_ATTEMPT_KEY = "cgv-exams-live-attempt";
 const HEARTBEAT_MS = 15000;
 const ADMIN_REFRESH_MS = 10000;
@@ -15,6 +12,12 @@ type AttemptState = {
   attemptId: string;
   courseId: string;
   totalQuestions: number;
+};
+
+type LiveSession = {
+  token: string;
+  role: "participant" | "admin";
+  endpoint: string;
 };
 
 type RequestPayload = {
@@ -32,6 +35,12 @@ function parsePayload(init?: RequestInit): RequestPayload | null {
   } catch {
     return null;
   }
+}
+
+function endpointFromInput(input: RequestInfo | URL) {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
 }
 
 function loadAttempt(): AttemptState | null {
@@ -86,16 +95,18 @@ export default function LiveQuizMonitorEnhancer() {
   const [error, setError] = useState("");
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
   const refreshingRef = useRef(false);
+  const sessionRef = useRef<LiveSession | null>(null);
 
   const refreshAdmin = useCallback(async () => {
-    if (refreshingRef.current || sessionStorage.getItem(ROLE_KEY) !== "admin") return;
-    const token = sessionStorage.getItem(TOKEN_KEY);
-    const endpoint = sessionStorage.getItem(ENDPOINT_KEY);
-    if (!token || !endpoint) return;
+    const session = sessionRef.current;
+    if (refreshingRef.current || session?.role !== "admin") return;
     refreshingRef.current = true;
     setLoading(true);
     try {
-      const data = await postAction(endpoint, { action: "adminGetLiveQuizActivity", token });
+      const data = await postAction(session.endpoint, {
+        action: "adminGetLiveQuizActivity",
+        token: session.token,
+      });
       setParticipants(Array.isArray(data.activity) ? data.activity : []);
       setLastUpdatedAt(data.now || new Date().toISOString());
       setError("");
@@ -115,17 +126,16 @@ export default function LiveQuizMonitorEnhancer() {
       status: "active" | "idle" | "disconnected" | "completed" = "active",
       keepalive = false,
     ) {
-      if (sessionStorage.getItem(ROLE_KEY) !== "participant") return;
+      const session = sessionRef.current;
+      if (session?.role !== "participant") return;
       const attempt = loadAttempt();
-      const token = sessionStorage.getItem(TOKEN_KEY);
-      const endpoint = sessionStorage.getItem(ENDPOINT_KEY);
-      if (!attempt || !token || !endpoint) return;
+      if (!attempt) return;
       if (status === "active" && !document.querySelector(".quiz-layout")) return;
       const progress = quizProgress(attempt);
       try {
-        await postAction(endpoint, {
+        await postAction(session.endpoint, {
           action: "updateAttemptActivity",
-          token,
+          token: session.token,
           attemptId: attempt.attemptId,
           courseId: attempt.courseId,
           currentQuestion: progress.currentQuestion,
@@ -142,6 +152,27 @@ export default function LiveQuizMonitorEnhancer() {
       const payload = parsePayload(init);
       const response = await originalFetch(input, init);
       if (!payload?.action) return response;
+
+      if (payload.action === "login" && response.ok) {
+        try {
+          const data = await response.clone().json() as {
+            ok?: boolean;
+            token?: string;
+            user?: { role?: string };
+          };
+          const role = String(data.user?.role || "").trim().toLowerCase();
+          if (data.ok !== false && data.token && (role === "admin" || role === "participant")) {
+            sessionRef.current = {
+              token: String(data.token),
+              role,
+              endpoint: endpointFromInput(input),
+            };
+            if (role === "admin") window.setTimeout(() => void refreshAdmin(), 0);
+          }
+        } catch {
+          // The main app owns login error handling.
+        }
+      }
 
       if (payload.action === "startAttempt" && response.ok) {
         try {
@@ -171,7 +202,13 @@ export default function LiveQuizMonitorEnhancer() {
         }
       }
 
-      if (payload.action === "logout") saveAttempt(null);
+      if (payload.action === "logout") {
+        sessionRef.current = null;
+        saveAttempt(null);
+        setParticipants([]);
+        setError("");
+        setLastUpdatedAt("");
+      }
       return response;
     };
 
@@ -188,14 +225,14 @@ export default function LiveQuizMonitorEnhancer() {
       if (node === observedMount) return;
       observedMount = node;
       setMountNode(node);
-      if (node && sessionStorage.getItem(ROLE_KEY) === "admin") void refreshAdmin();
+      if (node && sessionRef.current?.role === "admin") void refreshAdmin();
     };
     syncMount();
     const observer = new MutationObserver(syncMount);
     observer.observe(document.body, { childList: true, subtree: true });
 
     const onVisibility = () => {
-      if (sessionStorage.getItem(ROLE_KEY) === "participant") {
+      if (sessionRef.current?.role === "participant") {
         void sendHeartbeat(document.visibilityState === "visible" ? "active" : "idle");
       } else if (document.visibilityState === "visible") {
         void refreshAdmin();
@@ -227,7 +264,7 @@ export default function LiveQuizMonitorEnhancer() {
     };
   }, [refreshAdmin]);
 
-  if (!mountNode || sessionStorage.getItem(ROLE_KEY) !== "admin") return null;
+  if (!mountNode || sessionRef.current?.role !== "admin") return null;
   return createPortal(
     <LiveQuizMonitor
       participants={participants}
