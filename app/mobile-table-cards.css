@@ -1,0 +1,158 @@
+/* Universal mobile table cards.
+ * Desktop table rendering is untouched. On small screens, each tbody row becomes
+ * a readable card and labels are supplied by MobileTableCardEnhancer from the
+ * table's real <th> text. Add data-mobile-table-cards="off" on an ancestor to opt out. */
+
+@media (max-width: 760px) {
+  table[data-mobile-card-table="true"] {
+    border: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    display: block !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    table-layout: auto !important;
+  }
+
+  table[data-mobile-card-table="true"] thead {
+    block-size: 1px !important;
+    clip: rect(0 0 0 0) !important;
+    clip-path: inset(50%) !important;
+    inline-size: 1px !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    position: absolute !important;
+    white-space: nowrap !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody {
+    display: grid !important;
+    gap: 12px !important;
+    inline-size: 100% !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.027), transparent 46%),
+      rgba(18, 20, 19, 0.97) !important;
+    border: 1px solid rgba(255, 255, 255, 0.105) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22) !important;
+    display: grid !important;
+    gap: 0 !important;
+    inline-size: 100% !important;
+    overflow: hidden !important;
+    padding: 6px 14px !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td {
+    align-items: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.075) !important;
+    box-sizing: border-box !important;
+    color: #f4f6f2 !important;
+    display: grid !important;
+    gap: 14px !important;
+    grid-template-columns: minmax(92px, 0.78fr) minmax(0, 1.35fr) !important;
+    inline-size: 100% !important;
+    min-block-size: 48px !important;
+    min-inline-size: 0 !important;
+    padding: 11px 0 !important;
+    text-align: right !important;
+    white-space: normal !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td::before {
+    align-self: center;
+    color: #929a93;
+    content: attr(data-mobile-label);
+    font-size: 0.69rem;
+    font-weight: 800;
+    letter-spacing: 0.055em;
+    line-height: 1.25;
+    min-inline-size: 0;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td > * {
+    justify-self: end;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] .participant-cell,
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] .course-cell,
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] .user-cell,
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] .live-participant {
+    justify-content: flex-end !important;
+    text-align: right !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] button,
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] a,
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] .icon-button {
+    min-block-size: 44px;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="empty"] {
+    background: rgba(18, 20, 19, 0.74) !important;
+    border: 1px dashed rgba(255, 255, 255, 0.12) !important;
+    border-radius: 16px !important;
+    display: block !important;
+    inline-size: 100% !important;
+    overflow: hidden !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="empty"] > td {
+    border: 0 !important;
+    display: block !important;
+    inline-size: 100% !important;
+    padding: 18px !important;
+    text-align: center !important;
+  }
+
+  .responsive-table,
+  .course-management-table,
+  .participants-management-table,
+  .history-results-table,
+  .live-quiz-monitor__table-wrap {
+    overflow: visible !important;
+    max-inline-size: 100% !important;
+  }
+}
+
+@media (max-width: 420px) {
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] {
+    border-radius: 15px !important;
+    padding-inline: 12px !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td {
+    gap: 10px !important;
+    grid-template-columns: minmax(82px, 0.72fr) minmax(0, 1.28fr) !important;
+    padding-block: 10px !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td::before {
+    font-size: 0.64rem;
+  }
+}
+
+@media (forced-colors: active) and (max-width: 760px) {
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"],
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="empty"] {
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  table[data-mobile-card-table="true"] tbody tr[data-mobile-card-row="true"] > td::before {
+    color: CanvasText !important;
+  }
+}
