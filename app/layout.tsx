@@ -86,6 +86,7 @@ import "./visual-cohesion-system.css";
 import "./admin-overview-cohesion.css";
 import "./visual-cohesion-touch-targets.css";
 import "./mobile-table-cards.css";
+import "./admin-scoreboard-mobile-spacing.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
