@@ -13,6 +13,7 @@ import SessionScrollEnhancer from "./session-scroll-enhancer";
 import LanguageEnhancer from "./language-enhancer";
 import MobilePdfPagination from "./mobile-pdf-pagination";
 import LiveQuizMonitorEnhancer from "./live-quiz-monitor-enhancer";
+import MobileTableCardEnhancer from "./mobile-table-card-enhancer";
 import "./globals.css";
 import "./reference-theme.css";
 import "./logo-lockup.css";
@@ -84,6 +85,7 @@ import "./podium-leaderboard.css";
 import "./visual-cohesion-system.css";
 import "./admin-overview-cohesion.css";
 import "./visual-cohesion-touch-targets.css";
+import "./mobile-table-cards.css";
 
 const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
 const socialImageUrl = `${publicSiteUrl}og.png`;
@@ -173,6 +175,7 @@ export default function RootLayout({
           <SessionScrollEnhancer />
           <LanguageEnhancer />
           <MobilePdfPagination />
+          <MobileTableCardEnhancer />
         </AppInteractionProvider>
       </body>
     </html>
