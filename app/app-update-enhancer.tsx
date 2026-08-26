@@ -17,10 +17,24 @@ function updateManifestUrl() {
   return endpoint.toString();
 }
 
+function hasActiveEvaluation() {
+  return Boolean(document.querySelector(".quiz-layout"));
+}
+
 export default function AppUpdateEnhancer() {
   const [availableVersion, setAvailableVersion] = useState("");
+  const [evaluationInProgress, setEvaluationInProgress] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const refreshButtonRef = useRef<HTMLButtonElement>(null);
+  const shouldPrompt = Boolean(availableVersion) && !evaluationInProgress;
+
+  useEffect(() => {
+    const syncEvaluationState = () => setEvaluationInProgress(hasActiveEvaluation());
+    syncEvaluationState();
+    const observer = new MutationObserver(syncEvaluationState);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const currentUrl = new URL(window.location.href);
@@ -76,7 +90,7 @@ export default function AppUpdateEnhancer() {
   }, []);
 
   useEffect(() => {
-    if (!availableVersion) return;
+    if (!shouldPrompt) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.body.classList.add("cgv-update-required");
@@ -85,7 +99,7 @@ export default function AppUpdateEnhancer() {
       document.body.style.overflow = previousOverflow;
       document.body.classList.remove("cgv-update-required");
     };
-  }, [availableVersion]);
+  }, [shouldPrompt]);
 
   function refreshApplication() {
     setRefreshing(true);
@@ -94,7 +108,7 @@ export default function AppUpdateEnhancer() {
     window.location.replace(nextUrl.toString());
   }
 
-  if (!availableVersion) return null;
+  if (!shouldPrompt) return null;
 
   return (
     <section
@@ -134,7 +148,7 @@ export default function AppUpdateEnhancer() {
         >
           {refreshing ? "Loading the update..." : "Refresh and update"}
         </button>
-        <small>Your session and saved progress remain on this device.</small>
+        <small>Active evaluations are never interrupted by this update prompt.</small>
       </div>
     </section>
   );
