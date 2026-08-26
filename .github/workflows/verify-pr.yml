@@ -56,6 +56,8 @@ jobs:
       - name: Build static application
         run: npm run build:github-pages
         env:
+          NEXT_PUBLIC_BASE_PATH: /KnowledgeAcademy
+          NEXT_PUBLIC_SITE_URL: https://cgvlpl.github.io/KnowledgeAcademy/
           NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec
           NEXT_PUBLIC_CAPACITY_SPREAD_MS: "0"
 
@@ -83,3 +85,8 @@ jobs:
         run: |
           test -f dist/client/index.html
           test -f dist/client/.nojekyll
+          grep -q "/KnowledgeAcademy/" dist/client/index.html
+          if grep -R -q "/CGV.Exams/" dist/client; then
+            echo "Generated Pages artifact still references the upstream repository path." >&2
+            exit 1
+          fi
