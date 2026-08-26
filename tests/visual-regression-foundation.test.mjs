@@ -22,9 +22,9 @@ test("visual regression runner resolves the Pages artifact from the repository r
   assert.ok(config.includes('path.resolve(import.meta.dirname, "../..")'));
   assert.ok(config.includes('path.join(root, "dist/client")'));
   assert.ok(config.includes('path.join(root, "test-results/visual-artifacts")'));
-  assert.ok(config.includes('ln -sfn . "${dist}/CGV.Exams"'));
+  assert.ok(config.includes('ln -sfn . "${dist}/KnowledgeAcademy"'));
   assert.ok(config.includes("python3 -m http.server 4173 --directory"));
-  assert.ok(config.includes("http://127.0.0.1:4173/CGV.Exams/index.html"));
+  assert.ok(config.includes("http://127.0.0.1:4173/KnowledgeAcademy/index.html"));
 });
 
 test("responsive visual fixture covers the requested mobile tablet and desktop widths", () => {
