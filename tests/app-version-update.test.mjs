@@ -10,6 +10,7 @@ const updaterCss = read("app/app-update-enhancer.css");
 const versionScript = read("scripts/prepare-app-version.mjs");
 const pagesBuild = read("scripts/build-github-pages.sh");
 const sitesBuild = read("scripts/build-verified.sh");
+const nextConfig = read("next.config.ts");
 const packageJson = JSON.parse(read("package.json"));
 const appVersion = read("app/app-version.ts");
 
@@ -26,11 +27,16 @@ test("settings displays the exact running application version", () => {
   assert.match(pagesBuild, /NEXT_PUBLIC_APP_VERSION/);
   assert.match(sitesBuild, /NEXT_PUBLIC_APP_VERSION/);
   assert.match(pagesBuild, /find "\$project_dir\/dist\/client\/assets" -type f -name '\*\.css'/);
-  assert.match(pagesBuild, /replaceAll\("\/assets\/", "\/CGV\.Exams\/assets\/"\)/);
+  assert.match(pagesBuild, /pages_base_path="\$\{NEXT_PUBLIC_BASE_PATH:-\/KnowledgeAcademy\}"/);
+  assert.match(pagesBuild, /\$\{basePath\}\/assets\//);
   assert.match(pagesBuild, /grep -qF 'url\(\/assets\/'/);
+  assert.match(nextConfig, /NEXT_PUBLIC_BASE_PATH/);
+  assert.match(nextConfig, /\/KnowledgeAcademy/);
+  assert.doesNotMatch(nextConfig, /CGV\.Exams/);
+  assert.doesNotMatch(pagesBuild, /CGV\.Exams/);
 });
 
-test("new deployments trigger a mandatory full-screen refresh prompt", () => {
+test("new deployments trigger a mandatory refresh prompt only outside active evaluations", () => {
   assert.match(layout, /AppUpdateEnhancer/);
   assert.match(layout, /import "\.\/app-update-enhancer\.css"/);
   assert.match(updater, /version\.json/);
@@ -38,12 +44,24 @@ test("new deployments trigger a mandatory full-screen refresh prompt", () => {
   assert.match(updater, /latestVersion !== APP_VERSION/);
   assert.match(updater, /window\.addEventListener\("focus", checkForUpdate\)/);
   assert.match(updater, /visibilitychange/);
+  assert.match(updater, /document\.querySelector\("\.quiz-layout"\)/);
+  assert.match(updater, /MutationObserver/);
+  assert.match(updater, /shouldPrompt/);
   assert.match(updater, /window\.location\.replace/);
   assert.match(updater, /aria-modal="true"/);
   assert.match(updater, /Refresh and update/);
+  assert.match(updater, /Active evaluations are never interrupted/);
+  assert.doesNotMatch(updater, /Your session and saved progress remain on this device/);
   assert.match(updaterCss, /\.cgv-update-screen\s*\{/);
   assert.match(updaterCss, /inset:\s*0/);
   assert.match(updaterCss, /position:\s*fixed/);
   assert.match(updaterCss, /min-height:\s*100dvh/);
   assert.match(updaterCss, /z-index:\s*2147483647/);
+});
+
+test("public metadata belongs to the KnowledgeAcademy fork", () => {
+  assert.match(layout, /https:\/\/cgvlpl\.github\.io\/KnowledgeAcademy\//);
+  assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
+  assert.doesNotMatch(layout, /rayhanmawuntu-stack/);
+  assert.doesNotMatch(layout, /evalora-quiz\.rayhanmawuntu/);
 });
