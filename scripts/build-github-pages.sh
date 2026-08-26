@@ -5,6 +5,7 @@ project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 api_route="$project_dir/app/api/sheets/route.ts"
 temporary_dir="$(mktemp -d)"
 temporary_route="$temporary_dir/route.ts"
+pages_base_path="${NEXT_PUBLIC_BASE_PATH:-/KnowledgeAcademy}"
 
 restore_api_route() {
   if [[ -f "$temporary_route" ]]; then
@@ -30,7 +31,7 @@ await rm(process.argv[2], { recursive: true, force: true });
 NODE
 
 GITHUB_PAGES=true \
-NEXT_PUBLIC_BASE_PATH="/CGV.Exams" \
+NEXT_PUBLIC_BASE_PATH="$pages_base_path" \
 NEXT_PUBLIC_APP_VERSION="$NEXT_PUBLIC_APP_VERSION" \
 bash scripts/sites-env.sh -- vinext build
 
@@ -45,33 +46,43 @@ exported_files=(
   "$project_dir/dist/client/404.html"
 )
 
-# Vite emits imported images as root-relative URLs inside generated CSS. Include
-# every stylesheet in the base-path rewrite so those assets resolve on Pages.
+# Vite can emit root-relative URLs inside generated files. Rewrite only URLs
+# that actually start at the origin so an already-prefixed Pages URL is never
+# prefixed a second time.
 while IFS= read -r stylesheet; do
   exported_files+=("$stylesheet")
 done < <(find "$project_dir/dist/client/assets" -type f -name '*.css' -print)
 
-node --input-type=module - "${exported_files[@]}" <<'NODE'
+node --input-type=module - "$pages_base_path" "${exported_files[@]}" <<'NODE'
 import { readFile, writeFile } from "node:fs/promises";
 
-for (const file of process.argv.slice(2)) {
+const [basePath, ...files] = process.argv.slice(2);
+for (const file of files) {
   const source = await readFile(file, "utf8");
   const rewritten = source
-    .replaceAll("/assets/", "/CGV.Exams/assets/")
-    .replaceAll("/favicon.svg", "/CGV.Exams/favicon.svg")
-    .replaceAll('"/brand/', '"/CGV.Exams/brand/')
-    .replaceAll('"/site.webmanifest', '"/CGV.Exams/site.webmanifest')
-    .replaceAll('href="/cgv-logo.svg"', 'href="/CGV.Exams/cgv-logo.svg"');
+    .replaceAll('"/assets/', `"${basePath}/assets/`)
+    .replaceAll("'/assets/", `'${basePath}/assets/`)
+    .replaceAll("url(/assets/", `url(${basePath}/assets/`)
+    .replaceAll('"/favicon.svg', `"${basePath}/favicon.svg`)
+    .replaceAll("'/favicon.svg", `'${basePath}/favicon.svg`)
+    .replaceAll('"/brand/', `"${basePath}/brand/`)
+    .replaceAll("'/brand/", `'${basePath}/brand/`)
+    .replaceAll('"/site.webmanifest', `"${basePath}/site.webmanifest`)
+    .replaceAll("'/site.webmanifest", `'${basePath}/site.webmanifest`)
+    .replaceAll('href="/cgv-logo.svg"', `href="${basePath}/cgv-logo.svg"`);
   await writeFile(file, rewritten);
 }
 NODE
 
 for exported_file in "${exported_files[@]}"; do
   if grep -qF '"/assets/' "$exported_file" ||
+    grep -qF "'/assets/" "$exported_file" ||
     grep -qF 'import("/assets/' "$exported_file" ||
     grep -qF 'url(/assets/' "$exported_file" ||
     grep -qF '"/brand/' "$exported_file" ||
-    grep -qF '"/site.webmanifest' "$exported_file"; then
+    grep -qF "'/brand/" "$exported_file" ||
+    grep -qF '"/site.webmanifest' "$exported_file" ||
+    grep -qF "'/site.webmanifest" "$exported_file"; then
     echo "GitHub Pages build still contains root-relative asset paths in $exported_file." >&2
     exit 1
   fi

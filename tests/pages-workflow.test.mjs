@@ -21,7 +21,7 @@ test("only one canonical repository Pages deployment workflow remains", () => {
   assert.ok(fs.existsSync(workflowPath));
   assert.equal(fs.existsSync(obsoleteWorkflowPath), false);
   assert.ok(workflow.includes("name: Publish CGV Knowledge Academy site"));
-  assert.ok(workflow.includes("group: cgv-exams-pages-${{ github.ref }}"));
+  assert.ok(workflow.includes("group: knowledge-academy-pages-${{ github.ref }}"));
 });
 
 test("Pages workflow keeps required permissions and job dependency", () => {
@@ -30,6 +30,14 @@ test("Pages workflow keeps required permissions and job dependency", () => {
   assert.ok(workflow.includes("needs: build"));
   assert.ok(workflow.includes("environment:"));
   assert.ok(workflow.includes("name: github-pages"));
+});
+
+test("Pages workflow targets this fork while retaining the Google Apps Script backend", () => {
+  assert.ok(workflow.includes("NEXT_PUBLIC_BASE_PATH: /KnowledgeAcademy"));
+  assert.ok(workflow.includes("NEXT_PUBLIC_SITE_URL: https://cgvlpl.github.io/KnowledgeAcademy/"));
+  assert.ok(workflow.includes("NEXT_PUBLIC_GOOGLE_APPS_SCRIPT_URL: https://script.google.com/macros/s/AKfycbz0_-mm0ya8mmBf-mCmFGQhRbR4h2GCVJjwtq3iGUTKZUDP8l5p89ahnSyP41rppA78lQ/exec"));
+  assert.ok(workflow.includes("grep -q \"/KnowledgeAcademy/\" dist/client/index.html"));
+  assert.ok(workflow.includes("/CGV.Exams/"));
 });
 
 test("Pages build validates the generated application before artifact upload", () => {

@@ -7,8 +7,8 @@
 </table>
 
 <p align="center">
-  <a href="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/verify-pr.yml"><img src="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/verify-pr.yml/badge.svg" alt="Verify application"></a>
-  <a href="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/deploy-pages.yml"><img src="https://github.com/rayhanmawuntu-stack/CGV.Exams/actions/workflows/deploy-pages.yml/badge.svg" alt="Publish site"></a>
+  <a href="https://github.com/cgvLPL/KnowledgeAcademy/actions/workflows/verify-pr.yml"><img src="https://github.com/cgvLPL/KnowledgeAcademy/actions/workflows/verify-pr.yml/badge.svg" alt="Verify application"></a>
+  <a href="https://github.com/cgvLPL/KnowledgeAcademy/actions/workflows/deploy-pages.yml"><img src="https://github.com/cgvLPL/KnowledgeAcademy/actions/workflows/deploy-pages.yml/badge.svg" alt="Publish site"></a>
   <img src="https://img.shields.io/badge/Node.js-22%2B-339933?logo=node.js&logoColor=white" alt="Node.js 22 or newer">
 </p>
 
@@ -22,7 +22,7 @@ performance, certificates, and administrator tools in one cinematic workspace.
 
 ## Live application
 
-[Open CGV Knowledge Academy](https://rayhanmawuntu-stack.github.io/CGV.Exams/)
+[Open CGV Knowledge Academy](https://cgvlpl.github.io/KnowledgeAcademy/)
 
 ## Product highlights
 
@@ -142,8 +142,8 @@ on the sign-in screen.
 Requirements: Node.js 22.13 or newer and npm.
 
 ```bash
-git clone https://github.com/rayhanmawuntu-stack/CGV.Exams.git
-cd CGV.Exams
+git clone https://github.com/cgvLPL/KnowledgeAcademy.git
+cd KnowledgeAcademy
 cp .env.example .env.local
 npm ci
 npm run dev
@@ -190,7 +190,12 @@ complete regression suite, responsive visual regression, and Pages artifact
 checks.
 
 After a verified pull request is merged, **Publish CGV Knowledge Academy site**
-builds and deploys the frontend to GitHub Pages automatically.
+builds and deploys the frontend to GitHub Pages automatically at
+`https://cgvlpl.github.io/KnowledgeAcademy/`.
+
+The Pages workflow keeps the configured Google Apps Script deployment as the
+application backend. Frontend path and metadata changes do not replace or migrate
+the existing Google Sheets / Apps Script service.
 
 Google Apps Script versions are deployed separately. When files under
 `google-apps-script/` change, copy the latest `Code.gs` and extension `.gs` files
