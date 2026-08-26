@@ -1,0 +1,129 @@
+/* Shared mobile interface optimisation layer.
+ *
+ * This file intentionally stays small and cross-cutting. Page-specific mobile
+ * layouts (quiz, admin courses, participants, table cards) keep ownership of
+ * their own geometry while this layer handles viewport safety, form focus,
+ * fixed navigation, drawers, dialogs, and transient feedback consistently.
+ */
+
+@media (max-width: 760px) {
+  html,
+  body {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  /* Let the sign-in screen follow the visual viewport when browser chrome or
+     the software keyboard changes height. The legacy overflow:hidden rule can
+     otherwise make the focused field or submit action unreachable. */
+  .login-page {
+    min-height: 100dvh !important;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+  }
+
+  .login-page .login-layout {
+    min-height: 100dvh !important;
+    padding-top: max(24px, env(safe-area-inset-top)) !important;
+    padding-right: max(20px, env(safe-area-inset-right)) !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+    padding-left: max(20px, env(safe-area-inset-left)) !important;
+  }
+
+  /* viewport-fit=cover is enabled in layout.tsx. Keep the signed-in header out
+     of display cut-outs in Safari/PWA mode without changing normal phones. */
+  .topbar {
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: calc(68px + env(safe-area-inset-top)) !important;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+  }
+
+  /* Safari zooms the page when a focused form control renders below 16px.
+     Exclude switch/radio-like controls whose text size is not user-facing. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Give every destination the same footprint. This avoids narrow labels,
+     makes the full nav consistently tappable, and adds a visible keyboard cue. */
+  .mobile-nav {
+    align-items: stretch !important;
+    box-sizing: border-box !important;
+    gap: 4px !important;
+    justify-content: space-evenly !important;
+  }
+
+  .mobile-nav button {
+    flex: 1 1 0 !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    min-height: 48px !important;
+    min-width: 0 !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav button:focus-visible {
+    outline: 2px solid currentColor !important;
+    outline-offset: -4px !important;
+  }
+
+  /* The mobile drawer already uses 100dvh; add notch/home-indicator clearance
+     and contain momentum scrolling so the page behind it stays still. */
+  body.cgv-mobile-menu-open .sidebar {
+    overscroll-behavior-y: contain;
+    padding-top: max(28px, env(safe-area-inset-top)) !important;
+    padding-right: max(20px, env(safe-area-inset-right)) !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    padding-left: max(20px, env(safe-area-inset-left)) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Treat shared dialogs as bottom sheets on phones, but size them against the
+     dynamic viewport so address-bar/keyboard changes do not clip controls. */
+  .button-safety-dialog-backdrop,
+  .cgv-settings-backdrop,
+  .cgv-function-backdrop {
+    box-sizing: border-box !important;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+  }
+
+  .button-safety-dialog,
+  .cgv-settings-panel,
+  .cgv-function-modal,
+  .cgv-course-editor-modal {
+    max-height: calc(
+      100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom))
+    ) !important;
+    max-width: 100% !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .button-safety-dialog-close,
+  .cgv-settings-close {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  .cgv-settings-language-row select {
+    min-height: 48px !important;
+  }
+
+  /* Admin/function feedback previously sat at 24px and could be hidden behind
+     the 68px fixed mobile navigation. Match the existing safety toast offset. */
+  .cgv-function-toast {
+    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+  }
+}
