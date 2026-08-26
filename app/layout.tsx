@@ -87,27 +87,26 @@ import "./admin-overview-cohesion.css";
 import "./visual-cohesion-touch-targets.css";
 import "./mobile-table-cards.css";
 
-const publicSiteUrl = "https://evalora-quiz.rayhanmawuntu.chatgpt.site/";
-const socialImageUrl = `${publicSiteUrl}og.png`;
+const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://cgvlpl.github.io/KnowledgeAcademy/";
+const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `${publicSiteUrl}/`;
+const socialImageUrl = `${normalizedPublicSiteUrl}og.png`;
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
-const publicAssetOrigin = process.env.GITHUB_PAGES === "true"
-  ? "https://rayhanmawuntu-stack.github.io"
-  : publicSiteUrl.replace(/\/$/, "");
+const publicAssetOrigin = new URL(normalizedPublicSiteUrl).origin;
 const iconRevision = "2026-07-31";
 const publicAssetUrl = (path: string) => `${publicAssetOrigin}${publicBasePath}${path}`;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(publicSiteUrl),
+  metadataBase: new URL(normalizedPublicSiteUrl),
   applicationName: "CGV Knowledge Academy",
   title: "CGV Knowledge Academy — Evaluation Portal",
   description:
     "CGV Knowledge Academy's evaluation platform for learning courses, participant progress, certificates, and live results.",
   alternates: {
-    canonical: publicSiteUrl,
+    canonical: normalizedPublicSiteUrl,
   },
   openGraph: {
     type: "website",
-    url: publicSiteUrl,
+    url: normalizedPublicSiteUrl,
     siteName: "CGV Knowledge Academy",
     title: "CGV Knowledge Academy — Evaluation Portal",
     description:
