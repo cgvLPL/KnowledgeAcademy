@@ -24,8 +24,11 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `ln -sfn . "${dist}/CGV.Exams" && python3 -m http.server 4173 --directory "${dist}"`,
-    url: "http://127.0.0.1:4173/CGV.Exams/index.html",
+    // The production export emits /KnowledgeAcademy asset URLs. Keep the old
+    // /CGV.Exams alias only so legacy visual specs can still navigate while all
+    // loaded JS/CSS is resolved through the real fork path.
+    command: `ln -sfn . "${dist}/KnowledgeAcademy" && ln -sfn . "${dist}/CGV.Exams" && python3 -m http.server 4173 --directory "${dist}"`,
+    url: "http://127.0.0.1:4173/KnowledgeAcademy/index.html",
     reuseExistingServer: false,
     timeout: 15_000,
   },
