@@ -1,7 +1,7 @@
 <table align="center">
   <tr>
-    <td bgcolor="#19191B" align="center">
-      <img src="public/brand/cgv-knowledge-academy.svg" alt="CGV Knowledge Academy — CGV red logo with KnowledgeAcademy wordmark" width="900">
+    <td bgcolor="#151719" align="center">
+      <img src="public/brand/cgv-knowledge-academy.svg" alt="CGV Knowledge Academy — CGV red logo with KnowledgeAcademy wordmark" width="960">
     </td>
   </tr>
 </table>
