@@ -21,9 +21,9 @@ test("README and in-app branding use the same sharp SVG", () => {
     assert.ok(!brand.includes(obsolete), `Logo must not contain ${obsolete}`);
   }
   assert.ok(read("README.md").includes("public/brand/cgv-knowledge-academy.svg"));
-  for (const module of [client, updater]) {
-    assert.ok(module.includes("cgv-knowledge-academy.svg?v=20260924-vector-v2"));
-    assert.ok(module.includes("height={320}"));
+  for (const surface of [client, updater]) {
+    assert.ok(surface.includes("cgv-knowledge-academy.svg?v=20260924-vector-v2"));
+    assert.ok(surface.includes("height={320}"));
   }
   for (const stylesheet of ["app/logo-lockup.css", "app/brand-system.css"]) {
     assert.ok(read(stylesheet).includes("aspect-ratio: 1450 / 320 !important"));
