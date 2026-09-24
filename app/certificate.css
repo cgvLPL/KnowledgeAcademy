@@ -164,17 +164,13 @@
 }
 
 .certificate-cgv-mark {
-  aspect-ratio: 600 / 360;
-  background: #e6322f;
+  aspect-ratio: 426 / 188;
+  background: transparent;
   display: block;
   flex: 0 0 auto;
-  height: clamp(34px, 5.7vw, 50px);
-  mask-position: left center;
-  mask-repeat: no-repeat;
-  mask-size: auto 100%;
-  -webkit-mask-position: left center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: auto 100%;
+  height: clamp(30px, 4.5vw, 42px);
+  object-fit: contain;
+  width: auto;
 }
 
 .certificate-logo-divider {
@@ -187,7 +183,7 @@
 
 .certificate-logo-text {
   color: #111312;
-  font-size: clamp(12px, 1.85vw, 18px);
+  font-size: clamp(11px, 1.55vw, 15.5px);
   font-weight: 650;
   letter-spacing: -0.025em;
   line-height: 1;

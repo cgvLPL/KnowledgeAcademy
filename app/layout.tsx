@@ -92,7 +92,7 @@ const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `$
 const socialImageUrl = `${normalizedPublicSiteUrl}og.png`;
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
 const publicAssetOrigin = new URL(normalizedPublicSiteUrl).origin;
-const iconRevision = "2026-07-31";
+const iconRevision = "2026-09-24";
 const publicAssetUrl = (path: string) => `${publicAssetOrigin}${publicBasePath}${path}`;
 
 export const metadata: Metadata = {
@@ -121,17 +121,18 @@ export const metadata: Metadata = {
     images: [socialImageUrl],
   },
   other: {
-    "cgv-ui-release": "2026.07.31-knowledge-academy-brand-v1",
+    "cgv-ui-release": "2026.09.24-knowledge-academy-vector-v2",
     "mobile-web-app-capable": "yes",
   },
   manifest: `${publicAssetUrl("/site.webmanifest")}?v=${iconRevision}`,
   icons: {
     icon: [
+      { url: `${publicAssetUrl("/favicon.svg")}?v=${iconRevision}`, sizes: "any", type: "image/svg+xml" },
       { url: `${publicAssetUrl("/brand/favicon-16.png")}?v=${iconRevision}`, sizes: "16x16", type: "image/png" },
       { url: `${publicAssetUrl("/brand/favicon-32.png")}?v=${iconRevision}`, sizes: "32x32", type: "image/png" },
       { url: `${publicAssetUrl("/brand/app-icon-192.png")}?v=${iconRevision}`, sizes: "192x192", type: "image/png" },
     ],
-    shortcut: `${publicAssetUrl("/brand/favicon-32.png")}?v=${iconRevision}`,
+    shortcut: `${publicAssetUrl("/favicon.svg")}?v=${iconRevision}`,
     apple: [
       { url: `${publicAssetUrl("/brand/apple-touch-icon.png")}?v=${iconRevision}`, sizes: "180x180", type: "image/png" },
     ],

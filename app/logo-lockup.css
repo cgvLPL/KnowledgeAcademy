@@ -1,4 +1,4 @@
-/* Unified transparent CGV (exams) lockup */
+/* Unified CGV KnowledgeAcademy vector lockup (matching README). */
 .brand-lockup {
   align-items: center !important;
   flex-direction: column !important;
@@ -6,7 +6,7 @@
 }
 
 .brand-logo {
-  aspect-ratio: 1450 / 360 !important;
+  aspect-ratio: 1450 / 320 !important;
   filter: none !important;
   height: auto !important;
   object-fit: contain;

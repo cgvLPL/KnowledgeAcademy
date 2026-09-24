@@ -147,7 +147,7 @@ function fitText(doc: jsPDF, value: string, maxWidth: number) {
 function drawBrand(doc: jsPDF, logoDataUrl?: string | null, x = MARGIN, y = 7.3) {
   if (logoDataUrl) {
     try {
-      doc.addImage(logoDataUrl, "PNG", x, y, 27, 16.2, undefined, "FAST");
+      doc.addImage(logoDataUrl, "PNG", x, y + 1.4, 27, 11.92, undefined, "FAST");
     } catch {
       // Text branding keeps the report usable if the browser cannot rasterize the mark.
       setText(doc, RED, 17, "bold");
@@ -711,16 +711,12 @@ export async function loadExecutiveReportLogo(source: string): Promise<string | 
       element.src = objectUrl;
     });
     const canvas = document.createElement("canvas");
-    canvas.width = 600;
-    canvas.height = 360;
+    canvas.width = 640;
+    canvas.height = 282;
     const context = canvas.getContext("2d");
     if (!context) return null;
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, 1450, 360);
-    context.globalCompositeOperation = "source-in";
-    context.fillStyle = "#e6322f";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.globalCompositeOperation = "source-over";
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/png", 0.92);
   } finally {
     URL.revokeObjectURL(objectUrl);

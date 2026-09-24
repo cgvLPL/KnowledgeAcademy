@@ -354,10 +354,10 @@ function Logo({
     >
       <Image
         className="brand-logo"
-        src={`${publicBasePath}/brand/cgv-knowledge-academy.svg`}
+        src={`${publicBasePath}/brand/cgv-knowledge-academy.svg?v=20260924-vector-v2`}
         alt=""
         width={1450}
-        height={360}
+        height={320}
         priority={priority}
         unoptimized
       />
@@ -366,14 +366,15 @@ function Logo({
 }
 
 function CertificateLogo() {
-  const logoSource = `url("${publicBasePath}/cgv-logo.svg")`;
-
   return (
     <div className="certificate-logo-lockup" aria-label="CGV Knowledge Academy" role="img">
-      <span
+      <Image
         className="certificate-cgv-mark"
-        aria-hidden="true"
-        style={{ WebkitMaskImage: logoSource, maskImage: logoSource } as CSSProperties}
+        src={`${publicBasePath}/brand/cgv-mark.svg?v=20260924-vector-v2`}
+        alt=""
+        width={426}
+        height={188}
+        unoptimized
       />
       <span className="certificate-logo-divider" aria-hidden="true" />
       <span className="certificate-logo-text" aria-hidden="true">Knowledge Academy</span>
@@ -3107,7 +3108,7 @@ export default function ExamClient() {
         import("./executive-report"),
       ]);
       const logo = await reportModule
-        .loadExecutiveReportLogo(`${publicBasePath}/cgv-logo.svg`)
+        .loadExecutiveReportLogo(`${publicBasePath}/brand/cgv-mark.svg?v=20260924-vector-v2`)
         .catch(() => null);
       reportModule.downloadExecutiveReportPdf(report, logo);
       return null;
