@@ -86,6 +86,7 @@ import "./visual-cohesion-system.css";
 import "./admin-overview-cohesion.css";
 import "./visual-cohesion-touch-targets.css";
 import "./mobile-table-cards.css";
+import "./logo-position-centering.css";
 
 const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://cgvlpl.github.io/KnowledgeAcademy/";
 const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `${publicSiteUrl}/`;
