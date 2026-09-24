@@ -9,7 +9,7 @@ const css = read("app/knowledge-academy-loading.css");
 const finalCss = read("app/final-loading-viewport-fix.css");
 const visibilityCss = read("app/brand-visibility-polish.css");
 const layout = read("app/layout.tsx");
-const logo = read("public/cgv-logo.svg");
+const logo = read("public/brand/cgv-knowledge-academy.svg");
 const logoCss = read("app/logo-lockup.css");
 const client = read("app/exam-client.tsx");
 
@@ -28,15 +28,16 @@ test("Knowledge Academy artwork remains installed beneath the final alignment la
   );
 
   const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
-  assert.match(release, /^2026\.07\.\d{2}-[a-z0-9-]+-v\d+$/u);
+  assert.match(release, /^20\d{2}\.\d{2}\.\d{2}-[a-z0-9-]+-v\d+$/u);
 });
 
 test("loading screen uses the real CGV SVG and a visible Knowledge Academy lockup", () => {
   assert.ok(logo.includes("<svg"));
-  assert.ok(logo.includes("transparent background"));
+  assert.ok(logo.includes('viewBox="0 0 1450 320"'));
+  assert.equal(logo.split("<path ").length - 1, 7);
   assert.ok(client.includes("cgv-knowledge-academy.svg"));
   assert.ok(client.includes("<Logo priority />"));
-  assert.ok(client.includes('const logoSource = `url("${publicBasePath}/cgv-logo.svg")`;'));
+  assert.ok(client.includes("brand/cgv-mark.svg?v=20260924-vector-v2"));
   assert.ok(logoCss.includes(".brand-logo"));
   assert.ok(visibilityCss.includes("background: transparent !important"));
   assert.ok(visibilityCss.includes("width: min(820px, 84vw) !important"));

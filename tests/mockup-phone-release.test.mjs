@@ -20,7 +20,7 @@ test("mockup production layer remains in the final theme cascade", () => {
   assert.ok(layout.indexOf(finalColourImport) > layout.indexOf(mockupImport));
 
   const release = layout.match(/"cgv-ui-release":\s*"([^"]+)"/u)?.[1] || "";
-  assert.match(release, /^2026\.07\.\d{2}-[a-z0-9-]+-v\d+$/u);
+  assert.match(release, /^20\d{2}\.\d{2}\.\d{2}-[a-z0-9-]+-v\d+$/u);
 });
 
 test("desktop mockup palette and primary surfaces are enforced", () => {

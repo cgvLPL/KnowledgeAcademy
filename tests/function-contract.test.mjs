@@ -120,7 +120,7 @@ test("executive reports include per-quiz score and question analytics", () => {
   assert.match(client, /Download executive report/);
   assert.match(client, /adminGetExecutiveReport/);
   assert.match(client, /adminGetExecutiveReport[\s\S]*?courseId: evaluationId,[\s\S]*?fresh: true/);
-  assert.match(client, /loadExecutiveReportLogo\(`\$\{publicBasePath\}\/cgv-logo\.svg`\)/);
+  assert.ok(client.includes('.loadExecutiveReportLogo(`${publicBasePath}/brand/cgv-mark.svg?v=20260924-vector-v2`)'));
   assert.match(report, /Participant results/);
   assert.match(report, /Response patterns and item performance/);
   assert.match(report, /PARTICIPANT ANSWER AUDIT/);
@@ -130,7 +130,7 @@ test("executive reports include per-quiz score and question analytics", () => {
   assert.match(report, /downloadExecutiveReportPdf/);
   assert.match(report, /orientation:\s*"portrait"/);
   assert.doesNotMatch(report, /addPage\("a4",\s*"landscape"\)/);
-  assert.match(report, /context\.fillStyle = "#e6322f"/);
+  assert.ok(report.includes("context.drawImage(image, 0, 0, canvas.width, canvas.height)"));
   assert.match(report, /setText\(doc, INK, 8\.4, "bold"\)/);
 });
 
