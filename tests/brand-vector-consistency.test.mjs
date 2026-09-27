@@ -15,18 +15,21 @@ const updater = read("app/app-update-enhancer.tsx");
 const layout = read("app/layout.tsx");
 
 test("README and in-app branding use the same sharp SVG", () => {
-  assert.ok(brand.includes('viewBox="0 0 1450 320"'));
+  assert.ok(brand.includes('viewBox="0 0 1256 320"'));
   assert.equal(count(brand, "<path "), 7);
+  assert.ok(brand.includes('textLength="666" lengthAdjust="spacing"'));
+  assert.ok(brand.includes('<rect x="510" y="95" width="6" height="166"'));
   for (const obsolete of ["<image", "<filter", "base64"]) {
     assert.ok(!brand.includes(obsolete), `Logo must not contain ${obsolete}`);
   }
   assert.ok(read("README.md").includes("public/brand/cgv-knowledge-academy.svg"));
   for (const surface of [client, updater]) {
-    assert.ok(surface.includes("cgv-knowledge-academy.svg?v=20260924-vector-v2"));
+    assert.ok(surface.includes("cgv-knowledge-academy.svg?v=20260927-centered-v3"));
     assert.ok(surface.includes("height={320}"));
+    assert.ok(surface.includes("width={1256}"));
   }
   for (const stylesheet of ["app/logo-lockup.css", "app/brand-system.css"]) {
-    assert.ok(read(stylesheet).includes("aspect-ratio: 1450 / 320 !important"));
+    assert.ok(read(stylesheet).includes("aspect-ratio: 1256 / 320 !important"));
   }
 });
 

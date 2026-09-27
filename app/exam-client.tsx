@@ -354,9 +354,9 @@ function Logo({
     >
       <Image
         className="brand-logo"
-        src={`${publicBasePath}/brand/cgv-knowledge-academy.svg?v=20260924-vector-v2`}
+        src={`${publicBasePath}/brand/cgv-knowledge-academy.svg?v=20260927-centered-v3`}
         alt=""
-        width={1450}
+        width={1256}
         height={320}
         priority={priority}
         unoptimized

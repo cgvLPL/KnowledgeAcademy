@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1450" height="320" viewBox="0 0 1450 320" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1256" height="320" viewBox="0 0 1256 320" role="img" aria-labelledby="title description">
   <title id="title">CGV Knowledge Academy</title>
   <desc id="description">Original CGV vector mark in red with one warm-colored CGV sparkle, an orange-red divider, and a white KnowledgeAcademy wordmark.</desc>
   <defs>
@@ -14,7 +14,7 @@
       <stop offset="1" stop-color="#E6322F"/>
     </linearGradient>
   </defs>
-  <!-- The genuine CGV mark is drawn entirely as vector paths, with no raster images or blur filters. -->
+  <!-- Tight, optically centered artwork: 32px left padding and ~34px right padding. The original seven CGV paths are unchanged. -->
   <svg x="32" y="61" width="454" height="200" viewBox="0 0 212.88134 93.954597" aria-hidden="true">
       <g transform="translate(352.45463,36.48325)">
         <g transform="matrix(0.0254,0,0,0.0254,-369.34563,-139.48025)" style="clip-rule:evenodd;fill-rule:evenodd;image-rendering:optimizeQuality;shape-rendering:geometricPrecision;text-rendering:geometricPrecision">
@@ -28,6 +28,6 @@
         </g>
       </g>
     </svg>
-  <rect x="510" y="76" width="6" height="169" rx="3" fill="url(#divider-gradient)"/>
-  <text x="556" y="198" fill="#FAFAF9" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="77" letter-spacing="-2.4"><tspan font-weight="300">Knowledge</tspan><tspan font-weight="700">Academy</tspan></text>
+  <rect x="510" y="95" width="6" height="166" rx="3" fill="url(#divider-gradient)"/>
+  <text x="556" y="198" textLength="666" lengthAdjust="spacing" fill="#FAFAF9" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="77" letter-spacing="-2.4"><tspan font-weight="300">Knowledge</tspan><tspan font-weight="700">Academy</tspan></text>
 </svg>

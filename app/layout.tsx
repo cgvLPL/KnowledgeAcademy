@@ -122,7 +122,7 @@ export const metadata: Metadata = {
     images: [socialImageUrl],
   },
   other: {
-    "cgv-ui-release": "2026.09.24-knowledge-academy-vector-v2",
+    "cgv-ui-release": "2026.09.27-knowledge-academy-centered-v3",
     "mobile-web-app-capable": "yes",
   },
   manifest: `${publicAssetUrl("/site.webmanifest")}?v=${iconRevision}`,

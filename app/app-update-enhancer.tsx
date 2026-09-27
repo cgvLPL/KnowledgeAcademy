@@ -122,9 +122,9 @@ export default function AppUpdateEnhancer() {
       <div className="cgv-update-content">
         <Image
           className="cgv-update-logo"
-          src={`${publicBasePath}/brand/cgv-knowledge-academy.svg?v=20260924-vector-v2`}
+          src={`${publicBasePath}/brand/cgv-knowledge-academy.svg?v=20260927-centered-v3`}
           alt="CGV Knowledge Academy"
-          width={1450}
+          width={1256}
           height={320}
           priority
           unoptimized

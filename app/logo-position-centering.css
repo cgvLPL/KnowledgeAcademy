@@ -1,6 +1,7 @@
-/* Position-only pass matching the approved centered iPhone splash/login mockups.
- * Keep the corrected shared SVG, existing colors and all form behavior unchanged.
- * This stylesheet is deliberately loaded after every legacy branding rule.
+/* Optical logo centering: the SVG now has balanced artwork bounds (1256 x 320).
+ * Match the centered iPhone splash/login composition with one sizing source;
+ * never compensate for intrinsic artwork whitespace with translateX hacks.
+ * Loaded after legacy branding CSS to remove conflicting nested widths.
  */
 
 /* Splash: the stage and image must have the same width. Older mobile rules
@@ -16,7 +17,7 @@
   justify-items: center !important;
   margin-inline: auto !important;
   max-width: 100% !important;
-  width: min(660px, 82vw) !important;
+  width: min(640px, 72vw) !important;
 }
 
 .boot-screen .boot-logo-reveal {
@@ -76,7 +77,7 @@
     margin-inline: auto !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    width: min(560px, 78vw) !important;
+    width: min(560px, 75vw) !important;
   }
 
   .login-page .login-brand-row .brand-logo {
@@ -97,7 +98,7 @@
   }
 
   .login-page .login-brand-row .brand-lockup {
-    width: min(560px, 82vw) !important;
+    width: min(560px, 76vw) !important;
   }
 }
 
