@@ -22,7 +22,7 @@ test("navigation coordination is React-owned instead of document click intercept
 });
 
 test("Playwright runs sidebar and mobile PDF interactions alongside visual checks", () => {
-  assert.ok(config.includes("ui\\.(visual|interaction|mobile-pdf)\\.spec\\.mjs"));
+  assert.ok(config.includes("ui\\.(visual|interaction|mobile-pdf|brand-centering)\\.spec\\.mjs"));
   assert.ok(interactionSpec.includes("mobile menu settings help navigation and sign out stay synchronized"));
   assert.ok(interactionSpec.includes("desktop sidebar actions use the same interaction controller"));
   assert.ok(interactionSpec.includes('page.route("**/exec"'));
