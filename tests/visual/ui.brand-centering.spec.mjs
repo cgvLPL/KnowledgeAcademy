@@ -9,9 +9,17 @@ const productionCss = [...fs.readFileSync(path.join(dist, "index.html"), "utf8")
   .map((match) => match[0])
   .filter((tag) => /rel=["']stylesheet["']/i.test(tag))
   .join(" ");
+const fixtureUrl = "/KnowledgeAcademy/brand-centering-fixture.html";
+const fixturePath = path.join(dist, "brand-centering-fixture.html");
+
+test.beforeAll(() => {
+  fs.writeFileSync(fixturePath, `<!doctype html><html lang="en"><head><meta charset="utf-8"/>${productionCss}</head><body></body></html>`);
+});
+test.afterAll(() => fs.rmSync(fixturePath, { force: true }));
+
 
 test("the rendered CGV wordmark has balanced intrinsic margins on its centerline", async ({ page }) => {
-  await page.goto(logoUrl, { waitUntil: "load" });
+  await page.goto(fixtureUrl, { waitUntil: "load" });
   const result = await page.evaluate(async (src) => {
     const image = new Image();
     image.src = src;
@@ -54,7 +62,7 @@ test("the rendered CGV wordmark has balanced intrinsic margins on its centerline
 for (const width of [320, 390, 430, 768]) {
   test(`the ${width}px phone/tablet login and loading logos are centered on the viewport`, async ({ page }) => {
     await page.setViewportSize({ width, height: 844 });
-    await page.goto(logoUrl, { waitUntil: "load" });
+    await page.goto(fixtureUrl, { waitUntil: "load" });
     await page.setContent(`<!doctype html><html lang="en"><head><meta name="viewport" content="width=device-width,initial-scale=1"/>${productionCss}</head>
       <body><main class="login-page"><section class="login-layout"><form class="login-card">
       <div class="login-brand-row"><div class="brand-lockup"><img class="brand-logo" src="${logoUrl}" width="1256" height="320" alt="CGV Knowledge Academy"/></div><span>Secure portal</span></div>
