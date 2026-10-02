@@ -44,10 +44,15 @@
 }
 
 /* Phone/tablet login: center the *whole* SVG lockup within the card.
- * Do not center its red CGV mark alone: the divider and wordmark are one logo. */
+ * Do not center its red CGV mark alone: the divider and wordmark are one logo.
+ *
+ * The first and last login items use auto block margins so any spare viewport
+ * height is shared above and below the form. On short screens those margins
+ * collapse to zero, keeping the existing compact layout usable. */
 @media (max-width: 860px) {
   .login-page .login-card {
     align-items: stretch !important;
+    justify-content: flex-start !important;
   }
 
   .login-page .login-brand-row {
@@ -61,11 +66,15 @@
     right: auto !important;
     top: auto !important;
     transform: none !important;
-    margin: 0 auto clamp(22px, 4vh, 38px) !important;
+    margin: auto auto clamp(22px, 4vh, 38px) !important;
     max-width: 100% !important;
     padding: 0 !important;
     position: relative !important;
     width: 100% !important;
+  }
+
+  .login-page .login-card::after {
+    margin-bottom: auto !important;
   }
 
   .login-page .login-brand-row .brand-lockup {
