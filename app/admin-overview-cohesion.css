@@ -233,6 +233,39 @@
     padding: 15px !important;
   }
 
+  /* Centre the metric copy beneath the centred icon on narrow screens. */
+  .admin-overview .admin-metrics article {
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .admin-overview .admin-metrics article > div {
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .admin-overview .admin-metrics article p,
+  .admin-overview .admin-metrics article strong,
+  .admin-overview .admin-metrics article small {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .admin-overview .admin-metrics article strong {
+    align-items: baseline !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .admin-overview .admin-metrics article .metric-icon {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
   .admin-overview .section-heading,
   .admin-overview .table-card-header,
   .live-quiz-monitor__header {

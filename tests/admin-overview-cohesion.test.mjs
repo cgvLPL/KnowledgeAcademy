@@ -45,3 +45,12 @@ test("responsive dashboard rhythm remains intentional", () => {
   assert.ok(css.includes("grid-template-columns: repeat(2, minmax(0, 1fr)) !important"));
   assert.ok(css.includes("grid-template-columns: 1fr !important"));
 });
+
+test("mobile dashboard metric copy is centred beneath its icon", () => {
+  assert.ok(css.includes(".admin-overview .admin-metrics article > div"));
+  assert.ok(css.includes("align-items: center !important"));
+  assert.ok(css.includes("text-align: center !important"));
+  assert.ok(css.includes("justify-content: center !important"));
+  assert.ok(css.includes(".admin-overview .admin-metrics article strong"));
+  assert.ok(css.includes("width: 100% !important"));
+});
