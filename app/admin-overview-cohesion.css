@@ -224,23 +224,30 @@
   }
 
   .admin-overview .admin-metrics {
-    gap: 10px !important;
+    gap: 12px !important;
   }
 
   .admin-overview .admin-metrics article,
   .admin-overview .metric-card {
-    min-height: 116px;
-    padding: 15px !important;
+    min-height: 146px !important;
+    padding: 16px 18px !important;
   }
 
-  /* Centre the metric copy beneath the centred icon on narrow screens. */
+  /* Mobile KPI cards use one compact centred stack instead of stretching the
+   * icon and copy to opposite ends of the card. This keeps the hierarchy
+   * readable at phone scale and removes the oversized dead space. */
   .admin-overview .admin-metrics article {
     align-items: center !important;
+    gap: 11px !important;
+    justify-content: center !important;
     text-align: center !important;
   }
 
   .admin-overview .admin-metrics article > div {
     align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
     justify-content: center !important;
     text-align: center !important;
     width: 100% !important;
@@ -255,15 +262,44 @@
     width: 100% !important;
   }
 
+  .admin-overview .admin-metrics article p {
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.25 !important;
+    margin-bottom: 1px !important;
+    margin-top: 0 !important;
+  }
+
   .admin-overview .admin-metrics article strong {
     align-items: baseline !important;
     display: flex !important;
+    font-size: clamp(32px, 9.2vw, 38px) !important;
     justify-content: center !important;
+    letter-spacing: -0.045em !important;
+    line-height: 0.98 !important;
+    margin: 0 !important;
+  }
+
+  .admin-overview .admin-metrics article strong em {
+    font-size: clamp(14px, 4vw, 17px) !important;
+    line-height: 1 !important;
+    margin-left: 4px !important;
+  }
+
+  .admin-overview .admin-metrics article small {
+    font-size: clamp(10.5px, 2.9vw, 12px) !important;
+    line-height: 1.35 !important;
+    margin-top: 3px !important;
   }
 
   .admin-overview .admin-metrics article .metric-icon {
-    margin-left: auto !important;
-    margin-right: auto !important;
+    height: 44px !important;
+    margin: 0 auto !important;
+    width: 44px !important;
+  }
+
+  .admin-overview .admin-metrics article .metric-icon svg {
+    height: 21px !important;
+    width: 21px !important;
   }
 
   .admin-overview .section-heading,
@@ -291,7 +327,12 @@
 
   .admin-overview .admin-metrics article,
   .admin-overview .metric-card {
-    min-height: 104px;
+    min-height: 142px !important;
+    padding-block: 15px !important;
+  }
+
+  .admin-overview .admin-metrics article {
+    gap: 9px !important;
   }
 }
 
