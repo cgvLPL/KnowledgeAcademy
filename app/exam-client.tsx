@@ -1780,23 +1780,23 @@ function AdminOverview({
           </div>
         </section>
       </div>
-      <section className="table-card leaderboard-card">
+      <section className="table-card leaderboard-card" data-mobile-table-cards="off">
         <div className="table-card-header">
           <div><h3>Top performers</h3><p>Live ranking from submitted evaluations.</p></div>
           <button className="text-link" onClick={() => setView("scoreboard")}>Full scoreboard <ArrowRight size={16} /></button>
         </div>
         <div className="responsive-table">
-          <table>
+          <table className="top-performers-table">
             <thead><tr><th>Rank</th><th>Participant</th><th>Branch</th><th>Score</th><th>Time</th><th /></tr></thead>
             <tbody>
               {leaderboardData.slice(0, 5).map((item) => (
               <tr key={`${item.rank}-${item.name}`}>
-                <td><span className={`rank-badge rank-${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td>
+                <td><span className={`rank-badge rank-${item.rank}`} aria-label={`Rank ${item.rank}`}>{item.rank <= 3 ? <Medal size={16} /> : `#${item.rank}`}</span></td>
                 <td><div className="participant-cell"><Initials name={item.name} size="sm" /><strong>{item.name}</strong></div></td>
-                <td>{item.branch}</td>
+                <td>{item.branch || "—"}</td>
                 <td><strong className="table-score">{item.score}%</strong></td>
                 <td>{item.time}</td>
-                <td><button className="icon-button"><ChevronRight size={17} /></button></td>
+                <td><button className="icon-button" type="button" aria-label={`View ${item.name} in scoreboard`} onClick={() => setView("scoreboard")}><ChevronRight size={17} /></button></td>
               </tr>
               ))}
               {!leaderboardData.length && (
