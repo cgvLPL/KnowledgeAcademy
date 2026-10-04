@@ -1,0 +1,370 @@
+/* Bento-style live monitor layout inspired by soft modular dashboard cards.
+ * Keeps the CGV dark visual language while giving the monitor a more sculpted,
+ * asymmetric layout with distinct overview, controls and session-feed cards. */
+
+.admin-overview .live-quiz-monitor {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.live-quiz-monitor__bento {
+  display: grid;
+  gap: clamp(14px, 1.5vw, 20px);
+  grid-template-areas:
+    "overview controls"
+    "activity activity";
+  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  width: 100%;
+}
+
+.live-quiz-monitor__overview,
+.live-quiz-monitor__controls,
+.live-quiz-monitor__activity-panel {
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.055), transparent 18rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.028), transparent 46%),
+    rgba(18, 20, 19, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.live-quiz-monitor__overview {
+  border-radius: 30px 30px 22px 30px;
+  grid-area: overview;
+  padding: clamp(20px, 2vw, 28px);
+}
+
+.live-quiz-monitor__controls {
+  border-radius: 30px 30px 30px 20px;
+  grid-area: controls;
+  padding: clamp(20px, 2vw, 26px);
+}
+
+.live-quiz-monitor__activity-panel {
+  border-radius: 28px;
+  grid-area: activity;
+}
+
+.admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header {
+  align-items: flex-start !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 18px !important;
+  justify-content: space-between !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header > div {
+  min-width: 0;
+}
+
+.admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header h3 {
+  font-size: clamp(1.55rem, 2.2vw, 2.05rem) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 1.02 !important;
+  margin: 8px 0 8px !important;
+}
+
+.admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header p {
+  font-size: clamp(0.82rem, 1vw, 0.95rem) !important;
+  line-height: 1.48 !important;
+  margin: 0 !important;
+  max-width: 48ch !important;
+}
+
+.admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header .secondary-button {
+  border-radius: 999px !important;
+  flex: 0 0 auto;
+  min-height: 42px !important;
+  padding-inline: 17px !important;
+  width: auto !important;
+}
+
+.live-quiz-monitor__summary {
+  display: grid !important;
+  gap: 10px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  margin: clamp(24px, 2.2vw, 32px) 0 0 !important;
+}
+
+.live-quiz-monitor__summary button {
+  align-items: flex-start !important;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 55%),
+    rgba(255, 255, 255, 0.025) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  justify-content: center !important;
+  min-height: 104px !important;
+  padding: 16px 18px !important;
+  text-align: left !important;
+}
+
+.live-quiz-monitor__summary button:nth-child(1) {
+  border-radius: 22px 14px 22px 22px !important;
+}
+
+.live-quiz-monitor__summary button:nth-child(2) {
+  border-radius: 14px 22px 22px 22px !important;
+}
+
+.live-quiz-monitor__summary button:nth-child(3) {
+  border-radius: 22px 22px 14px 22px !important;
+}
+
+.live-quiz-monitor__summary button:nth-child(4) {
+  border-radius: 22px 22px 22px 14px !important;
+}
+
+.live-quiz-monitor__summary strong {
+  font-size: clamp(1.75rem, 2.6vw, 2.35rem) !important;
+  letter-spacing: -0.045em !important;
+  line-height: 0.95 !important;
+}
+
+.live-quiz-monitor__summary span {
+  font-size: clamp(0.73rem, 0.9vw, 0.84rem) !important;
+  line-height: 1.2 !important;
+}
+
+.live-quiz-monitor__summary button.is-selected {
+  background:
+    linear-gradient(135deg, rgba(255, 190, 72, 0.15), rgba(255, 106, 34, 0.09)),
+    rgba(255, 255, 255, 0.025) !important;
+  border-color: rgba(255, 160, 74, 0.34) !important;
+}
+
+.live-quiz-monitor__panel-heading,
+.live-quiz-monitor__activity-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.live-quiz-monitor__panel-heading {
+  margin-bottom: 18px;
+}
+
+.live-quiz-monitor__panel-heading h4,
+.live-quiz-monitor__activity-heading h4 {
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  margin: 6px 0 0;
+}
+
+.live-quiz-monitor__control-count,
+.live-quiz-monitor__activity-heading > span {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.085);
+  border-radius: 999px;
+  color: var(--cgv-cohesion-muted);
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.live-quiz-monitor__controls .live-quiz-monitor__filters {
+  border: 0 !important;
+  display: grid !important;
+  gap: 12px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.live-quiz-monitor__controls .live-filter-search {
+  grid-column: 1 / -1 !important;
+}
+
+.live-quiz-monitor__controls .live-filter-reset {
+  grid-column: 1 / -1 !important;
+  min-height: 44px !important;
+}
+
+.live-quiz-monitor__controls .live-quiz-monitor__filters label {
+  gap: 7px !important;
+}
+
+.live-quiz-monitor__controls .live-quiz-monitor__filters label > span {
+  font-size: 0.66rem !important;
+  letter-spacing: 0.11em !important;
+}
+
+.live-quiz-monitor__controls .live-quiz-monitor__filters input,
+.live-quiz-monitor__controls .live-quiz-monitor__filters select,
+.live-quiz-monitor__controls .live-filter-reset {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  border-radius: 14px !important;
+  font-size: 0.82rem !important;
+}
+
+.live-quiz-monitor__controls .live-quiz-monitor__filters input,
+.live-quiz-monitor__controls .live-quiz-monitor__filters select {
+  min-height: 46px !important;
+  padding: 10px 12px !important;
+}
+
+.live-quiz-monitor__activity-heading {
+  padding: 20px clamp(20px, 2vw, 26px) 16px;
+}
+
+.live-quiz-monitor__activity-panel .live-quiz-monitor__error {
+  margin: 0 clamp(20px, 2vw, 26px) 14px !important;
+}
+
+.live-quiz-monitor__activity-panel .live-quiz-monitor__table-wrap {
+  border-top: 1px solid rgba(255, 255, 255, 0.075) !important;
+  margin: 0 !important;
+}
+
+.live-quiz-monitor__activity-panel table {
+  margin: 0 !important;
+}
+
+.live-quiz-monitor__activity-panel thead {
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+
+.live-quiz-monitor__activity-panel thead th {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.08em !important;
+  padding: 13px clamp(16px, 1.8vw, 24px) !important;
+}
+
+.live-quiz-monitor__activity-panel tbody td {
+  font-size: 0.8rem !important;
+  padding: 14px clamp(16px, 1.8vw, 24px) !important;
+}
+
+.live-quiz-monitor__activity-panel .live-quiz-monitor__empty {
+  min-height: 92px !important;
+  padding: 28px clamp(20px, 2vw, 26px) !important;
+}
+
+.live-quiz-monitor__activity-panel footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.065) !important;
+  font-size: 0.7rem !important;
+  margin: 0 !important;
+  padding: 13px clamp(20px, 2vw, 26px) 15px !important;
+}
+
+@media (max-width: 1180px) {
+  .live-quiz-monitor__bento {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.82fr);
+  }
+
+  .live-quiz-monitor__controls .live-quiz-monitor__filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .live-quiz-monitor__controls .live-filter-search,
+  .live-quiz-monitor__controls .live-filter-reset {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .live-quiz-monitor__bento {
+    grid-template-areas:
+      "overview"
+      "controls"
+      "activity";
+    grid-template-columns: 1fr;
+  }
+
+  .live-quiz-monitor__overview,
+  .live-quiz-monitor__controls,
+  .live-quiz-monitor__activity-panel {
+    border-radius: 24px !important;
+  }
+
+  .live-quiz-monitor__controls .live-quiz-monitor__filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .live-quiz-monitor__controls .live-filter-search,
+  .live-quiz-monitor__controls .live-filter-reset {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .live-quiz-monitor__bento {
+    gap: 12px;
+  }
+
+  .live-quiz-monitor__overview,
+  .live-quiz-monitor__controls {
+    padding: 18px;
+  }
+
+  .admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header {
+    flex-direction: column !important;
+  }
+
+  .admin-overview .live-quiz-monitor__overview .live-quiz-monitor__header .secondary-button {
+    width: 100% !important;
+  }
+
+  .live-quiz-monitor__summary {
+    margin-top: 20px !important;
+  }
+
+  .live-quiz-monitor__summary button {
+    min-height: 92px !important;
+    padding: 14px !important;
+  }
+
+  .live-quiz-monitor__activity-heading {
+    padding: 18px 16px 14px;
+  }
+
+  .live-quiz-monitor__activity-panel .live-quiz-monitor__table-wrap {
+    overflow: visible !important;
+  }
+
+  .live-quiz-monitor__activity-panel footer {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .live-quiz-monitor__summary,
+  .live-quiz-monitor__controls .live-quiz-monitor__filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .live-quiz-monitor__controls .live-filter-search,
+  .live-quiz-monitor__controls .live-filter-reset {
+    grid-column: auto !important;
+  }
+
+  .live-quiz-monitor__summary button,
+  .live-quiz-monitor__summary button:nth-child(n) {
+    border-radius: 18px !important;
+    min-height: 82px !important;
+  }
+
+  .live-quiz-monitor__panel-heading,
+  .live-quiz-monitor__activity-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+}
