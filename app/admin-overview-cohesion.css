@@ -132,6 +132,29 @@
     var(--cgv-cohesion-surface) !important;
 }
 
+.admin-overview .live-quiz-monitor__header {
+  padding: 22px var(--admin-overview-pad) 18px !important;
+}
+
+.admin-overview .live-quiz-monitor__header .card-kicker {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.14em !important;
+  line-height: 1.2 !important;
+}
+
+.admin-overview .live-quiz-monitor__header h3 {
+  font-size: clamp(1.35rem, 1.8vw, 1.65rem) !important;
+  line-height: 1.08 !important;
+  margin-top: 7px !important;
+}
+
+.admin-overview .live-quiz-monitor__header p {
+  font-size: clamp(0.8rem, 1vw, 0.92rem) !important;
+  line-height: 1.48 !important;
+  margin-top: 8px !important;
+  max-width: 62ch !important;
+}
+
 .live-quiz-monitor__summary,
 .live-quiz-monitor__filters,
 .live-quiz-monitor__error {
@@ -140,14 +163,30 @@
 }
 
 .live-quiz-monitor__summary {
-  gap: 10px !important;
-  margin-bottom: 14px !important;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
 }
 
 .live-quiz-monitor__summary button {
-  min-height: 68px !important;
-  padding: 12px 14px !important;
+  align-items: flex-start !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-height: 82px !important;
+  padding: 14px 16px !important;
+  border-radius: 14px !important;
   box-shadow: none !important;
+}
+
+.live-quiz-monitor__summary strong {
+  font-size: clamp(1.45rem, 1.8vw, 1.75rem) !important;
+  line-height: 1 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.live-quiz-monitor__summary span {
+  font-size: clamp(0.72rem, 0.9vw, 0.82rem) !important;
+  line-height: 1.25 !important;
 }
 
 .live-quiz-monitor__summary button.is-selected {
@@ -156,20 +195,70 @@
 }
 
 .live-quiz-monitor__filters {
-  padding: 14px 0 16px;
+  padding: 16px 0 18px !important;
   margin-bottom: 0 !important;
   border-top: 1px solid rgba(255, 255, 255, 0.065);
+  gap: 12px !important;
+}
+
+.live-quiz-monitor__filters label {
+  gap: 7px !important;
+}
+
+.live-quiz-monitor__filters label > span {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.1em !important;
+  line-height: 1.15 !important;
+}
+
+.live-quiz-monitor__filters input,
+.live-quiz-monitor__filters select,
+.live-filter-reset {
+  min-height: 44px !important;
+  border-radius: 11px !important;
+  font-size: clamp(0.78rem, 0.95vw, 0.88rem) !important;
+  line-height: 1.2 !important;
+}
+
+.live-quiz-monitor__filters input,
+.live-quiz-monitor__filters select {
+  padding: 10px 12px !important;
+}
+
+.live-filter-reset {
+  padding: 10px 15px !important;
+  font-size: 0.82rem !important;
 }
 
 .live-quiz-monitor__table-wrap {
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+.live-quiz-monitor thead th {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.08em !important;
+  padding-top: 13px !important;
+  padding-bottom: 13px !important;
+}
+
+.live-quiz-monitor tbody td {
+  font-size: 0.82rem !important;
+  line-height: 1.35 !important;
+}
+
+.live-quiz-monitor__empty {
+  font-size: 0.8rem !important;
+  min-height: 82px !important;
+  padding: 24px var(--admin-overview-pad) !important;
+}
+
 .live-quiz-monitor footer {
   margin: 0 !important;
-  padding: 13px var(--admin-overview-pad) 16px;
+  padding: 12px var(--admin-overview-pad) 14px !important;
   border-top: 1px solid rgba(255, 255, 255, 0.065);
   color: var(--cgv-cohesion-muted) !important;
+  font-size: 0.7rem !important;
+  line-height: 1.35 !important;
 }
 
 /* Actions use consistent scale and avoid competing with card content. */
