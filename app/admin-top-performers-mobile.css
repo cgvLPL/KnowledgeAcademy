@@ -5,7 +5,7 @@
   .admin-overview .leaderboard-card {
     min-width: 0 !important;
     overflow: hidden !important;
-    padding: clamp(16px, 4.2vw, 20px) !important;
+    padding: 0 !important;
     width: 100% !important;
   }
 
@@ -15,7 +15,7 @@
     flex-direction: column !important;
     gap: 9px !important;
     min-width: 0 !important;
-    padding: 0 !important;
+    padding: clamp(18px, 4.8vw, 24px) clamp(18px, 4.8vw, 24px) 16px !important;
   }
 
   .admin-overview .leaderboard-card .table-card-header > div {
@@ -42,10 +42,12 @@
   }
 
   .admin-overview .leaderboard-card .responsive-table {
-    margin-top: clamp(14px, 3.8vw, 18px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    margin-top: 0 !important;
     max-width: 100% !important;
     min-width: 0 !important;
     overflow: visible !important;
+    padding: 0 !important;
     width: 100% !important;
   }
 
@@ -66,6 +68,7 @@
   .admin-overview .top-performers-table tbody {
     display: grid !important;
     gap: clamp(10px, 2.7vw, 13px) !important;
+    padding: clamp(12px, 3.2vw, 16px) 0 clamp(14px, 3.8vw, 18px) !important;
   }
 
   .admin-overview .top-performers-table tbody tr:not(.empty-table-row) {
@@ -83,7 +86,7 @@
     row-gap: 4px !important;
     min-height: clamp(88px, 23vw, 102px) !important;
     min-width: 0 !important;
-    padding: clamp(13px, 3.5vw, 16px) clamp(14px, 3.8vw, 18px) !important;
+    padding: clamp(13px, 3.5vw, 16px) clamp(18px, 4.8vw, 24px) !important;
     width: 100% !important;
   }
 
@@ -204,10 +207,6 @@
 }
 
 @media (max-width: 380px) {
-  .admin-overview .leaderboard-card {
-    padding-inline: 13px !important;
-  }
-
   .admin-overview .top-performers-table tbody tr:not(.empty-table-row) {
     grid-template-columns: 36px minmax(0, 1fr) auto !important;
     min-height: 84px !important;
