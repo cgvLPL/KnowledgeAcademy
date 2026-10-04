@@ -151,32 +151,44 @@ export default function LiveQuizMonitor({ participants, loading, error, lastUpda
 
   return (
     <section className="live-quiz-monitor" aria-live="polite">
-      <header className="live-quiz-monitor__header">
-        <div>
-          <span className="card-kicker">LIVE ACTIVITY</span>
-          <h3>Quiz monitor</h3>
-          <p>Track active quiz sessions without exposing answers or correct-answer data.</p>
-        </div>
-        <button type="button" className="secondary-button" onClick={onRefresh} disabled={loading}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </button>
-      </header>
+      <div className="live-quiz-monitor__bento">
+        <section className="live-quiz-monitor__overview">
+          <header className="live-quiz-monitor__header">
+            <div>
+              <span className="card-kicker">LIVE ACTIVITY</span>
+              <h3>Quiz monitor</h3>
+              <p>Track active quiz sessions without exposing answers or correct-answer data.</p>
+            </div>
+            <button type="button" className="secondary-button" onClick={onRefresh} disabled={loading}>
+              {loading ? "Refreshing…" : "Refresh"}
+            </button>
+          </header>
 
-      <div className="live-quiz-monitor__summary" aria-label="Live quiz status summary">
-        {(Object.keys(STATUS_LABELS) as ParticipantStatus[]).map((status) => (
-          <button
-            type="button"
-            key={status}
-            className={statusFilter === status ? "is-selected" : ""}
-            aria-pressed={statusFilter === status}
-            onClick={() => setStatusFilter((current) => current === status ? "all" : status)}
-          >
-            <strong>{counts[status]}</strong><span>{STATUS_LABELS[status]}</span>
-          </button>
-        ))}
-      </div>
+          <div className="live-quiz-monitor__summary" aria-label="Live quiz status summary">
+            {(Object.keys(STATUS_LABELS) as ParticipantStatus[]).map((status) => (
+              <button
+                type="button"
+                key={status}
+                className={statusFilter === status ? "is-selected" : ""}
+                aria-pressed={statusFilter === status}
+                onClick={() => setStatusFilter((current) => current === status ? "all" : status)}
+              >
+                <strong>{counts[status]}</strong><span>{STATUS_LABELS[status]}</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-      <div className="live-quiz-monitor__filters" aria-label="Live quiz filters">
+        <aside className="live-quiz-monitor__controls">
+          <div className="live-quiz-monitor__panel-heading">
+            <div>
+              <span className="card-kicker">VIEW</span>
+              <h4>Monitor controls</h4>
+            </div>
+            <span className="live-quiz-monitor__control-count">{visibleParticipants.length} shown</span>
+          </div>
+
+          <div className="live-quiz-monitor__filters" aria-label="Live quiz filters">
         <label className="live-filter-search">
           <span>Search</span>
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Participant, branch, position…" />
@@ -212,12 +224,22 @@ export default function LiveQuizMonitor({ participants, loading, error, lastUpda
             <option value="status">Status</option>
           </select>
         </label>
-        <button type="button" className="live-filter-reset" onClick={clearFilters} disabled={!hasFilters && sortMode === "activity"}>Reset</button>
-      </div>
+            <button type="button" className="live-filter-reset" onClick={clearFilters} disabled={!hasFilters && sortMode === "activity"}>Reset</button>
+          </div>
+        </aside>
 
-      {error ? <p className="live-quiz-monitor__error">{error}</p> : null}
+        <section className="live-quiz-monitor__activity-panel">
+          <div className="live-quiz-monitor__activity-heading">
+            <div>
+              <span className="card-kicker">SESSION FEED</span>
+              <h4>Live sessions</h4>
+            </div>
+            <span>{participants.length} total</span>
+          </div>
 
-      <div className="responsive-table live-quiz-monitor__table-wrap">
+          {error ? <p className="live-quiz-monitor__error">{error}</p> : null}
+
+          <div className="responsive-table live-quiz-monitor__table-wrap">
         <table>
           <thead>
             <tr>
@@ -261,11 +283,13 @@ export default function LiveQuizMonitor({ participants, loading, error, lastUpda
             ) : null}
           </tbody>
         </table>
+          </div>
+          <footer>
+            <span>{visibleParticipants.length} of {participants.length} sessions shown</span>
+            <span>{lastUpdatedAt ? `Live · refreshed ${relativeActivity(lastUpdatedAt)}` : "Waiting for live activity"}</span>
+          </footer>
+        </section>
       </div>
-      <footer>
-        <span>{visibleParticipants.length} of {participants.length} sessions shown</span>
-        <span>{lastUpdatedAt ? `Live · refreshed ${relativeActivity(lastUpdatedAt)}` : "Waiting for live activity"}</span>
-      </footer>
     </section>
   );
 }
