@@ -61,7 +61,6 @@ import "./admin-dashboard-information-release.css";
 import "./admin-courses-mobile-release.css";
 import "./admin-courses-mobile-width-fix.css";
 import "./participant-quiz-mobile-responsive.css";
-import "./admin-top-performers-mobile.css";
 import "./final-no-green-lock.css";
 import "./dashboard-card-spacing.css";
 import "./admin-participants-mobile.css";
@@ -87,6 +86,7 @@ import "./admin-overview-cohesion.css";
 import "./visual-cohesion-touch-targets.css";
 import "./mobile-table-cards.css";
 import "./logo-position-centering.css";
+import "./admin-top-performers-mobile.css";
 
 const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://cgvlpl.github.io/KnowledgeAcademy/";
 const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `${publicSiteUrl}/`;
