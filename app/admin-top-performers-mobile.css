@@ -1,6 +1,6 @@
 /* Admin overview — Top performers has its own compact phone layout.
- * The table opts out of the universal mobile-table enhancer in exam-client.tsx,
- * so these rules can position real content without generated field labels. */
+ * It opts out of the universal mobile-table enhancer and is loaded last so
+ * generic table rules cannot re-introduce padding or overflow on phone cards. */
 @media (max-width: 760px) {
   .admin-overview .leaderboard-card {
     min-width: 0 !important;
@@ -43,36 +43,41 @@
 
   .admin-overview .leaderboard-card .responsive-table {
     border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
-    margin-top: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     padding: 0 !important;
     width: 100% !important;
   }
 
-  .admin-overview .top-performers-table,
-  .admin-overview .top-performers-table tbody {
+  .admin-overview .leaderboard-card .top-performers-table,
+  .admin-overview .leaderboard-card .top-performers-table tbody {
     border: 0 !important;
     border-collapse: separate !important;
     border-spacing: 0 !important;
     box-sizing: border-box !important;
     display: block !important;
+    max-width: 100% !important;
     min-width: 0 !important;
     width: 100% !important;
   }
 
-  .admin-overview .top-performers-table thead {
+  .admin-overview .leaderboard-card .top-performers-table thead {
     display: none !important;
   }
 
-  .admin-overview .top-performers-table tbody {
+  .admin-overview .leaderboard-card .top-performers-table tbody {
     display: grid !important;
     gap: clamp(10px, 2.7vw, 13px) !important;
-    padding: clamp(12px, 3.2vw, 16px) 2px clamp(14px, 3.8vw, 18px) !important;
+    padding:
+      clamp(12px, 3.2vw, 16px)
+      clamp(10px, 2.8vw, 14px)
+      clamp(14px, 3.8vw, 18px) !important;
   }
 
-  .admin-overview .top-performers-table tbody tr:not(.empty-table-row) {
+  .admin-overview .leaderboard-card .top-performers-table tbody tr:not(.empty-table-row) {
     align-items: center !important;
     background:
       linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 48%),
@@ -82,29 +87,32 @@
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.17) !important;
     box-sizing: border-box !important;
     display: grid !important;
-    grid-template-columns: clamp(38px, 10vw, 44px) minmax(0, 1fr) auto !important;
+    grid-template-columns: clamp(34px, 9vw, 40px) minmax(0, 1fr) auto !important;
     grid-template-rows: auto auto !important;
-    column-gap: clamp(11px, 3vw, 15px) !important;
+    column-gap: clamp(10px, 2.8vw, 14px) !important;
     row-gap: 4px !important;
-    min-height: clamp(88px, 23vw, 102px) !important;
+    margin: 0 !important;
+    min-height: clamp(92px, 24vw, 108px) !important;
     min-width: 0 !important;
-    padding: clamp(13px, 3.5vw, 16px) clamp(18px, 4.8vw, 24px) !important;
+    padding: clamp(13px, 3.5vw, 16px) clamp(14px, 3.8vw, 18px) !important;
     width: 100% !important;
   }
 
-  .admin-overview .top-performers-table tbody td {
+  .admin-overview .leaderboard-card .top-performers-table tbody tr:not(.empty-table-row) > td {
     background: transparent !important;
     border: 0 !important;
+    box-sizing: border-box !important;
+    min-height: 0 !important;
     min-width: 0 !important;
     padding: 0 !important;
   }
 
-  .admin-overview .top-performers-table tbody td::before {
+  .admin-overview .leaderboard-card .top-performers-table tbody td::before {
     content: none !important;
     display: none !important;
   }
 
-  .admin-overview .top-performers-table tbody td:nth-child(1) {
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(1) {
     align-self: center !important;
     grid-column: 1 !important;
     grid-row: 1 / span 2 !important;
@@ -113,22 +121,22 @@
 
   .admin-overview .leaderboard-card .rank-badge {
     align-items: center !important;
-    border-radius: 12px !important;
+    border-radius: 11px !important;
     display: inline-flex !important;
     font-size: clamp(10px, 2.8vw, 12px) !important;
-    height: clamp(38px, 10vw, 44px) !important;
+    height: clamp(34px, 9vw, 40px) !important;
     justify-content: center !important;
     min-width: 0 !important;
     padding: 0 !important;
-    width: clamp(38px, 10vw, 44px) !important;
+    width: clamp(34px, 9vw, 40px) !important;
   }
 
   .admin-overview .leaderboard-card .rank-badge svg {
-    height: clamp(17px, 4.5vw, 20px) !important;
-    width: clamp(17px, 4.5vw, 20px) !important;
+    height: clamp(16px, 4.2vw, 19px) !important;
+    width: clamp(16px, 4.2vw, 19px) !important;
   }
 
-  .admin-overview .top-performers-table tbody td:nth-child(2) {
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(2) {
     align-self: end !important;
     grid-column: 2 !important;
     grid-row: 1 !important;
@@ -161,7 +169,7 @@
     white-space: nowrap !important;
   }
 
-  .admin-overview .top-performers-table tbody td:nth-child(3) {
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(3) {
     align-self: start !important;
     color: rgba(255, 255, 255, 0.56) !important;
     font-size: clamp(10px, 2.8vw, 12px) !important;
@@ -174,7 +182,7 @@
     white-space: nowrap !important;
   }
 
-  .admin-overview .top-performers-table tbody td:nth-child(4) {
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(4) {
     align-self: center !important;
     grid-column: 3 !important;
     grid-row: 1 / span 2 !important;
@@ -193,30 +201,36 @@
     white-space: nowrap !important;
   }
 
-  .admin-overview .top-performers-table tbody td:nth-child(5),
-  .admin-overview .top-performers-table tbody td:nth-child(6) {
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(5),
+  .admin-overview .leaderboard-card .top-performers-table tbody td:nth-child(6) {
     display: none !important;
   }
 
-  .admin-overview .top-performers-table .empty-table-row {
+  .admin-overview .leaderboard-card .top-performers-table .empty-table-row {
     display: block !important;
   }
 
-  .admin-overview .top-performers-table .empty-table-row td {
+  .admin-overview .leaderboard-card .top-performers-table .empty-table-row td {
     display: block !important;
+    padding: 18px !important;
     width: 100% !important;
   }
 }
 
 @media (max-width: 380px) {
-  .admin-overview .top-performers-table tbody tr:not(.empty-table-row) {
-    grid-template-columns: 36px minmax(0, 1fr) auto !important;
-    min-height: 84px !important;
-    padding: 12px 13px !important;
+  .admin-overview .leaderboard-card .top-performers-table tbody {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .admin-overview .leaderboard-card .top-performers-table tbody tr:not(.empty-table-row) {
+    grid-template-columns: 32px minmax(0, 1fr) auto !important;
+    min-height: 88px !important;
+    padding: 12px !important;
   }
 
   .admin-overview .leaderboard-card .rank-badge {
-    height: 36px !important;
-    width: 36px !important;
+    height: 32px !important;
+    width: 32px !important;
   }
 }
