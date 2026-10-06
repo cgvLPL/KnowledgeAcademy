@@ -48,6 +48,7 @@ type ResourceInfo = {
   isPdf: boolean;
   isFileGarden: boolean;
   isFileGardenPage: boolean;
+  isDropbox: boolean;
   viewerUrl: string;
 };
 
@@ -84,12 +85,19 @@ function resourceInfo(value: string): ResourceInfo {
     const isPdf = decodedPath.toLowerCase().endsWith(".pdf");
     const isFileGarden = hostname === "file.garden" || hostname.endsWith(".file.garden");
     const isFileGardenPage = hostname === "filegarden.com" || hostname.endsWith(".filegarden.com");
+    const isDropboxShare = hostname === "dropbox.com" || hostname.endsWith(".dropbox.com");
+    const isDropboxContent = hostname === "dropboxusercontent.com" || hostname.endsWith(".dropboxusercontent.com");
+    const isDropbox = isDropboxShare || isDropboxContent;
+    if (isDropboxShare && isPdf) {
+      parsed.searchParams.delete("dl");
+      parsed.searchParams.set("raw", "1");
+    }
     const viewerUrl = isPdf && !parsed.hash
       ? `${parsed.toString()}#toolbar=1&navpanes=0&view=FitH`
       : parsed.toString();
-    return { isPdf, isFileGarden, isFileGardenPage, viewerUrl };
+    return { isPdf, isFileGarden, isFileGardenPage, isDropbox, viewerUrl };
   } catch {
-    return { isPdf: false, isFileGarden: false, isFileGardenPage: false, viewerUrl: "" };
+    return { isPdf: false, isFileGarden: false, isFileGardenPage: false, isDropbox: false, viewerUrl: "" };
   }
 }
 
@@ -130,7 +138,7 @@ function PdfReader({
           <div>
             <span className="knowledge-pdf-icon"><FileText size={18} /></span>
             <span>
-              <small>{info.isFileGarden ? "FILE GARDEN PDF" : "PDF DOCUMENT"}</small>
+              <small>{info.isFileGarden ? "FILE GARDEN PDF" : info.isDropbox ? "DROPBOX PDF" : "PDF DOCUMENT"}</small>
               <strong id="knowledge-pdf-title">{title}</strong>
             </span>
           </div>
@@ -353,24 +361,26 @@ function LessonEditor({
           </label>
           <label className="knowledge-field">
             <span>PDF / resource link <small>optional</small></span>
-            <input type="url" value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} maxLength={2048} placeholder="https://file.garden/.../document.pdf" />
+            <input type="url" value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} maxLength={2048} placeholder="https://www.dropbox.com/.../document.pdf?dl=0" />
             {resourceUrl.trim() && (
               <small className={`knowledge-resource-hint ${resource.isPdf ? "pdf" : resource.isFileGardenPage ? "warning" : ""}`}>
                 {resource.isFileGardenPage
                   ? "Use File Garden’s direct file.garden file URL, not the garden page URL."
-                  : resource.isFileGarden && resource.isPdf
-                    ? "File Garden PDF detected — it will open inside CGV Knowledge Academy."
-                    : resource.isPdf
-                      ? "PDF detected — it will open inside CGV Knowledge Academy."
-                      : "Non-PDF resources continue to open as external links."}
+                  : resource.isDropbox && resource.isPdf
+                    ? "Dropbox PDF detected — the shared link will use Dropbox’s raw-file viewer inside CGV Knowledge Academy."
+                    : resource.isFileGarden && resource.isPdf
+                      ? "File Garden PDF detected — it will open inside CGV Knowledge Academy."
+                      : resource.isPdf
+                        ? "PDF detected — it will open inside CGV Knowledge Academy."
+                        : "Non-PDF resources continue to open as external links."}
               </small>
             )}
           </label>
           <div className="knowledge-filegarden-guide knowledge-field-wide">
             <FileText size={19} />
             <span>
-              <strong>Using File Garden for PDFs</strong>
-              <small>Upload the PDF manually in File Garden, copy its direct https://file.garden/.../file.pdf URL, then paste it above. CGV.Exams does not upload files to File Garden automatically.</small>
+              <strong>Using File Garden or Dropbox for PDFs</strong>
+              <small>Upload the PDF manually in File Garden, copy its direct https://file.garden/.../file.pdf URL, then paste it above. For Dropbox, paste a normal shared PDF link; CGV Knowledge Academy converts it to Dropbox’s raw-file view automatically. CGV.Exams does not upload files to File Garden automatically.</small>
             </span>
           </div>
           <label className="knowledge-field knowledge-field-wide">
