@@ -1042,6 +1042,7 @@ function knowledgeResourceInfo_(value) {
     isPdf: false,
     isFileGarden: false,
     isFileGardenPage: false,
+    isDropbox: false,
   };
   if (!url) return empty;
   const match = url.match(/^(https?):\/\/([^\/?#]+)([^?#]*)/i);
@@ -1056,14 +1057,20 @@ function knowledgeResourceInfo_(value) {
   const isPdf = /\.pdf$/i.test(pathname);
   const isFileGarden = hostname === "file.garden" || /\.file\.garden$/i.test(hostname);
   const isFileGardenPage = hostname === "filegarden.com" || /\.filegarden\.com$/i.test(hostname);
+  const isDropbox =
+    hostname === "dropbox.com" ||
+    /\.dropbox\.com$/i.test(hostname) ||
+    hostname === "dropboxusercontent.com" ||
+    /\.dropboxusercontent\.com$/i.test(hostname);
   return {
     url: url,
     valid: true,
     type: isPdf ? "pdf" : "link",
-    provider: isFileGarden ? "filegarden" : "external",
+    provider: isFileGarden ? "filegarden" : isDropbox ? "dropbox" : "external",
     isPdf: isPdf,
     isFileGarden: isFileGarden,
     isFileGardenPage: isFileGardenPage,
+    isDropbox: isDropbox,
   };
 }
 
@@ -1083,11 +1090,13 @@ function knowledgeCentreSyncMeta_() {
   return {
     backend: "google-apps-script",
     sheet: APP.sheets.lessons,
-    revision: "2026.08.17-knowledge-centre-filegarden-sync",
+    revision: "2026.10.06-knowledge-centre-dropbox-sync",
     storesResourceTitle: true,
     storesResourceUrl: true,
     fileGardenDirectUrls: true,
     fileGardenUploadsAreManual: true,
+    dropboxSharedUrls: true,
+    dropboxPdfRawViewer: true,
   };
 }
 
@@ -1097,6 +1106,7 @@ function syncKnowledgeCentreData_() {
   const invalidLessonIds = [];
   let normalizedResources = 0;
   let fileGardenResources = 0;
+  let dropboxResources = 0;
   let pdfResources = 0;
 
   lessons.forEach(function (lesson) {
@@ -1109,6 +1119,7 @@ function syncKnowledgeCentreData_() {
       return;
     }
     if (resource.isFileGarden) fileGardenResources += 1;
+    if (resource.isDropbox) dropboxResources += 1;
     if (resource.isPdf) pdfResources += 1;
     if (trimmedUrl !== storedUrl) {
       updateObjectRow_(sheet, lesson.__row, {
@@ -1125,6 +1136,7 @@ function syncKnowledgeCentreData_() {
     lessons: lessons.length,
     normalizedResources: normalizedResources,
     fileGardenResources: fileGardenResources,
+    dropboxResources: dropboxResources,
     pdfResources: pdfResources,
     invalidLessonIds: invalidLessonIds,
     sync: knowledgeCentreSyncMeta_(),
@@ -1867,6 +1879,7 @@ function publicLesson_(lesson) {
     resourceProvider: resource.provider,
     resourceIsPdf: resource.isPdf,
     resourceIsFileGarden: resource.isFileGarden,
+    resourceIsDropbox: resource.isDropbox,
     resourceValid: !resource.url || (resource.valid && !resource.isFileGardenPage),
     status: String(lesson.status || "draft").toLowerCase() === "published" ? "published" : "draft",
     createdAt: toIso_(lesson.created_at),
