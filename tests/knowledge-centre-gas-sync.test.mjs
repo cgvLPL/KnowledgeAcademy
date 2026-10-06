@@ -42,6 +42,15 @@ test("server-side resource validation recognizes direct File Garden PDFs", () =>
   assert.equal(pdf.type, "pdf");
   assert.equal(pdf.provider, "filegarden");
 
+  const dropbox = helpers.knowledgeResourceInfo_(
+    "https://www.dropbox.com/scl/fi/example/Cinema%20Operations.pdf?rlkey=test&dl=0",
+  );
+  assert.equal(dropbox.valid, true);
+  assert.equal(dropbox.isDropbox, true);
+  assert.equal(dropbox.isPdf, true);
+  assert.equal(dropbox.type, "pdf");
+  assert.equal(dropbox.provider, "dropbox");
+
   const external = helpers.knowledgeResourceInfo_("https://example.com/guide.html");
   assert.equal(external.provider, "external");
   assert.equal(external.type, "link");
@@ -76,6 +85,7 @@ test("public lessons return resource metadata used by the internal PDF reader", 
   assert.match(publicLesson, /resourceProvider:\s*resource\.provider/);
   assert.match(publicLesson, /resourceIsPdf:\s*resource\.isPdf/);
   assert.match(publicLesson, /resourceIsFileGarden:\s*resource\.isFileGarden/);
+  assert.match(publicLesson, /resourceIsDropbox:\s*resource\.isDropbox/);
   assert.match(publicLesson, /resourceValid:/);
 });
 
@@ -88,8 +98,10 @@ test("Apps Script provides an authenticated maintenance sync without changing Fi
   assert.match(syncAction, /requireSession_\(body\.token, "admin"\)/);
   assert.match(syncAction, /withScriptLock_\(30000, syncKnowledgeCentreData_\)/);
   assert.match(manualSync, /beginRequest_\(\)/);
-  assert.match(backend, /revision:\s*"2026\.08\.17-knowledge-centre-filegarden-sync"/);
+  assert.match(backend, /revision:\s*"2026\.10\.06-knowledge-centre-dropbox-sync"/);
   assert.match(backend, /fileGardenUploadsAreManual:\s*true/);
+  assert.match(backend, /dropboxSharedUrls:\s*true/);
+  assert.match(backend, /dropboxPdfRawViewer:\s*true/);
   assert.match(knowledge, /Upload the PDF manually in File Garden/);
   assert.doesNotMatch(knowledge, /fetch\([^\n]*file\.garden/);
 });
@@ -104,5 +116,6 @@ test("Lessons schema is re-checked whenever the Knowledge Centre is accessed", (
   assert.match(backend, /invalidLessonIds/);
   assert.match(backend, /normalizedResources/);
   assert.match(backend, /fileGardenResources/);
+  assert.match(backend, /dropboxResources/);
   assert.match(backend, /pdfResources/);
 });
