@@ -43,6 +43,16 @@ function sourceUrl(value: string) {
   try {
     const parsed = new URL(value, window.location.href);
     parsed.hash = "";
+    const hostname = parsed.hostname.toLowerCase();
+    const isDropboxShare =
+      hostname === "dropbox.com" ||
+      hostname === "www.dropbox.com" ||
+      hostname === "dl.dropbox.com";
+    if (isDropboxShare) {
+      parsed.hostname = "dl.dropboxusercontent.com";
+      parsed.searchParams.delete("raw");
+      parsed.searchParams.set("dl", "0");
+    }
     return parsed.toString();
   } catch {
     return value.split("#", 1)[0] || value;
