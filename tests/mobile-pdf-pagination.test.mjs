@@ -19,6 +19,14 @@ test("mobile PDFs use app-owned PDF.js pagination instead of Safari iframe navig
   assert.match(controller, /pageCount \|\| "…"/);
 });
 
+test("mobile Dropbox PDFs are rewritten to the direct content host before PDF.js fetches them", () => {
+  assert.match(controller, /hostname === "www\.dropbox\.com"/);
+  assert.match(controller, /hostname === "dl\.dropbox\.com"/);
+  assert.match(controller, /parsed\.hostname = "dl\.dropboxusercontent\.com"/);
+  assert.match(controller, /parsed\.searchParams\.delete\("raw"\)/);
+  assert.match(controller, /parsed\.searchParams\.set\("dl", "0"\)/);
+});
+
 test("mobile PDF zoom is bounded and touch friendly", () => {
   assert.match(controller, /Math\.max\(0\.75,/);
   assert.match(controller, /Math\.min\(2,/);
