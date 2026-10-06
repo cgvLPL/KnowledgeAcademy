@@ -85,12 +85,16 @@ function resourceInfo(value: string): ResourceInfo {
     const isPdf = decodedPath.toLowerCase().endsWith(".pdf");
     const isFileGarden = hostname === "file.garden" || hostname.endsWith(".file.garden");
     const isFileGardenPage = hostname === "filegarden.com" || hostname.endsWith(".filegarden.com");
-    const isDropboxShare = hostname === "dropbox.com" || hostname.endsWith(".dropbox.com");
+    const isDropboxShare =
+      hostname === "dropbox.com" ||
+      hostname === "www.dropbox.com" ||
+      hostname === "dl.dropbox.com";
     const isDropboxContent = hostname === "dropboxusercontent.com" || hostname.endsWith(".dropboxusercontent.com");
     const isDropbox = isDropboxShare || isDropboxContent;
     if (isDropboxShare && isPdf) {
-      parsed.searchParams.delete("dl");
-      parsed.searchParams.set("raw", "1");
+      parsed.hostname = "dl.dropboxusercontent.com";
+      parsed.searchParams.delete("raw");
+      parsed.searchParams.set("dl", "0");
     }
     const viewerUrl = isPdf && !parsed.hash
       ? `${parsed.toString()}#toolbar=1&navpanes=0&view=FitH`
@@ -367,7 +371,7 @@ function LessonEditor({
                 {resource.isFileGardenPage
                   ? "Use File Garden’s direct file.garden file URL, not the garden page URL."
                   : resource.isDropbox && resource.isPdf
-                    ? "Dropbox PDF detected — the shared link will use Dropbox’s raw-file viewer inside CGV Knowledge Academy."
+                    ? "Dropbox PDF detected — the shared link will use Dropbox’s direct content host inside CGV Knowledge Academy."
                     : resource.isFileGarden && resource.isPdf
                       ? "File Garden PDF detected — it will open inside CGV Knowledge Academy."
                       : resource.isPdf
@@ -380,7 +384,7 @@ function LessonEditor({
             <FileText size={19} />
             <span>
               <strong>Using File Garden or Dropbox for PDFs</strong>
-              <small>Upload the PDF manually in File Garden, copy its direct https://file.garden/.../file.pdf URL, then paste it above. For Dropbox, paste a normal shared PDF link; CGV Knowledge Academy converts it to Dropbox’s raw-file view automatically. CGV.Exams does not upload files to File Garden automatically.</small>
+              <small>Upload the PDF manually in File Garden, copy its direct https://file.garden/.../file.pdf URL, then paste it above. For Dropbox, paste a normal shared PDF link; CGV Knowledge Academy converts it to Dropbox’s direct content URL automatically. CGV.Exams does not upload files to File Garden automatically.</small>
             </span>
           </div>
           <label className="knowledge-field knowledge-field-wide">
