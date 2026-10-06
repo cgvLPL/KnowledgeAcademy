@@ -64,10 +64,20 @@ test("File Garden direct PDF links open inside the Knowledge Centre", () => {
   assert.match(knowledge, /PDF controls are provided inside the viewer\. The document stays inside CGV Knowledge Academy\./);
 });
 
+test("Dropbox shared PDF links are converted to raw in-app viewer URLs", () => {
+  assert.match(knowledge, /hostname === "dropbox\.com" \|\| hostname\.endsWith\("\.dropbox\.com"\)/);
+  assert.match(knowledge, /hostname === "dropboxusercontent\.com" \|\| hostname\.endsWith\("\.dropboxusercontent\.com"\)/);
+  assert.match(knowledge, /parsed\.searchParams\.delete\("dl"\)/);
+  assert.match(knowledge, /parsed\.searchParams\.set\("raw", "1"\)/);
+  assert.match(knowledge, /DROPBOX PDF/);
+  assert.match(knowledge, /Dropbox PDF detected/);
+  assert.match(knowledge, /paste a normal shared PDF link/);
+});
+
 test("admin guidance rejects File Garden garden-page URLs and keeps uploads manual", () => {
   assert.match(knowledge, /hostname === "filegarden\.com" \|\| hostname\.endsWith\("\.filegarden\.com"\)/);
   assert.match(knowledge, /paste the direct https:\/\/file\.garden\/\.\.\. file link instead of the garden page/);
-  assert.match(knowledge, /placeholder="https:\/\/file\.garden\/\.\.\.\/document\.pdf"/);
+  assert.match(knowledge, /placeholder="https:\/\/www\.dropbox\.com\/\.\.\.\/document\.pdf\?dl=0"/);
   assert.match(knowledge, /File Garden PDF detected — it will open inside CGV Knowledge Academy\./);
   assert.match(knowledge, /Upload the PDF manually in File Garden/);
   assert.match(knowledge, /CGV\.Exams does not upload files to File Garden automatically/);
