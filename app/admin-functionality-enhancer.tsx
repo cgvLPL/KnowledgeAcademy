@@ -90,7 +90,12 @@ function usernameFromRow(element: Element) {
 function dateInput(value: string | undefined) {
   if (!value) return "";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+  if (Number.isNaN(date.getTime())) return "";
+
+  // Render the selected calendar date in the user's local timezone. Using
+  // toISOString() here can move midnight dates to the previous day/year.
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 function attemptLimitLabel(value: number | undefined) {
