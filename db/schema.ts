@@ -108,7 +108,7 @@ export const attempts = pgTable("attempts", {
 export const answers = pgTable("answers", {
   answerId: text("answer_id").primaryKey(),
   attemptId: text("attempt_id").notNull().references(() => attempts.attemptId, { onDelete: "cascade" }),
-  questionId: text("question_id").notNull().references(() => questions.questionId, { onDelete: "restrict" }),
+  questionId: text("question_id").notNull().references(() => questions.questionId, { onDelete: "cascade" }),
   selectedOption: text("selected_option"),
   isCorrect: boolean("is_correct"),
   pointsAwarded: numeric("points_awarded", { precision: 8, scale: 2 }).notNull().default("0"),
