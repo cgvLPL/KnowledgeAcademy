@@ -2810,19 +2810,7 @@ export default function ExamClient() {
         } catch (workspaceError) {
           console.error("Workspace data could not be loaded:", workspaceError);
         }
-      })();      setSessionToken(loginData.token);
-      setBackendMode("sheets");
-      setCurrentUser({
-        id: String(loginData.user?.id || ""),
-        username: String(loginData.user?.username || username),
-        fullName: String(loginData.user?.fullName || (authenticatedRole === "admin" ? "Administrator" : "Participant")),
-        branch: String(loginData.user?.branch || ""),
-        position: String(loginData.user?.position || ""),
-        role: authenticatedRole,
-        status: String(loginData.user?.status || "active"),
-      });
-      setRole(authenticatedRole);
-      setView(authenticatedRole === "admin" ? "overview" : "home");
+      })();
       return null;
     } catch (error) {
       return error instanceof Error ? error.message : "Unable to sign in.";
