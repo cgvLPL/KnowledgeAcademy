@@ -37,8 +37,26 @@ function lifecycle(c: Row, now = Date.now()) {
 function publicCourse(c: Row, count = 0) {
   return { id: c.course_id, title: c.title, description: c.description, category: c.category, passingScore: n(c.passing_score), duration: n(c.time_limit_min), attemptLimit: clamp(Math.floor(n(c.attempt_limit)), 0, 100), randomizeAnswers: bool(c.randomize_answers), createdAt: iso(c.created_at), startAt: iso(c.start_at), endAt: iso(c.end_at), status: lifecycle(c), questionCount: count };
 }
+function resourceInfo(value:any){
+  const url=String(value||"").trim(),empty={url,valid:!url,type:"",provider:"",isPdf:false,isFileGarden:false,isFileGardenPage:false,isDropbox:false};
+  if(!url)return empty;
+  const match=url.match(/^(https?):\/\/([^\/?#]+)([^?#]*)/i);
+  if(!match)return {...empty,valid:false};
+  const hostname=String(match[2]||"").toLowerCase().replace(/\.$/,"");let pathname=String(match[3]||"");
+  try{pathname=decodeURIComponent(pathname);}catch{}
+  const isPdf=/\.pdf$/i.test(pathname),isFileGarden=hostname==="file.garden"||/\.file\.garden$/i.test(hostname),isFileGardenPage=hostname==="filegarden.com"||/\.filegarden\.com$/i.test(hostname),isDropbox=hostname==="dropbox.com"||/\.dropbox\.com$/i.test(hostname)||hostname==="dropboxusercontent.com"||/\.dropboxusercontent\.com$/i.test(hostname);
+  return {url,valid:true,type:isPdf?"pdf":"link",provider:isFileGarden?"filegarden":isDropbox?"dropbox":"external",isPdf,isFileGarden,isFileGardenPage,isDropbox};
+}
+function normalizeResourceUrl(value:any){
+  const url=String(value||"").trim();if(!url)return "";if(url.length>2048)throw new Error("Resource links must be 2,048 characters or fewer.");
+  const resource=resourceInfo(url);if(!resource.valid)throw new Error("Resource links must use http or https.");
+  if(resource.isFileGardenPage)throw new Error("For File Garden, use the direct https://file.garden/... file URL instead of the garden page.");
+  return url;
+}
+function knowledgeSyncMeta(){return {backend:"neon-postgres",sheet:"lessons",revision:"2026.10.06-knowledge-centre-dropbox-sync",storesResourceTitle:true,storesResourceUrl:true,fileGardenDirectUrls:true,fileGardenUploadsAreManual:true,dropboxSharedUrls:true,dropboxPdfRawViewer:true};}
 function publicLesson(l: Row) {
-  return { id: l.lesson_id, title: l.title, summary: l.summary, content: l.content, category: l.category || "General", duration: Math.max(1, n(l.duration_min, 5)), resourceTitle: l.resource_title || "", resourceUrl: l.resource_url || "", status: l.status, createdAt: iso(l.created_at), updatedAt: iso(l.updated_at) };
+  const resource=resourceInfo(l.resource_url);
+  return {id:l.lesson_id,title:l.title,summary:l.summary,content:l.content,category:l.category||"General",duration:Math.max(1,n(l.duration_min,5)),resourceTitle:l.resource_title||"",resourceUrl:resource.url,resourceType:resource.type,resourceProvider:resource.provider,resourceIsPdf:resource.isPdf,resourceIsFileGarden:resource.isFileGarden,resourceIsDropbox:resource.isDropbox,resourceValid:!resource.url||(resource.valid&&!resource.isFileGardenPage),status:String(l.status||"draft").toLowerCase()==="published"?"published":"draft",createdAt:iso(l.created_at),updatedAt:iso(l.updated_at)};
 }
 function publicAttempt(a: Row, course?: Row) {
   const score = n(a.score);
@@ -96,6 +114,53 @@ function position(value: any, role: string) {
   if (role==="admin") { if (p.toLowerCase()==="mod") return "MoD"; if (p.toLowerCase()==="cinema manager") return "Cinema Manager"; throw new Error("Administrator position must be MoD or Cinema Manager."); }
   return p.toLowerCase()==="stars" ? "Stars" : p;
 }
+async function executiveReport(c:Client,b:Body){
+  await session(c,b.token,"admin");
+  const courseId=clean(b.courseId);if(!courseId)throw new Error("Course ID is required.");
+  const cr=await c.query("SELECT * FROM courses WHERE course_id=$1",[courseId]),course=cr.rows[0];if(!course)throw new Error("Course not found.");
+  const [qr,ar,ur]=await Promise.all([
+    c.query("SELECT * FROM questions WHERE course_id=$1 AND COALESCE(is_archived_placeholder,false)=false ORDER BY order_no",[courseId]),
+    c.query("SELECT * FROM attempts WHERE course_id=$1 AND status='submitted'",[courseId]),
+    c.query("SELECT user_id,full_name,branch,excluded_from_reporting FROM users")
+  ]);
+  const users=Object.fromEntries(ur.rows.map(u=>[String(u.user_id),u]));
+  const attempts=ar.rows.filter(a=>!bool(users[String(a.user_id)]?.excluded_from_reporting));
+  const answerByQuestion:Record<string,Row[]>={},needsRows=new Set<string>();
+  for(const a of attempts){
+    let recorded:any=null;try{recorded=typeof a.answers_json==="string"?JSON.parse(a.answers_json):a.answers_json;}catch{}
+    if(recorded&&typeof recorded==="object"&&!Array.isArray(recorded)&&Object.keys(recorded).length){
+      for(const qid of Object.keys(recorded)){(answerByQuestion[qid]||=[]).push({attempt_id:a.attempt_id,question_id:qid,selected_option:recorded[qid]});}
+    }else needsRows.add(String(a.attempt_id));
+  }
+  if(needsRows.size){
+    const fallback=await c.query("SELECT attempt_id,question_id,selected_option FROM answers WHERE attempt_id = ANY($1::text[])",[[...needsRows]]);
+    for(const row of fallback.rows)(answerByQuestion[String(row.question_id)]||=[]).push(row);
+  }
+  const participantResults=attempts.map(a=>{const u=users[String(a.user_id)]||{},score=n(a.score);return {attemptId:String(a.attempt_id||""),participantId:String(a.user_id||""),name:String(u.full_name||"Unknown participant"),branch:String(u.branch||""),score,correctCount:n(a.correct_count),totalQuestions:n(a.total_questions,qr.rows.length),durationSeconds:n(a.duration_seconds),submittedAt:iso(a.submitted_at),passed:score>=n(course.passing_score)};})
+    .sort((a,b)=>b.score-a.score||a.durationSeconds-b.durationSeconds||new Date(b.submittedAt).getTime()-new Date(a.submittedAt).getTime()).map((x,i)=>({...x,rank:i+1}));
+  const scores=participantResults.map(x=>x.score).sort((a,b)=>a-b),durations=participantResults.map(x=>x.durationSeconds),scoreTotal=scores.reduce((a,b)=>a+b,0),mid=Math.floor(scores.length/2),median=scores.length?(scores.length%2?scores[mid]:Math.round((scores[mid-1]+scores[mid])/2)):0,passed=participantResults.filter(x=>x.passed).length;
+  const scoreBands=[{label:"Below 50%",min:0,max:49},{label:"50-59%",min:50,max:59},{label:"60-69%",min:60,max:69},{label:"70-79%",min:70,max:79},{label:"80-89%",min:80,max:89},{label:"90-100%",min:90,max:100}].map(x=>{const count=scores.filter(v=>v>=x.min&&v<=x.max).length;return {label:x.label,count,percentage:scores.length?Math.round(count/scores.length*100):0};});
+  const questionAnalysis=qr.rows.map(q=>{
+    const rows=answerByQuestion[String(q.question_id)]||[],keys=["A","B","C","D"],texts=[q.option_a,q.option_b,q.option_c,q.option_d],counts:Record<string,number>={A:0,B:0,C:0,D:0},correct=String(q.correct_option||"A").trim().toUpperCase();
+    for(const a of rows){const key=String(a.selected_option||"").trim().toUpperCase();if(Object.prototype.hasOwnProperty.call(counts,key))counts[key]++;}
+    const answered=keys.reduce((sum,k)=>sum+counts[k],0),correctCount=counts[correct]||0,wrong=Math.max(0,answered-correctCount),most=answered?keys.reduce((best,k)=>counts[k]>counts[best]?k:best,"A"):"",byAttempt=Object.fromEntries(rows.map(a=>[String(a.attempt_id),a]));
+    const responses=participantResults.map(p=>{const a=byAttempt[p.attemptId]||{},selected=String(a.selected_option||"").trim().toUpperCase(),idx=keys.indexOf(selected),status=!selected?"unanswered":selected===correct?"correct":"incorrect";return {attemptId:p.attemptId,participantId:p.participantId,participantName:p.name,branch:p.branch,submittedAt:p.submittedAt,selectedOption:selected,selectedAnswer:idx>=0?String(texts[idx]||""):"",status,isCorrect:status==="correct"};});
+    return {id:String(q.question_id),order:n(q.order_no),prompt:String(q.question_text||""),correctOption:correct,correctAnswer:String(texts[keys.indexOf(correct)]||""),totalResponses:attempts.length,answeredCount:answered,unansweredCount:Math.max(0,attempts.length-answered),correctCount,correctPercentage:attempts.length?Math.round(correctCount/attempts.length*100):0,incorrectPercentage:attempts.length?Math.round(wrong/attempts.length*100):0,mostCommonOption:most,mostCommonAnswer:most?String(texts[keys.indexOf(most)]||""):"",mostCommonCount:most?counts[most]:0,mostCommonPercentage:attempts.length&&most?Math.round(counts[most]/attempts.length*100):0,options:keys.map((k,i)=>({key:k,text:String(texts[i]||""),count:counts[k],percentage:attempts.length?Math.round(counts[k]/attempts.length*100):0,isCorrect:k===correct})),responses};
+  });
+  return {ok:true,report:{generatedAt:new Date().toISOString(),course:publicCourse(course,qr.rows.length),summary:{submissions:participantResults.length,uniqueParticipants:new Set(attempts.map(a=>String(a.user_id))).size,averageScore:scores.length?Math.round(scoreTotal/scores.length):0,medianScore:median,passRate:scores.length?Math.round(passed/scores.length*100):0,highestScore:scores.length?Math.max(...scores):0,lowestScore:scores.length?Math.min(...scores):0,averageDurationSeconds:durations.length?Math.round(durations.reduce((a,b)=>a+b,0)/durations.length):0},scoreDistribution:scoreBands,participants:participantResults,questions:questionAnalysis}};
+}
+async function syncKnowledgeCentre(c:Client,b:Body){
+  await session(c,b.token,"admin");
+  const result=await c.query("SELECT lesson_id,resource_url FROM lessons ORDER BY updated_at DESC");
+  let normalizedResources=0,fileGardenResources=0,dropboxResources=0,pdfResources=0;const invalidLessonIds:string[]=[];
+  for(const lesson of result.rows){
+    const stored=String(lesson.resource_url||""),trimmed=stored.trim();if(!trimmed)continue;
+    const resource=resourceInfo(trimmed);if(!resource.valid||resource.isFileGardenPage){invalidLessonIds.push(String(lesson.lesson_id||""));continue;}
+    if(resource.isFileGarden)fileGardenResources++;if(resource.isDropbox)dropboxResources++;if(resource.isPdf)pdfResources++;
+    if(trimmed!==stored){await c.query("UPDATE lessons SET resource_url=$2,updated_at=now() WHERE lesson_id=$1",[lesson.lesson_id,trimmed]);normalizedResources++;}
+  }
+  return {ok:true,lessons:result.rows.length,normalizedResources,fileGardenResources,dropboxResources,pdfResources,invalidLessonIds,sync:knowledgeSyncMeta()};
+}
 async function action(c: Client, b: Body) {
   const a = clean(b.action);
   if (a==="health") return {ok:true,ready:true,service:"CGV Knowledge Academy · Neon",now:new Date().toISOString()};
@@ -117,7 +182,7 @@ async function action(c: Client, b: Body) {
   }
   if(a==="logout"){if(b.token)await c.query("DELETE FROM sessions WHERE token_hash=$1",[tokenHash(String(b.token))]);return {ok:true};}
   if(a==="getParticipantHome"){const u=await session(c,b.token,"participant");return participantHome(c,u);}
-  if(a==="getKnowledgeCentre"){const u=await session(c,b.token);return {ok:true,user:publicUser(u),lessons:await lessonsFor(c,u.role==="admin"),sync:{}};}
+  if(a==="getKnowledgeCentre"){const u=await session(c,b.token);return {ok:true,user:publicUser(u),lessons:await lessonsFor(c,u.role==="admin"),sync:knowledgeSyncMeta()};}
   if(a==="startAttempt"){
     const u=await session(c,b.token,"participant"), cid=clean(b.courseId);
     const cr=await c.query("SELECT * FROM courses WHERE course_id=$1",[cid]), co=cr.rows[0];
@@ -183,7 +248,7 @@ async function action(c: Client, b: Body) {
     await session(c,b.token,"admin");const id=clean(b.courseId),at=await c.query("SELECT 1 FROM attempts WHERE course_id=$1 LIMIT 1",[id]);if(at.rowCount){const r=await c.query("UPDATE courses SET status='archived',updated_at=now() WHERE course_id=$1 RETURNING *",[id]);return {ok:true,archived:true,message:"Course has results and was archived instead of deleted.",course:publicCourse(r.rows[0])};}const r=await c.query("DELETE FROM courses WHERE course_id=$1 RETURNING course_id",[id]);if(!r.rowCount)throw new Error("Course not found.");return {ok:true,deleted:true};
   }
   if(a==="adminSaveLesson"){
-    const u=await session(c,b.token,"admin"),l=b.lesson||{},title=clean(l.title),summary=clean(l.summary),content=clean(l.content);if(!title||!summary||!content)throw new Error("Lesson title, summary and content are required.");if(content.length>45000)throw new Error("Lesson content is too long.");const id=clean(l.id)||uid();const r=await c.query("INSERT INTO lessons(lesson_id,title,summary,content,category,duration_min,resource_title,resource_url,status,created_by,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now()) ON CONFLICT(lesson_id) DO UPDATE SET title=EXCLUDED.title,summary=EXCLUDED.summary,content=EXCLUDED.content,category=EXCLUDED.category,duration_min=EXCLUDED.duration_min,resource_title=EXCLUDED.resource_title,resource_url=EXCLUDED.resource_url,status=EXCLUDED.status,updated_at=now() RETURNING *",[id,title,summary,content,clean(l.category)||"General",clamp(n(l.duration,5),1,240),clean(l.resourceTitle),clean(l.resourceUrl),l.status==="draft"?"draft":"published",u.user_id]);return {ok:true,lesson:publicLesson(r.rows[0])};
+    const u=await session(c,b.token,"admin"),l=b.lesson||{},title=clean(l.title),summary=clean(l.summary),content=clean(l.content);if(!title||!summary||!content)throw new Error("Lesson title, summary and content are required.");if(content.length>45000)throw new Error("Lesson content is too long.");const id=clean(l.id)||uid();const r=await c.query("INSERT INTO lessons(lesson_id,title,summary,content,category,duration_min,resource_title,resource_url,status,created_by,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),now()) ON CONFLICT(lesson_id) DO UPDATE SET title=EXCLUDED.title,summary=EXCLUDED.summary,content=EXCLUDED.content,category=EXCLUDED.category,duration_min=EXCLUDED.duration_min,resource_title=EXCLUDED.resource_title,resource_url=EXCLUDED.resource_url,status=EXCLUDED.status,updated_at=now() RETURNING *",[id,title,summary,content,clean(l.category)||"General",clamp(n(l.duration,5),1,240),clean(l.resourceTitle),normalizeResourceUrl(l.resourceUrl),l.status==="draft"?"draft":"published",u.user_id]);return {ok:true,lesson:publicLesson(r.rows[0])};
   }
   if(a==="adminDeleteLesson"){await session(c,b.token,"admin");const r=await c.query("DELETE FROM lessons WHERE lesson_id=$1 RETURNING lesson_id",[clean(b.lessonId)]);if(!r.rowCount)throw new Error("Lesson not found.");return {ok:true,deleted:true,lessonId:b.lessonId};}
   if(a==="adminSaveParticipant"||a==="adminSaveUser"){
@@ -194,8 +259,8 @@ async function action(c: Client, b: Body) {
   if(a==="adminSetUserReportingExclusion"){await session(c,b.token,"admin");const r=await c.query("UPDATE users SET excluded_from_reporting=$2 WHERE user_id=$1 AND role='participant' RETURNING *",[clean(b.userId),bool(b.excluded)]);if(!r.rowCount)throw new Error("Participant account not found.");return {ok:true,user:publicUser(r.rows[0])};}
   if(a==="adminResetPassword"){await session(c,b.token,"admin");const pw=String(b.newPassword||"");if(pw.length<8)throw new Error("New password must be at least eight characters.");const salt=randomBytes(24).toString("hex"),r=await c.query("UPDATE users SET salt=$2,password_hash=$3 WHERE user_id=$1 RETURNING user_id",[clean(b.userId),salt,passwordHash(pw,salt)]);if(!r.rowCount)throw new Error("Account not found.");await c.query("DELETE FROM sessions WHERE user_id=$1",[b.userId]);return {ok:true};}
   if(a==="getAccountLanguage"||a==="setAccountLanguage"){const u=await session(c,b.token),key="account_language:"+u.user_id;if(a==="getAccountLanguage"){const r=await c.query("SELECT value FROM app_settings WHERE key=$1",[key]);return {ok:true,language:r.rows[0]?.value==="id"?"id":"en"};}const lang=String(b.language).toLowerCase()==="id"?"id":"en";await c.query("INSERT INTO app_settings(key,value,updated_at) VALUES($1,$2,now()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=now()",[key,lang]);return {ok:true,language:lang,user:{...publicUser(u),language:lang}};}
-  if(a==="adminGetExecutiveReport") throw new Error("Executive report migration is in progress; this action is not yet available on the Neon backend.");
-  if(a==="adminSyncKnowledgeCentre") throw new Error("Knowledge Centre external file sync is not yet connected to Neon.");
+  if(a==="adminGetExecutiveReport") return executiveReport(c,b);
+  if(a==="adminSyncKnowledgeCentre") return syncKnowledgeCentre(c,b);
   throw new Error("Unsupported action.");
 }
 async function participantHome(c: Client, u: Row) {
