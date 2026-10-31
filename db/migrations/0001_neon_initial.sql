@@ -47,7 +47,8 @@ create table if not exists public.questions (
   course_id text not null references public.courses(course_id) on delete cascade,
   order_no integer not null default 0, question_text text not null,
   option_a text, option_b text, option_c text, option_d text,
-  correct_option text, points numeric(8,2) not null default 1, explanation text
+  correct_option text, points numeric(8,2) not null default 1, explanation text,
+  is_archived_placeholder boolean not null default false
 );
 create index if not exists questions_course_order_idx on public.questions (course_id, order_no);
 
