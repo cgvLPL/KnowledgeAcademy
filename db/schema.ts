@@ -84,6 +84,7 @@ export const questions = pgTable("questions", {
   correctOption: text("correct_option"),
   points: numeric("points", { precision: 8, scale: 2 }).notNull().default("1"),
   explanation: text("explanation"),
+  isArchivedPlaceholder: boolean("is_archived_placeholder").notNull().default(false),
 }, (table) => [index("questions_course_order_idx").on(table.courseId, table.orderNo)]);
 
 export const attempts = pgTable("attempts", {
@@ -107,7 +108,7 @@ export const attempts = pgTable("attempts", {
 export const answers = pgTable("answers", {
   answerId: text("answer_id").primaryKey(),
   attemptId: text("attempt_id").notNull().references(() => attempts.attemptId, { onDelete: "cascade" }),
-  questionId: text("question_id").notNull(), // May refer to a retired question version not present in the current question bank.
+  questionId: text("question_id").notNull().references(() => questions.questionId, { onDelete: "restrict" }),
   selectedOption: text("selected_option"),
   isCorrect: boolean("is_correct"),
   pointsAwarded: numeric("points_awarded", { precision: 8, scale: 2 }).notNull().default("0"),
