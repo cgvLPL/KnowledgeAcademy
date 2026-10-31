@@ -2749,68 +2749,68 @@ export default function ExamClient() {
       }
       const authenticatedRole = roleValue as Role;
 
-      if (authenticatedRole === "participant") {
-        const homeData = Array.isArray(loginData.workspace?.courses) &&
-          Array.isArray(loginData.workspace?.history)
-          ? {
-            courses: loginData.workspace.courses,
-            history: loginData.workspace.history,
-            lessons: Array.isArray(loginData.workspace.lessons) ? loginData.workspace.lessons : [],
-          }
-          : await sheetsRequest<{
-            ok: boolean;
-            courses: Record<string, unknown>[];
-            history: Record<string, unknown>[];
-            lessons?: Record<string, unknown>[];
-          }>("getParticipantHome", { token: loginData.token });
-        setEvaluations(homeData.courses.map(apiCourseToEvaluation));
-        setLessons((homeData.lessons || []).map(apiLessonToLesson));
-        setHistory(homeData.history.map((item, index) => ({
-          id: String(item.id || `history-${index}`),
-          title: String(item.title || "Evaluation"),
-          category: String(item.category || "General"),
-          date: formatApiDate(item.submittedAt),
-          score: Number(item.score || 0),
-          status: item.passed ? "Passed" : "Needs review",
-          duration: formatDuration(Number(item.durationSeconds || 0)),
-        })));
-      } else {
-        const dashboardData = Array.isArray(loginData.workspace?.courses) &&
-          Array.isArray(loginData.workspace?.participants) &&
-          Array.isArray(loginData.workspace?.scoreboard)
-          ? {
-            courses: loginData.workspace.courses,
-            participants: loginData.workspace.participants,
-            scoreboard: loginData.workspace.scoreboard,
-            lessons: Array.isArray(loginData.workspace.lessons) ? loginData.workspace.lessons : [],
-          }
-          : await sheetsRequest<{
-            ok: boolean;
-            courses: Record<string, unknown>[];
-            participants: Record<string, unknown>[];
-            scoreboard: Record<string, unknown>[];
-            lessons?: Record<string, unknown>[];
-          }>("adminGetDashboard", { token: loginData.token });
-        setEvaluations(dashboardData.courses.map(apiCourseToEvaluation));
-        setLessons((dashboardData.lessons || []).map(apiLessonToLesson));
-        const liveLeaderboard = apiScoreboardToLeaderboard(dashboardData.scoreboard);
-        setLeaderboardData(liveLeaderboard);
-        setParticipantsData(dashboardData.participants.map((item) => {
-          return {
-            id: String(item.id || ""),
-            name: String(item.fullName || "Participant"),
-            username: String(item.username || item.email || ""),
-            branch: String(item.branch || ""),
-            position: String(item.position || ""),
-            attempts: Number(item.attempts || 0),
-            average: Number(item.average || 0),
-            status: String(item.status || "active") === "active" ? "Active" : "Inactive",
-            excludedFromReporting: item.excludedFromReporting === true,
-          };
-        }));
-      }
-
       setSessionToken(loginData.token);
+      setBackendMode("sheets");
+      setCurrentUser({
+        id: String(loginData.user?.id || ""),
+        username: String(loginData.user?.username || username),
+        fullName: String(loginData.user?.fullName || (authenticatedRole === "admin" ? "Administrator" : "Participant")),
+        branch: String(loginData.user?.branch || ""),
+        position: String(loginData.user?.position || ""),
+        role: authenticatedRole,
+        status: String(loginData.user?.status || "active"),
+      });
+      setRole(authenticatedRole);
+      setView(authenticatedRole === "admin" ? "overview" : "home");
+
+      // Authenticate first; load the heavier workspace after the user reaches the app.
+      void (async () => {
+        try {
+          if (authenticatedRole === "participant") {
+            const homeData = await sheetsRequest<{
+              ok: boolean;
+              courses: Record<string, unknown>[];
+              history: Record<string, unknown>[];
+              lessons?: Record<string, unknown>[];
+            }>("getParticipantHome", { token: loginData.token });
+            setEvaluations(homeData.courses.map(apiCourseToEvaluation));
+            setLessons((homeData.lessons || []).map(apiLessonToLesson));
+            setHistory(homeData.history.map((item, index) => ({
+              id: String(item.id || `history-${index}`),
+              title: String(item.title || "Evaluation"),
+              category: String(item.category || "General"),
+              date: formatApiDate(item.submittedAt),
+              score: Number(item.score || 0),
+              status: item.passed ? "Passed" : "Needs review",
+              duration: formatDuration(Number(item.durationSeconds || 0)),
+            })));
+          } else {
+            const dashboardData = await sheetsRequest<{
+              ok: boolean;
+              courses: Record<string, unknown>[];
+              participants: Record<string, unknown>[];
+              scoreboard: Record<string, unknown>[];
+              lessons?: Record<string, unknown>[];
+            }>("adminGetDashboard", { token: loginData.token });
+            setEvaluations(dashboardData.courses.map(apiCourseToEvaluation));
+            setLessons((dashboardData.lessons || []).map(apiLessonToLesson));
+            setLeaderboardData(apiScoreboardToLeaderboard(dashboardData.scoreboard));
+            setParticipantsData(dashboardData.participants.map((item) => ({
+              id: String(item.id || ""),
+              name: String(item.fullName || "Participant"),
+              username: String(item.username || item.email || ""),
+              branch: String(item.branch || ""),
+              position: String(item.position || ""),
+              attempts: Number(item.attempts || 0),
+              average: Number(item.average || 0),
+              status: String(item.status || "active") === "active" ? "Active" : "Inactive",
+              excludedFromReporting: item.excludedFromReporting === true,
+            })));
+          }
+        } catch (workspaceError) {
+          console.error("Workspace data could not be loaded:", workspaceError);
+        }
+      })();      setSessionToken(loginData.token);
       setBackendMode("sheets");
       setCurrentUser({
         id: String(loginData.user?.id || ""),
