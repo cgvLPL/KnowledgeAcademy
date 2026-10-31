@@ -1,4 +1,4 @@
-import { Client } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -18,11 +18,12 @@ const username = (value: any) => String(value ?? "").trim().toLowerCase();
 const uid = () => randomUUID();
 const clean = (value: any) => String(value ?? "").trim();
 
-async function db<T = Row>(fn: (c: Client) => Promise<T>): Promise<T> {
+let databasePool: Pool | undefined;
+async function db<T = Row>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
   if (!process.env.DATABASE_URL) throw new Error("Neon database is not configured.");
-  const c = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true }, connectionTimeoutMillis: 12000, statement_timeout: 30000 });
-  await c.connect();
-  try { return await fn(c); } finally { await c.end(); }
+  databasePool ??= new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: true }, connectionTimeoutMillis: 8000, idleTimeoutMillis: 30000, max: 8, statement_timeout: 20000 });
+  const c = await databasePool.connect();
+  try { return await fn(c); } finally { c.release(); }
 }
 function publicUser(u: Row) {
   return { id: u.user_id, username: u.username, email: u.email, fullName: u.full_name, branch: u.branch, position: u.position || "", role: u.role, status: u.status, excludedFromReporting: u.role === "participant" && bool(u.excluded_from_reporting), createdAt: iso(u.created_at), lastLogin: iso(u.last_login) };
@@ -62,7 +63,7 @@ function publicAttempt(a: Row, course?: Row) {
   const score = n(a.score);
   return { id: a.attempt_id, courseId: a.course_id, title: course?.title || "", category: course?.category || "", submittedAt: iso(a.submitted_at), score, correctCount: n(a.correct_count), totalQuestions: n(a.total_questions), durationSeconds: n(a.duration_seconds), passed: score >= n(course?.passing_score) };
 }
-async function session(c: Client, token: string, role?: string) {
+async function session(c: PoolClient, token: string, role?: string) {
   if (!token) throw new Error("Authentication required.");
   const r = await c.query("SELECT s.*,u.* FROM sessions s JOIN users u USING(user_id) WHERE s.token_hash=$1 AND s.expires_at>now() AND u.status='active' LIMIT 1", [tokenHash(token)]);
   if (!r.rowCount) throw new Error("Your session has expired. Please sign in again.");
@@ -70,15 +71,15 @@ async function session(c: Client, token: string, role?: string) {
   if (role && u.role !== role) throw new Error("You do not have access to this action.");
   return u;
 }
-async function lessonsFor(c: Client, admin: boolean) {
+async function lessonsFor(c: PoolClient, admin: boolean) {
   const r = await c.query("SELECT * FROM lessons " + (admin ? "" : "WHERE status='published' ") + "ORDER BY updated_at DESC");
   return r.rows.map(publicLesson);
 }
-async function questionCounts(c: Client) {
+async function questionCounts(c: PoolClient) {
   const r = await c.query("SELECT course_id,count(*)::int AS count FROM questions WHERE is_archived_placeholder=false GROUP BY course_id");
   return Object.fromEntries(r.rows.map(x => [x.course_id, x.count]));
 }
-async function dashboard(c: Client, user: Row, courseId = "") {
+async function dashboard(c: PoolClient, user: Row, courseId = "") {
   const [courses, users, attempts, lessons, counts] = await Promise.all([
     c.query("SELECT * FROM courses ORDER BY created_at DESC"),
     c.query("SELECT * FROM users ORDER BY full_name"),
@@ -114,7 +115,7 @@ function position(value: any, role: string) {
   if (role==="admin") { if (p.toLowerCase()==="mod") return "MoD"; if (p.toLowerCase()==="cinema manager") return "Cinema Manager"; throw new Error("Administrator position must be MoD or Cinema Manager."); }
   return p.toLowerCase()==="stars" ? "Stars" : p;
 }
-async function executiveReport(c:Client,b:Body){
+async function executiveReport(c:PoolClient,b:Body){
   await session(c,b.token,"admin");
   const courseId=clean(b.courseId);if(!courseId)throw new Error("Course ID is required.");
   const cr=await c.query("SELECT * FROM courses WHERE course_id=$1",[courseId]),course=cr.rows[0];if(!course)throw new Error("Course not found.");
@@ -149,7 +150,7 @@ async function executiveReport(c:Client,b:Body){
   });
   return {ok:true,report:{generatedAt:new Date().toISOString(),course:publicCourse(course,qr.rows.length),summary:{submissions:participantResults.length,uniqueParticipants:new Set(attempts.map(a=>String(a.user_id))).size,averageScore:scores.length?Math.round(scoreTotal/scores.length):0,medianScore:median,passRate:scores.length?Math.round(passed/scores.length*100):0,highestScore:scores.length?Math.max(...scores):0,lowestScore:scores.length?Math.min(...scores):0,averageDurationSeconds:durations.length?Math.round(durations.reduce((a,b)=>a+b,0)/durations.length):0},scoreDistribution:scoreBands,participants:participantResults,questions:questionAnalysis}};
 }
-async function syncKnowledgeCentre(c:Client,b:Body){
+async function syncKnowledgeCentre(c:PoolClient,b:Body){
   await session(c,b.token,"admin");
   const result=await c.query("SELECT lesson_id,resource_url FROM lessons ORDER BY updated_at DESC");
   let normalizedResources=0,fileGardenResources=0,dropboxResources=0,pdfResources=0;const invalidLessonIds:string[]=[];
@@ -161,7 +162,7 @@ async function syncKnowledgeCentre(c:Client,b:Body){
   }
   return {ok:true,lessons:result.rows.length,normalizedResources,fileGardenResources,dropboxResources,pdfResources,invalidLessonIds,sync:knowledgeSyncMeta()};
 }
-async function action(c: Client, b: Body) {
+async function action(c: PoolClient, b: Body) {
   const a = clean(b.action);
   if (a==="health") return {ok:true,ready:true,service:"CGV Knowledge Academy · Neon",now:new Date().toISOString()};
   if (a==="login") {
@@ -177,8 +178,7 @@ async function action(c: Client, b: Body) {
     await c.query("BEGIN");
     try { await c.query("UPDATE users SET last_login=now() WHERE user_id=$1",[u.user_id]); await c.query("INSERT INTO sessions(token_hash,user_id,role,expires_at,created_at) VALUES($1,$2,$3,$4,now())",[tokenHash(token),u.user_id,u.role,expires]); await c.query("COMMIT"); } catch(e) { await c.query("ROLLBACK"); throw e; }
     const updated={...u,last_login:new Date()};
-    const workspace=u.role==="admin"?await dashboard(c,updated):await participantHome(c,updated);
-    return {ok:true,token,expiresAt:expires.toISOString(),user:publicUser(updated),workspace};
+    return {ok:true,token,expiresAt:expires.toISOString(),user:publicUser(updated)};
   }
   if(a==="logout"){if(b.token)await c.query("DELETE FROM sessions WHERE token_hash=$1",[tokenHash(String(b.token))]);return {ok:true};}
   if(a==="getParticipantHome"){const u=await session(c,b.token,"participant");return participantHome(c,u);}
@@ -263,7 +263,7 @@ async function action(c: Client, b: Body) {
   if(a==="adminSyncKnowledgeCentre") return syncKnowledgeCentre(c,b);
   throw new Error("Unsupported action.");
 }
-async function participantHome(c: Client, u: Row) {
+async function participantHome(c: PoolClient, u: Row) {
   const [cr,ar,lessons,counts]=await Promise.all([
     c.query("SELECT * FROM courses WHERE status NOT IN ('draft','archived') ORDER BY start_at NULLS LAST"),
     c.query("SELECT * FROM attempts WHERE user_id=$1 AND status='submitted' ORDER BY submitted_at DESC",[u.user_id]),
