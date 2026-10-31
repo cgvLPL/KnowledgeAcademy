@@ -1,5 +1,6 @@
 import { Client } from "pg";
 import * as XLSX from "xlsx";
+import { createHash, timingSafeEqual } from "node:crypto";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type R = Record<string, any>;
@@ -8,6 +9,7 @@ const num = (v:any, fallback:any=null) => v == null || v === "" ? fallback : Num
 const int = (v:any) => v == null || v === "" ? null : Math.trunc(Number(v));
 const bool = (v:any) => v == null || v === "" ? false : typeof v === "string" ? !["false","0","no"].includes(v.toLowerCase()) : Boolean(v);
 const ident = (s:string) => `"${s.replaceAll('"','""')}"`;
+function previewOnly(){return process.env.VERCEL_ENV==="preview"&&process.env.VERCEL_GIT_COMMIT_REF==="neon-backend-migration";}
 function prepare(buf:Buffer) {
   const wb=XLSX.read(buf,{type:"buffer",cellDates:true});
   const rows=(name:string):R[]=>{const s=wb.Sheets[name];if(!s)throw Error(`Missing worksheet: ${name}`);return XLSX.utils.sheet_to_json<R>(s,{defval:null,raw:true}).filter(r=>Object.values(r).some(v=>v!==null&&v!==""));};
@@ -39,8 +41,28 @@ async function insert(client:Client,table:string,rows:R[]) {
   for(let i=0;i<rows.length;i+=100){const batch=rows.slice(i,i+100),values:any[]=[];const tuples=batch.map((r,j)=>`(${cols.map((k,c)=>{values.push(r[k]??null);return `$${j*cols.length+c+1}`;}).join(",")})`);
     await client.query(`INSERT INTO public.${ident(table)} (${cols.map(ident).join(",")}) VALUES ${tuples.join(",")} ON CONFLICT DO NOTHING`,values);}
 }
+export async function PUT(req:Request) {
+  if(!previewOnly())return Response.json({ok:false,error:"Not found."},{status:404});
+  if(!process.env.DATABASE_URL)return Response.json({ok:false,error:"Preview database is not configured."},{status:503});
+  let client:Client|undefined;
+  try {
+    const body=await req.json() as {pepper?:string;username?:string;password?:string};
+    if(typeof body.pepper!=="string"||!body.pepper||typeof body.username!=="string"||!body.username||typeof body.password!=="string"||!body.password)return Response.json({ok:false,error:"Enter the pepper, username and password."},{status:400});
+    if(body.pepper.length>2048||body.password.length>1024)return Response.json({ok:false,error:"Input is too long."},{status:400});
+    client=new Client({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:true},connectionTimeoutMillis:10000,statement_timeout:10000});await client.connect();
+    const found=await client.query("SELECT salt,password_hash FROM public.users WHERE lower(username)=lower($1) AND status='active' LIMIT 1",[body.username]);
+    if(!found.rowCount)return Response.json({ok:false,error:"Account not found or inactive."},{status:401});
+    const {salt,password_hash}=found.rows[0];
+    const digest=createHash("sha256").update(String(salt)+"|"+body.password+"|"+body.pepper,"utf8").digest("hex");
+    const expected=String(password_hash??"");
+    const valid=/^[a-f0-9]{64}$/i.test(expected)&&timingSafeEqual(Buffer.from(digest,"hex"),Buffer.from(expected,"hex"));
+    if(!valid)return Response.json({ok:false,error:"The pepper and account credentials did not match. No data was changed."},{status:401});
+    return Response.json({ok:true,message:"Legacy password hash verified. No credentials or secrets were changed or stored."},{headers:{"cache-control":"no-store"}});
+  } catch {return Response.json({ok:false,error:"Could not verify the credentials. No data was changed."},{status:400,headers:{"cache-control":"no-store"}});}
+  finally {if(client)await client.end().catch(()=>{});}
+}
 export async function POST(req:Request) {
-  if(process.env.VERCEL_ENV!=="preview"||process.env.VERCEL_GIT_COMMIT_REF!=="neon-backend-migration")return Response.json({ok:false},{status:404});
+  if(!previewOnly())return Response.json({ok:false},{status:404});
   if(!process.env.DATABASE_URL)return Response.json({ok:false,error:"Preview database is not configured."},{status:503});
   let client:Client|undefined;
   try {
