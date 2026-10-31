@@ -113,13 +113,13 @@ function announceParticipantChange(user: ApiUser) {
 
 async function api<T>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
   const token = window.sessionStorage.getItem(TOKEN_KEY);
-  const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild;
+  const endpoint = window.sessionStorage.getItem(ENDPOINT_KEY) || endpointFromBuild || "/api/sheets";
   if (!token) throw new Error("Your administrator session has expired. Please sign in again.");
-  if (!endpoint) throw new Error("The Google Apps Script endpoint is not configured.");
+  
 
   const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "content-type": "text/plain;charset=utf-8" },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({ action, token, ...payload }),
   });
   const data = await response.json() as T & { ok?: boolean; error?: string };
