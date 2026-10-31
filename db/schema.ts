@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -34,8 +35,8 @@ export const users = pgTable("users", {
   position: text("position"),
   excludedFromReporting: boolean("excluded_from_reporting").notNull().default(false),
 }, (table) => [
-  uniqueIndex("users_username_lower_uq").on(table.username),
-  uniqueIndex("users_email_lower_uq").on(table.email),
+  uniqueIndex("users_username_lower_uq").on(sql`lower(${table.username})`),
+  uniqueIndex("users_email_lower_uq").on(sql`lower(${table.email})`),
   index("users_status_role_idx").on(table.status, table.role),
 ]);
 
