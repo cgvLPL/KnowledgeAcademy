@@ -103,7 +103,7 @@ async function dashboard(c: Client, user: Row, courseId = "") {
   return {
     ok:true, user:publicUser(user),
     courses:courses.rows.map(co=>({...publicCourse(co, counts[co.course_id]||0), participants:stats[co.course_id]?.people.size||0, average:stats[co.course_id]?.count?Math.round(stats[co.course_id].total/stats[co.course_id].count):0})),
-    lessons, knowledgeCentre:{}, participants:users.rows.filter(u=>u.role==="participant").map(u=>({...publicUser(u),attempts:participantStats[u.user_id]?.count||0,average:participantStats[u.user_id]?.count?Math.round(participantStats[u.user_id].total/participantStats[u.user_id].count):0})),
+    lessons, knowledgeCentre:knowledgeSyncMeta(), participants:users.rows.filter(u=>u.role==="participant").map(u=>({...publicUser(u),attempts:participantStats[u.user_id]?.count||0,average:participantStats[u.user_id]?.count?Math.round(participantStats[u.user_id].total/participantStats[u.user_id].count):0})),
     admins:users.rows.filter(u=>u.role==="admin").map(publicUser), scoreboard,
     summary:{participants:users.rows.filter(u=>u.role==="participant"&&!bool(u.excluded_from_reporting)).length,submitted:scoreboard.length,average:scoreboard.length?Math.round(scoreboard.reduce((s,x)=>s+x.score,0)/scoreboard.length):0,topScore:scoreboard[0]?.score||0}
   };
