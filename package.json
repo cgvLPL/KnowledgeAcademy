@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
+    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
+    "migration:preview": "echo 'Open /migration on the neon-backend-migration Vercel Preview deployment'"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
