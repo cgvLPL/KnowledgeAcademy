@@ -135,15 +135,15 @@ async function action(c: Client, b: Body) {
     const ar=await c.query("SELECT a.*,co.passing_score FROM attempts a JOIN courses co USING(course_id) WHERE attempt_id=$1 AND user_id=$2",[id,u.user_id]);const at=ar.rows[0];if(!at)throw new Error("Attempt not found.");
     if(at.status==="submitted")return {ok:true,alreadySubmitted:true,result:{attemptId:id,score:n(at.score),correctCount:n(at.correct_count),totalQuestions:n(at.total_questions),durationSeconds:n(at.duration_seconds),passed:n(at.score)>=n(at.passing_score),passingScore:n(at.passing_score)}};
     if(at.status!=="started")throw new Error("This attempt cannot be submitted.");
-    const qs=await c.query("SELECT * FROM questions WHERE course_id=$1 AND is_archived_placeholder=false ORDER BY order_no",[at.course_id]);if(!qs.rowCount)throw new Error("No questions are configured for this course.");
+    const qs=await c.query("SELECT * FROM questions WHERE course_id=$1 AND is_archived_placeholder=false ORDER BY order_no",[at.course_id]);if(!qs.rows.length)throw new Error("No questions are configured for this course.");
     const answers=b.answers&&typeof b.answers==="object"?b.answers:{}, now=new Date();let earned=0,total=0,correct=0;const answerMap:Record<string,string>={};
     await c.query("BEGIN");
     try {
       for(const q of qs.rows){const raw=String(answers[q.question_id]||"").toUpperCase();const selected=["A","B","C","D"].includes(raw)?raw:"";const ok=selected===String(q.correct_option||"").toUpperCase();const pts=Math.max(1,n(q.points,1));total+=pts;if(ok){correct++;earned+=pts;}answerMap[q.question_id]=selected;await c.query("INSERT INTO answers(answer_id,attempt_id,question_id,selected_option,is_correct,points_awarded,answered_at) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(attempt_id,question_id) DO UPDATE SET selected_option=EXCLUDED.selected_option,is_correct=EXCLUDED.is_correct,points_awarded=EXCLUDED.points_awarded,answered_at=EXCLUDED.answered_at",[uid(),id,q.question_id,selected,ok,ok?pts:0,now]);}
       const score=total?Math.round(earned/total*100):0,duration=Math.max(0,Math.round((now.getTime()-new Date(at.started_at).getTime())/1000));
-      await c.query("UPDATE attempts SET status='submitted',submitted_at=$2,score=$3,correct_count=$4,total_questions=$5,duration_seconds=$6,answers_json=$7 WHERE attempt_id=$1",[id,now,score,correct,qs.rowCount,duration,JSON.stringify(answerMap)]);
+      await c.query("UPDATE attempts SET status='submitted',submitted_at=$2,score=$3,correct_count=$4,total_questions=$5,duration_seconds=$6,answers_json=$7 WHERE attempt_id=$1",[id,now,score,correct,qs.rows.length,duration,JSON.stringify(answerMap)]);
       await c.query("UPDATE live_activity SET client_status='completed',last_activity_at=$2,updated_at=$2 WHERE attempt_id=$1",[id,now]);await c.query("COMMIT");
-      return {ok:true,result:{attemptId:id,score,correctCount:correct,totalQuestions:qs.rowCount,durationSeconds:duration,passed:score>=n(at.passing_score),passingScore:n(at.passing_score)}};
+      return {ok:true,result:{attemptId:id,score,correctCount:correct,totalQuestions:qs.rows.length,durationSeconds:duration,passed:score>=n(at.passing_score),passingScore:n(at.passing_score)}};
     }catch(e){await c.query("ROLLBACK");throw e;}
   }
   if(a==="updateAttemptActivity"){
@@ -157,7 +157,7 @@ async function action(c: Client, b: Body) {
   }
   if(a==="adminGetDashboard"){const u=await session(c,b.token,"admin");return dashboard(c,u,clean(b.courseId));}
   if(a==="adminGetCourse"){
-    await session(c,b.token,"admin");const r=await c.query("SELECT * FROM courses WHERE course_id=$1",[clean(b.courseId)]);if(!r.rowCount)throw new Error("Course not found.");const qs=await c.query("SELECT * FROM questions WHERE course_id=$1 AND is_archived_placeholder=false ORDER BY order_no",[b.courseId]);return {ok:true,course:publicCourse(r.rows[0],qs.rowCount),questions:qs.rows.map(q=>({id:q.question_id,prompt:q.question_text,options:[q.option_a,q.option_b,q.option_c,q.option_d],correct:q.correct_option||"A",points:n(q.points,1),explanation:q.explanation||""}))};
+    await session(c,b.token,"admin");const r=await c.query("SELECT * FROM courses WHERE course_id=$1",[clean(b.courseId)]);if(!r.rowCount)throw new Error("Course not found.");const qs=await c.query("SELECT * FROM questions WHERE course_id=$1 AND is_archived_placeholder=false ORDER BY order_no",[b.courseId]);return {ok:true,course:publicCourse(r.rows[0],qs.rows.length),questions:qs.rows.map(q=>({id:q.question_id,prompt:q.question_text,options:[q.option_a,q.option_b,q.option_c,q.option_d],correct:q.correct_option||"A",points:n(q.points,1),explanation:q.explanation||""}))};
   }
   if(a==="adminSaveCourse"){
     const u=await session(c,b.token,"admin"), input=b.course||{}, title=clean(input.title), qs=Array.isArray(input.questions)?input.questions:[];if(!title||!qs.length)throw new Error("Course title and at least one question are required.");
