@@ -444,11 +444,10 @@ function Login({
   return (
     <main className="login-page">
       <section className="login-layout">
+        <div className="login-brand-panel" aria-label="CGV Knowledge Academy">
+          <Logo priority />
+        </div>
         <form className="login-card" onSubmit={submit}>
-          <div className="login-brand-row">
-            <Logo />
-            <span>Secure portal</span>
-          </div>
           <div className="login-card-heading">
             <h1>Welcome Back!</h1>
           </div>
