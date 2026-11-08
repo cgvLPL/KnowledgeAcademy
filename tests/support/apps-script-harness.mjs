@@ -102,12 +102,12 @@ class FakeRange {
 
   createTextFinder(text) {
     const needle = String(text).toLowerCase();
-    const range = this;
+    // Arrow functions keep this method's `this`, so no alias is needed.
     const matches = () => {
       const found = [];
-      range.getValues().forEach((row, r) => {
+      this.getValues().forEach((row, r) => {
         row.forEach((value) => {
-          if (String(value).toLowerCase() === needle) found.push({ getRow: () => range.row + r });
+          if (String(value).toLowerCase() === needle) found.push({ getRow: () => this.row + r });
         });
       });
       return found;
