@@ -17,7 +17,7 @@ function section(start, end) {
 
 test("web requests are bounded, traced, and returned through one JSON envelope", () => {
   const getHandler = section("function doGet()", "function doPost(event)");
-  const postHandler = section("function doPost(event)", "function health_()");
+  const postHandler = section("function doPost(event)", "function apiRoutes_()");
   const parser = section("function parseBody_(event)", "function json_(value)");
   const responseMeta = section("function withResponseMeta_(value)", "function errorResponse_(error)");
 
@@ -25,7 +25,8 @@ test("web requests are bounded, traced, and returned through one JSON envelope",
   assert.match(backend, /maxBodyBytes:\s*512 \* 1024/);
   assert.match(getHandler, /withResponseMeta_\(health_\(\)\)/);
   assert.match(getHandler, /errorResponse_\(error\)/);
-  assert.match(postHandler, /withResponseMeta_\(API_ACTIONS\[action\]\(body\)\)/);
+  assert.match(postHandler, /const routes = apiRoutes_\(\)/);
+  assert.match(postHandler, /withResponseMeta_\(routes\[action\]\(body\)\)/);
   assert.match(postHandler, /errorResponse_\(error\)/);
   assert.match(parser, /Utilities\.newBlob\(contents, "application\/json"\)\.getBytes\(\)\.length/);
   assert.match(parser, /Request body is too large\./);
@@ -75,14 +76,18 @@ test("resuming an attempt preserves its original server start time", () => {
 test("a retried submission replaces partial answer rows before writing", () => {
   const submitAttempt = section(
     "function submitAttempt_(body)",
-    "function submittedAttemptCountForCourse_",
+    "function gradeAttemptAnswers_",
   );
-  const cleanupIndex = submitAttempt.indexOf(
-    'deleteRowsMatching_(answersSheet, "attempt_id", attemptId);',
+  const writer = section(
+    "function writeAttemptResult_(attempt, graded, durationSeconds, now)",
+    "function finalizeExpiredAttempt_",
   );
-  const writeIndex = submitAttempt.indexOf(".setValues(answerRows);");
+  const cleanupIndex = writer.indexOf(
+    'deleteRowsMatching_(answersSheet, "attempt_id", attempt.attempt_id);',
+  );
+  const writeIndex = writer.indexOf(".setValues(graded.answerRows);");
 
   assert.ok(cleanupIndex >= 0, "submission cleanup is missing");
   assert.ok(writeIndex > cleanupIndex, "answer rows must be cleaned before the retry write");
-  assert.match(submitAttempt, /const durationSeconds = attemptDurationSeconds_\(current, now\)/);
+  assert.match(submitAttempt, /writeAttemptResult_\(current, graded, attemptDurationSeconds_\(current, now\), now\)/);
 });

@@ -84,12 +84,13 @@ test("Apps Script live activity routes require the correct session roles and att
   assert.match(update, /serverTotalQuestions/);
   assert.doesNotMatch(update, /total_questions:\s*Number\(body\.totalQuestions/);
   assert.match(backend, /requireSession_\(body\.token, "admin"\)/);
-  assert.match(backend, /action === "updateAttemptActivity"/);
-  assert.match(backend, /action === "adminGetLiveQuizActivity"/);
+  assert.match(backend, /updateAttemptActivity: updateAttemptActivity_/);
+  assert.match(backend, /adminGetLiveQuizActivity: adminGetLiveQuizActivity_/);
+  assert.doesNotMatch(backend, /function doPost/);
 });
 
 test("status boundaries are exact at 30, 31, 120, and 121 seconds", () => {
-  const source = section("function liveQuizDerivedStatus_(activity, attempt, nowMs)", "function pruneLiveQuizActivity_(nowMs)");
+  const source = section("function liveQuizDerivedStatus_(activity, attempt, nowMs)", "function updateAttemptActivity_(body)");
   const derive = new Function(
     "const LIVE_QUIZ = { activeSeconds: 30, idleSeconds: 120 };\n" + source + "; return liveQuizDerivedStatus_;",
   )();
@@ -106,22 +107,25 @@ test("status boundaries are exact at 30, 31, 120, and 121 seconds", () => {
   assert.equal(derive({ client_status: "completed", last_activity_at: new Date(now).toISOString() }, null, now), "completed");
 });
 
-test("heartbeat writes are throttled and stale activity is pruned", () => {
+test("heartbeat writes are throttled, cache-backed, and expire by retention window", () => {
   assert.match(backend, /heartbeatMinMs:\s*5000/);
   assert.match(backend, /sameSnapshot/);
   assert.match(backend, /throttled:\s*true/);
   assert.match(backend, /completedRetentionMs:\s*6 \* 3600000/);
   assert.match(backend, /disconnectedRetentionMs:\s*24 \* 3600000/);
-  assert.match(backend, /sheet\.deleteRow\(activity\.__row\)/);
-  assert.match(backend, /pruneLiveQuizActivity_\(nowMs\)/);
+  assert.match(backend, /CacheService\.getScriptCache\(\)/);
+  const update = section("function updateAttemptActivity_(body)", "function liveQuizCandidateAttempts_");
+  assert.doesNotMatch(update, /withScriptLock_/, "heartbeats must not queue on the script lock");
+  assert.doesNotMatch(update, /deleteRow/);
 });
 
-test("LiveActivity setup is migration-safe and requires no manual sheet editing", () => {
-  assert.match(backend, /function liveQuizSheet_\(\)/);
-  assert.match(backend, /ensureDataSheet_\(activeSpreadsheet_\(\), LIVE_QUIZ\.sheet, LIVE_QUIZ_HEADERS\)/);
-  assert.match(backend, /function setupLiveQuizMonitoring\(\)/);
-  assert.match(backend, /"attempt_id"/);
-  assert.match(backend, /"last_activity_at"/);
+test("legacy LiveActivity cleanup is lock-protected and batched", () => {
+  const setup = section("function setupLiveQuizMonitoring()", "function liveQuizCacheKey_");
+  assert.match(setup, /withScriptLock_\(/);
+  assert.match(setup, /clearDataRows_\(sheet\)/);
+  assert.doesNotMatch(setup, /deleteRow\(/);
+  assert.match(backend, /"attempt_id"|attempt_id:/);
+  assert.match(backend, /last_activity_at/);
 });
 
 test("live activity responses do not expose quiz answers or question content", () => {

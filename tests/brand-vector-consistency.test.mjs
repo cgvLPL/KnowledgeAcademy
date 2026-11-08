@@ -40,7 +40,11 @@ test("print, reports, and browser use the original CGV vector", () => {
   assert.ok(!client.includes("cgv-logo.svg"));
   assert.ok(read("app/certificate.css").includes("aspect-ratio: 426 / 188"));
   assert.ok(read("app/executive-report.ts").includes("context.drawImage(image, 0, 0, canvas.width, canvas.height)"));
-  assert.equal(count(favicon, "<path "), 7);
+  // The favicon embeds the original 7-path mark once per color scheme.
+  const markPaths = [...mark.matchAll(/<path d="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(markPaths.length, 7);
+  for (const pathData of markPaths) assert.ok(favicon.includes(pathData), "favicon must use the original CGV vector");
+  assert.equal(count(favicon, "<path ") % 7, 0);
   assert.ok(layout.includes('publicAssetUrl("/favicon.svg")'));
   const manifest = JSON.parse(read("public/site.webmanifest"));
   assert.equal(manifest.icons[0].src, "favicon.svg");

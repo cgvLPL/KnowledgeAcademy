@@ -60,8 +60,8 @@ test("backend submission path fails fast under lock pressure and keeps retry-saf
     /function submitAttempt_\(body\)[\s\S]*?withScriptLock_\(APP\.capacity\.submissionLockTimeoutMs/,
   );
   assert.match(backend, /if \(current\.status === "submitted"\) return existingAttemptResult_/);
-  assert.match(backend, /deleteRowsMatching_\(answersSheet, "attempt_id", attemptId\)/);
-  assert.match(backend, /answersSheet[\s\S]*?\.setValues\(answerRows\)/);
+  assert.match(backend, /deleteRowsMatching_\(answersSheet, "attempt_id", attempt\.attempt_id\)/);
+  assert.match(backend, /answersSheet[\s\S]*?\.setValues\(graded\.answerRows\)/);
   assert.match(
     backend,
     /function deleteRowsMatching_[\s\S]*?sheet\.deleteRows\(runLow, runHigh - runLow \+ 1\)/,
