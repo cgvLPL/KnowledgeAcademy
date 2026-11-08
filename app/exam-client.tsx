@@ -444,7 +444,7 @@ function Login({
   return (
     <main className="login-page">
       <section className="login-layout">
-        <div className="login-brand-row" aria-label="CGV Knowledge Academy">
+        <div className="login-brand-row">
           <Logo />
         </div>
         <form className="login-card" onSubmit={submit}>
