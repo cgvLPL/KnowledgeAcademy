@@ -480,6 +480,9 @@ export default function AdminFunctionalityEnhancer() {
           endAt: editCourse.endAt || "",
           status: normalize(editCourse.status) || "draft",
           questions: editQuestions.map((question) => ({
+            // Sending the existing ID lets the backend keep it, so recorded
+            // answers and in-progress attempts stay linked to the question.
+            id: question.id || "",
             prompt: question.prompt,
             options: question.options,
             correct: question.correct,

@@ -62,9 +62,6 @@ import "./admin-courses-mobile-release.css";
 import "./admin-courses-mobile-width-fix.css";
 import "./participant-quiz-mobile-responsive.css";
 import "./final-no-green-lock.css";
-import "./dashboard-card-spacing.css";
-import "./admin-participants-mobile.css";
-import "./admin-quiz-builder-responsive.css";
 import "./login-loading-indicator.css";
 import "./archived-courses.css";
 import "./login-static-backdrop.css";
@@ -87,14 +84,19 @@ import "./visual-cohesion-touch-targets.css";
 import "./mobile-table-cards.css";
 import "./logo-position-centering.css";
 import "./admin-top-performers-mobile.css";
+import "./dashboard-card-spacing.css";
+import "./admin-participants-mobile.css";
+import "./admin-quiz-builder-responsive.css";
 import "./live-quiz-monitor-bento.css";
+// Liquid Glass (iOS 26 HIG) — cascade-layered, so it must stay the final import.
+import "./liquid-glass.css";
 
 const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://cgvlpl.github.io/KnowledgeAcademy/";
 const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `${publicSiteUrl}/`;
 const socialImageUrl = `${normalizedPublicSiteUrl}og.png`;
 const publicBasePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim() || "";
 const publicAssetOrigin = new URL(normalizedPublicSiteUrl).origin;
-const iconRevision = "2026-09-24";
+const iconRevision = "2026-11-08";
 const publicAssetUrl = (path: string) => `${publicAssetOrigin}${publicBasePath}${path}`;
 
 export const metadata: Metadata = {

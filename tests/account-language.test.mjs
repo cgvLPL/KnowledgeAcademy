@@ -33,8 +33,8 @@ test("Apps Script persists language per authenticated account", () => {
   assert.ok(backend.includes('return "account_language:" + String(userId || "")'));
   assert.ok(backend.includes("function getAccountLanguage_(body)"));
   assert.ok(backend.includes("function setAccountLanguage_(body)"));
-  assert.ok(backend.includes('action === "getAccountLanguage"'));
-  assert.ok(backend.includes('action === "setAccountLanguage"'));
+  assert.ok(backend.includes("getAccountLanguage: getAccountLanguage_"));
+  assert.ok(backend.includes("setAccountLanguage: setAccountLanguage_"));
   assert.ok(backend.includes("requireSession_(body.token)"));
   assert.ok(backend.includes("normalizeAccountLanguage_(body.language)"));
 });

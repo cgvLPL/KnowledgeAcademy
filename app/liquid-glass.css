@@ -1,0 +1,1013 @@
+/*
+ * Liquid Glass layer — CGV Knowledge Academy
+ *
+ * Applies Apple's iOS 26 Liquid Glass guidance (HIG: Materials, Color, and
+ * "Adopting Liquid Glass") to the web app:
+ *
+ *  1. Glass only on the navigation/control layer that floats above content:
+ *     sidebar, tab bar, bar controls, sheets, toasts, and controls over media.
+ *     Content (cards, tables, question cards) uses standard materials — no
+ *     glass, no backdrop blur. Never glass on glass.
+ *  2. Regular glass by default; larger surfaces (sidebar, sheets) are more
+ *     opaque for legibility. Clear glass only over rich media (the PDF and
+ *     certificate viewers), with a 35% dimming layer.
+ *  3. Bars have no material of their own; a scroll edge effect blurs and fades
+ *     content scrolling beneath them, and their controls float as glass.
+ *  4. Color is applied sparingly: only the primary action is tinted (on its
+ *     background, not its label); selected navigation tints its symbol and
+ *     label. Labels on glass are monochrome.
+ *  5. Capsule controls and concentric corner radii.
+ *  6. Respects Reduce Transparency, Increase Contrast, Reduce Motion, and
+ *     forced colors, and degrades to opaque surfaces without backdrop-filter.
+ *
+ * Why a cascade layer: legacy stylesheets use ~3,400 `!important`
+ * declarations. Important declarations inside a layer outrank unlayered
+ * important ones regardless of specificity, so this file wins predictably
+ * without a selector-specificity arms race. Every declaration here therefore
+ * needs `!important`.
+ */
+
+@layer liquid-glass {
+  :root {
+    /* Glass (navigation layer). */
+    --lg-glass: rgba(34, 36, 38, 0.5);
+    --lg-glass-bar: rgba(30, 32, 34, 0.66);
+    --lg-glass-large: rgba(24, 26, 28, 0.74);
+    --lg-glass-sheet: rgba(22, 24, 26, 0.84);
+    --lg-glass-clear: rgba(255, 255, 255, 0.07);
+    --lg-glass-dim: rgba(0, 0, 0, 0.35);
+    --lg-glass-filter: blur(22px) saturate(180%);
+    --lg-glass-filter-large: blur(34px) saturate(170%);
+    --lg-glass-filter-clear: blur(10px) saturate(150%);
+    --lg-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.025) 42%, rgba(255, 255, 255, 0) 100%);
+    --lg-rim:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    --lg-lift: 0 10px 30px rgba(0, 0, 0, 0.34), 0 2px 8px rgba(0, 0, 0, 0.22);
+    --lg-lift-large: 0 24px 64px rgba(0, 0, 0, 0.45), 0 4px 14px rgba(0, 0, 0, 0.25);
+
+    /* Standard materials (content layer). */
+    --lg-material: rgba(26, 28, 29, 0.92);
+    --lg-material-thick: rgba(30, 32, 33, 0.97);
+    --lg-fill: rgba(120, 120, 128, 0.2);
+    --lg-fill-secondary: rgba(120, 120, 128, 0.14);
+    --lg-fill-selected: rgba(255, 255, 255, 0.14);
+    --lg-separator: rgba(255, 255, 255, 0.09);
+
+    /* Labels (iOS dark vibrant label hierarchy). */
+    --lg-label: #f5f5f7;
+    --lg-label-secondary: rgba(235, 235, 245, 0.64);
+    --lg-label-tertiary: rgba(235, 235, 245, 0.34);
+
+    /* Accent: one tint, for the primary action and the current selection.
+       #c93d0b keeps white labels at 5:1 (the brand gradient was 1.8–4.3:1). */
+    --lg-tint: #c93d0b;
+    --lg-tint-top: #d4470f;
+    --lg-tint-label: #ff8a4f;
+
+    /* Concentric radii: inner radius = outer radius − inset. */
+    --lg-radius-sheet: 34px;
+    --lg-radius-sidebar: 28px;
+    --lg-radius-section: 22px;
+    --lg-radius-card: 20px;
+    --lg-radius-field: 14px;
+    --lg-capsule: 999px;
+    --lg-inset: 12px;
+
+    /* Motion: iOS sheet curve, and a gentle overshoot for press feedback. */
+    --lg-ease: cubic-bezier(0.32, 0.72, 0, 1);
+    --lg-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  /* ---------------------------------------------------------------------
+   * Navigation layer: sidebar (large glass, floats inset from the window).
+   * ------------------------------------------------------------------- */
+  .sidebar {
+    background: var(--lg-sheen), var(--lg-glass-large) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter-large) !important;
+    backdrop-filter: var(--lg-glass-filter-large) !important;
+    border: 0 !important;
+    border-radius: var(--lg-radius-sidebar) !important;
+    box-shadow: var(--lg-rim), var(--lg-lift-large) !important;
+    height: calc(100dvh - var(--lg-inset) * 2) !important;
+    margin: var(--lg-inset) 0 var(--lg-inset) var(--lg-inset) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    scrollbar-width: none !important;
+    top: var(--lg-inset) !important;
+  }
+
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: none !important;
+    color: var(--lg-label-secondary) !important;
+    transition:
+      background-color 240ms var(--lg-ease),
+      color 240ms var(--lg-ease),
+      transform 320ms var(--lg-spring) !important;
+  }
+
+  .sidebar-nav button svg,
+  .sidebar-bottom button svg {
+    color: currentColor !important;
+  }
+
+  .sidebar-nav button:hover,
+  .sidebar-bottom button:hover {
+    background: var(--lg-fill-secondary) !important;
+    color: var(--lg-label) !important;
+  }
+
+  /* Selection: a lighter glass bubble; tint only on symbol and label. */
+  .sidebar-nav button.active,
+  .sidebar-nav button[aria-current="page"] {
+    background: var(--lg-fill-selected) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    color: var(--lg-tint-label) !important;
+  }
+
+  .sidebar-nav button small {
+    background: var(--lg-fill) !important;
+    border-radius: var(--lg-capsule) !important;
+    color: var(--lg-label) !important;
+  }
+
+  .workspace-label {
+    color: var(--lg-label-tertiary) !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Navigation layer: mobile tab bar (floating glass capsule).
+   * ------------------------------------------------------------------- */
+  .mobile-nav {
+    background: var(--lg-sheen), var(--lg-glass-bar) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(0.9) !important;
+    backdrop-filter: blur(28px) saturate(180%) brightness(0.9) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: var(--lg-rim), var(--lg-lift) !important;
+  }
+
+  .mobile-nav button {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: none !important;
+    color: var(--lg-label-secondary) !important;
+    transition:
+      background-color 240ms var(--lg-ease),
+      color 240ms var(--lg-ease),
+      transform 320ms var(--lg-spring) !important;
+  }
+
+  .mobile-nav button.active,
+  .mobile-nav button[aria-current="page"] {
+    background: var(--lg-fill-selected) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    color: var(--lg-tint-label) !important;
+  }
+
+  .mobile-nav button svg {
+    color: currentColor !important;
+  }
+
+  /* Legacy rules color the label span directly; keep it with the symbol. */
+  :is(.mobile-nav, .sidebar-nav) button :is(span, svg) {
+    color: inherit !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Bars: no material of their own. A scroll edge effect softens content
+   * passing beneath, and the bar's controls float as glass.
+   * ------------------------------------------------------------------- */
+  .topbar,
+  .quiz-header,
+  .result-header,
+  .builder-header {
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    isolation: isolate !important;
+  }
+
+  /* Scroll edge effect, only on bars that stay pinned while content scrolls. */
+  .topbar::after,
+  .builder-header::after {
+    background: linear-gradient(180deg, rgba(9, 10, 9, 0.82) 0%, rgba(9, 10, 9, 0.5) 62%, rgba(9, 10, 9, 0) 100%) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+    content: "" !important;
+    inset: 0 0 -22px 0 !important;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 58%, transparent 100%) !important;
+    mask-image: linear-gradient(180deg, #000 0%, #000 58%, transparent 100%) !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    z-index: -1 !important;
+  }
+
+  /* Floating bar controls, grouped by function. */
+  .topbar .top-search,
+  .topbar .icon-button,
+  .topbar .user-chip,
+  .quiz-header .icon-button,
+  .quiz-header .timer,
+  .result-header .icon-button,
+  .builder-header .icon-button,
+  .builder-header .back-button {
+    background: var(--lg-sheen), var(--lg-glass) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter) !important;
+    backdrop-filter: var(--lg-glass-filter) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: var(--lg-rim), 0 6px 18px rgba(0, 0, 0, 0.26) !important;
+    color: var(--lg-label) !important;
+  }
+
+  .topbar .top-search input {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  .topbar .top-search input::placeholder {
+    color: var(--lg-label-tertiary) !important;
+  }
+
+  .topbar .top-search kbd {
+    background: var(--lg-fill-secondary) !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    color: var(--lg-label-secondary) !important;
+  }
+
+  .page-title p,
+  .user-chip span {
+    color: var(--lg-label-secondary) !important;
+  }
+
+  /* Status on glass: tint reserved for the warning state only. */
+  .quiz-header .timer.timer-warning {
+    background: var(--lg-sheen), rgba(201, 61, 11, 0.62) !important;
+    color: #fff !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Sheets and dialogs: glass, more opaque because they hold text, with an
+   * increased corner radius. Content inside them is not glass.
+   * ------------------------------------------------------------------- */
+  .modal-backdrop,
+  .cgv-function-backdrop,
+  .knowledge-modal-backdrop,
+  .certificate-backdrop {
+    background: rgba(0, 0, 0, 0.52) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    backdrop-filter: blur(6px) !important;
+  }
+
+  /* Eyebrows inside sheets use the single app tint (replaces legacy lime). */
+  :is(.confirm-modal, .cgv-function-modal, .knowledge-reader, .knowledge-editor, .certificate-dialog) .card-kicker {
+    color: var(--lg-tint-label) !important;
+  }
+
+  .confirm-modal,
+  .cgv-function-modal,
+  .knowledge-reader,
+  .knowledge-editor,
+  .certificate-dialog {
+    background: var(--lg-sheen), var(--lg-glass-sheet) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter-large) !important;
+    backdrop-filter: var(--lg-glass-filter-large) !important;
+    border: 0 !important;
+    border-radius: var(--lg-radius-sheet) !important;
+    box-shadow: var(--lg-rim), var(--lg-lift-large) !important;
+    color: var(--lg-label) !important;
+  }
+
+  .modal-close,
+  .knowledge-modal-close {
+    background: var(--lg-fill) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  .modal-icon {
+    background: var(--lg-fill) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  /* Transient feedback floats as glass. */
+  .cgv-function-toast {
+    background: var(--lg-sheen), var(--lg-glass-large) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter) !important;
+    backdrop-filter: var(--lg-glass-filter) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: var(--lg-rim), var(--lg-lift) !important;
+    color: var(--lg-label) !important;
+  }
+
+  /* Controls over rich media use clear glass with a 35% dimming layer. */
+  .knowledge-pdf-toolbar,
+  .knowledge-pdf-footer,
+  .certificate-toolbar {
+    background: linear-gradient(var(--lg-glass-dim), var(--lg-glass-dim)), var(--lg-glass-clear) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter-clear) !important;
+    backdrop-filter: var(--lg-glass-filter-clear) !important;
+    border: 0 !important;
+    box-shadow: var(--lg-rim) !important;
+    color: #fff !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Sign-in: the card floats over the photographic backdrop. It holds a
+   * form, so it uses regular (not clear) glass.
+   * ------------------------------------------------------------------- */
+  .login-card {
+    background: var(--lg-sheen), var(--lg-glass-large) !important;
+    -webkit-backdrop-filter: var(--lg-glass-filter-large) !important;
+    backdrop-filter: var(--lg-glass-filter-large) !important;
+    border: 0 !important;
+    border-radius: var(--lg-radius-sheet) !important;
+    box-shadow: var(--lg-rim), var(--lg-lift-large) !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Content layer: standard materials. The previous glassmorphism layer put
+   * blurred glass on every card; the HIG reserves glass for navigation, so
+   * cards become solid, quiet surfaces with larger, concentric radii.
+   * ------------------------------------------------------------------- */
+  .welcome-row,
+  .page-intro,
+  .admin-section-header,
+  .participant-page-header,
+  .metric-card,
+  .admin-metrics article,
+  .section-block,
+  .analytics-card,
+  .completion-card,
+  .table-card,
+  .course-card,
+  .history-preview-card,
+  .history-summary,
+  .history-score-card,
+  .leaderboard-card,
+  .profile-card,
+  .settings-card,
+  .detail-card,
+  .scoreboard-hero,
+  .quiz-progress-panel,
+  .question-card,
+  .result-card,
+  .builder-card,
+  .question-editor,
+  .question-outline,
+  .evaluation-list,
+  .knowledge-card,
+  .score-trend-card,
+  .admin-operations-card,
+  .admin-attention-card,
+  .live-quiz-monitor__activity-panel {
+    background: var(--lg-material) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: 1px solid var(--lg-separator) !important;
+    border-radius: var(--lg-radius-card) !important;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  .welcome-row,
+  .page-intro,
+  .scoreboard-hero,
+  .section-block,
+  .table-card {
+    border-radius: var(--lg-radius-section) !important;
+  }
+
+  /* Remove the decorative specular sweep from content headers. */
+  .welcome-row::after,
+  .page-intro::after,
+  .admin-section-header::after,
+  .participant-page-header::after {
+    content: none !important;
+  }
+
+  /* Section headers use title-style capitalization instead of all caps. */
+  .card-kicker {
+    letter-spacing: 0.01em !important;
+    text-transform: none !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Controls in the content layer: capsules on standard fills. Only the
+   * primary action is tinted, on its background.
+   * ------------------------------------------------------------------- */
+  .primary-button,
+  .login-button,
+  .hero-button {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 55%), linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint)) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 8px 22px rgba(201, 61, 11, 0.32) !important;
+    color: #fff !important;
+  }
+
+  .secondary-button,
+  .row-button,
+  .text-button.secondary,
+  .certificate-row-button,
+  .calendar-row-button,
+  .scoreboard-csv-button,
+  .participants-export-button,
+  .executive-report-button,
+  .restore-course-button,
+  .clear-insights-button {
+    background: var(--lg-fill) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    color: var(--lg-label) !important;
+  }
+
+  .content .icon-button {
+    background: var(--lg-fill-secondary) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  .primary-button:hover:not(:disabled),
+  .login-button:hover:not(:disabled),
+  .hero-button:hover:not(:disabled) {
+    filter: brightness(1.08) !important;
+  }
+
+  .secondary-button:hover:not(:disabled),
+  .row-button:hover:not(:disabled),
+  .content .icon-button:hover:not(:disabled) {
+    background: rgba(120, 120, 128, 0.28) !important;
+  }
+
+  /* Interactive feedback: controls compress and spring back on press. */
+  .primary-button,
+  .login-button,
+  .hero-button,
+  .secondary-button,
+  .row-button,
+  .icon-button,
+  .sidebar-nav button,
+  .mobile-nav button,
+  .filter-tabs button,
+  .knowledge-category-tabs button,
+  .answer-list button {
+    transition:
+      background-color 220ms var(--lg-ease),
+      box-shadow 220ms var(--lg-ease),
+      filter 220ms var(--lg-ease),
+      transform 360ms var(--lg-spring) !important;
+  }
+
+  .primary-button:active:not(:disabled),
+  .login-button:active:not(:disabled),
+  .hero-button:active:not(:disabled),
+  .secondary-button:active:not(:disabled),
+  .row-button:active:not(:disabled),
+  .icon-button:active:not(:disabled),
+  .sidebar-nav button:active,
+  .mobile-nav button:active,
+  .filter-tabs button:active,
+  .knowledge-category-tabs button:active {
+    transform: scale(0.96) !important;
+    transition-duration: 90ms !important;
+  }
+
+  .primary-button:disabled,
+  .login-button:disabled,
+  .hero-button:disabled,
+  .secondary-button:disabled,
+  .row-button:disabled {
+    filter: saturate(0.4) !important;
+    opacity: 0.55 !important;
+  }
+
+  /* Segmented controls: a recessed track with a raised selected segment. */
+  .filter-tabs,
+  .knowledge-category-tabs {
+    background: var(--lg-fill-secondary) !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .filter-tabs button,
+  .knowledge-category-tabs button {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: var(--lg-capsule) !important;
+    box-shadow: none !important;
+    color: var(--lg-label-secondary) !important;
+  }
+
+  .filter-tabs button.active,
+  .knowledge-category-tabs button.active {
+    background: var(--lg-sheen), rgba(118, 118, 128, 0.42) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    color: var(--lg-label) !important;
+  }
+
+  /* Pills and badges: capsules, color only where it carries status. */
+  .status-pill,
+  .outcome-pill,
+  .live-pill,
+  .knowledge-status {
+    border-radius: var(--lg-capsule) !important;
+  }
+
+  /* Fields: standard fill with a tinted focus ring. */
+  .input-shell,
+  .admin-search,
+  .knowledge-search,
+  .live-filter-search,
+  .knowledge-field input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+  .knowledge-field select,
+  .knowledge-field textarea,
+  .insights-select-field select,
+  .confirm-modal input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *),
+  .confirm-modal select:not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *),
+  .confirm-modal textarea:not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *),
+  .login-card input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *) {
+    background: var(--lg-fill-secondary) !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--lg-radius-field) !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  .admin-search,
+  .knowledge-search,
+  .live-filter-search {
+    border-radius: var(--lg-capsule) !important;
+  }
+
+  /* An input inside a field shell takes the shell's fill and focus ring. */
+  :is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) input {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  :is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) input:focus-visible {
+    outline: none !important;
+  }
+
+  .input-shell:focus-within,
+  .admin-search:focus-within,
+  .knowledge-search:focus-within,
+  .live-filter-search:focus-within,
+  .knowledge-field input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):focus,
+  .knowledge-field select:focus,
+  .knowledge-field textarea:focus,
+  .confirm-modal input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *):focus,
+  .confirm-modal select:not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *):focus,
+  .confirm-modal textarea:not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *):focus,
+  .login-card input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]):not(:is(.input-shell, .admin-search, .knowledge-search, .live-filter-search, .top-search) *):focus {
+    border-color: var(--lg-tint-label) !important;
+    box-shadow: 0 0 0 3px rgba(255, 138, 79, 0.22) !important;
+    outline: none !important;
+  }
+
+  /* Quiz answers are content: solid rows, tinted outline when selected. */
+  .answer-list button {
+    background: var(--lg-material-thick) !important;
+    border: 1px solid var(--lg-separator) !important;
+    border-radius: var(--lg-radius-field) !important;
+    box-shadow: none !important;
+    color: var(--lg-label) !important;
+  }
+
+  .answer-list button:hover:not(:disabled) {
+    background: rgba(44, 46, 48, 0.97) !important;
+  }
+
+  .answer-list .answer-radio {
+    background: var(--lg-fill) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: var(--lg-label-secondary) !important;
+  }
+
+  .answer-list button.selected .answer-radio {
+    background: linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint)) !important;
+    color: #fff !important;
+  }
+
+  .answer-list button.selected {
+    background: linear-gradient(rgba(201, 61, 11, 0.16), rgba(201, 61, 11, 0.16)), var(--lg-material-thick) !important;
+    border-color: var(--lg-tint-label) !important;
+    box-shadow: inset 0 0 0 1px var(--lg-tint-label) !important;
+  }
+
+  /* Tables are content: hairline separators, no glass. */
+  .responsive-table th,
+  .responsive-table td {
+    border-color: var(--lg-separator) !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Symbols. SF Symbols conventions applied to the Lucide set: a regular
+   * weight that matches adjacent text, rounded caps and joins, monochrome by
+   * default (inheriting the label color), and filled variants for selected
+   * navigation (see app/symbols.tsx).
+   * ------------------------------------------------------------------- */
+  svg.lucide {
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+    stroke-width: 1.85 !important;
+  }
+
+  .sidebar-nav svg,
+  .mobile-nav svg,
+  .sidebar-bottom svg {
+    flex-shrink: 0 !important;
+  }
+
+  .cgv-symbol-fill {
+    stroke: none !important;
+  }
+
+  /* Small inline glyphs (chevrons, arrows) read heavier at small sizes, so
+     they step down a weight, as SF Symbols do at small scales. */
+  :is(.answer-radio, .text-link, .row-button, .input-action, kbd) svg.lucide {
+    stroke-width: 2.1 !important;
+  }
+
+  /* Symbol tiles: the iOS 26 "tinted" treatment. One app tint, a quiet
+     tinted backing with a specular top edge, and the glyph in the tint —
+     instead of a saturated gradient tile on every card. */
+  .metric-icon,
+  .evaluation-icon,
+  .course-icon,
+  .archived-section-title .metric-icon {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%),
+      rgba(255, 106, 34, 0.16) !important;
+    border: 0 !important;
+    border-radius: 30% !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      inset 0 0 0 1px rgba(255, 138, 79, 0.18) !important;
+    color: var(--lg-tint-label) !important;
+  }
+
+  .metric-icon svg,
+  .evaluation-icon svg,
+  .course-icon svg {
+    color: currentColor !important;
+  }
+
+  /* The one emphasized tile per screen (the first metric) keeps a filled
+     tint, mirroring a prominent control. */
+  .admin-metrics article:first-child .metric-icon,
+  .metric-grid .metric-card:first-child .metric-icon {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%),
+      linear-gradient(180deg, var(--lg-tint-top), var(--lg-tint)) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 16px rgba(201, 61, 11, 0.3) !important;
+    color: #fff !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Text alignment. HIG reading order: leading alignment for navigation,
+   * cards, body copy, and questions so every block shares one left edge;
+   * trailing alignment with tabular figures for numbers that get compared;
+   * centered only for alerts, empty states, button labels, and hero titles.
+   * `start`/`end` keep this correct for right-to-left languages.
+   * ------------------------------------------------------------------- */
+
+  /* Navigation: labels share one leading edge instead of each centering. */
+  .sidebar-nav button,
+  .sidebar-bottom button {
+    justify-content: flex-start !important;
+    text-align: start !important;
+  }
+
+  .sidebar-nav button small {
+    margin-inline-start: auto !important;
+  }
+
+  /* Metric cards: symbol, label, value, and caption on one leading edge. */
+  .admin-metrics article,
+  .metric-card {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    text-align: start !important;
+  }
+
+  .admin-metrics article > div,
+  .metric-card > div {
+    align-items: flex-start !important;
+    text-align: start !important;
+  }
+
+  .admin-metrics article :is(p, strong, small),
+  .metric-card :is(p, strong, small) {
+    justify-content: flex-start !important;
+    justify-self: start !important;
+    margin-inline: 0 !important;
+    text-align: start !important;
+  }
+
+  .admin-metrics article .metric-icon,
+  .metric-card .metric-icon {
+    margin-inline: 0 !important;
+  }
+
+  /* Quiz: the question, its number, and the coach line align with the
+     answers beneath them. */
+  .question-card h2,
+  .question-number-row,
+  .quiz-coach {
+    justify-content: flex-start !important;
+    text-align: start !important;
+  }
+
+  /* Card and section headings read from the leading edge. */
+  :is(.section-heading, .table-card-header, .admin-section-header, .page-intro, .participant-page-header) :is(h2, h3, p) {
+    text-align: start !important;
+  }
+
+  /* Tables: text columns leading, numeric columns trailing, headers match
+     their column so labels sit over the values they describe. */
+  .responsive-table :is(th, td) {
+    text-align: start !important;
+    vertical-align: middle !important;
+  }
+
+  .course-management-table :is(th, td):is(:nth-child(4), :nth-child(5)),
+  .participants-management-table :is(th, td):is(:nth-child(4), :nth-child(5)),
+  .responsive-table :is(th, td).course-card-stat,
+  .responsive-table :is(th, td):has(> .table-score) {
+    text-align: end !important;
+  }
+
+  .course-management-table :is(th, td):last-child {
+    text-align: end !important;
+  }
+
+  .course-management-table td:last-child .inline-actions {
+    justify-content: flex-end !important;
+  }
+
+  /* Figures that update or get compared don't shift as digits change. */
+  :is(.responsive-table td, .admin-metrics strong, .metric-card strong, .timer, .progress-number, .table-score, .score-ring, .course-section-count, .history-summary strong, .scoreboard-kpis strong) {
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  /* Intentionally centered: alerts, empty states, and button labels. */
+  :is(.confirm-modal:not(.cgv-function-modal, .add-participant-modal), .empty-state, .knowledge-empty, .live-quiz-monitor__empty) :is(h2, h3, p, .card-kicker) {
+    text-align: center !important;
+  }
+
+  :is(.primary-button, .secondary-button, .login-button, .hero-button, .row-button) {
+    text-align: center !important;
+  }
+
+  /* Forms inside sheets read top-to-bottom from the leading edge. */
+  :is(.cgv-function-modal, .add-participant-modal, .knowledge-editor) :is(label, .field-label, .knowledge-field) {
+    text-align: start !important;
+  }
+
+  /* Keyboard focus is always visible on glass and content alike. */
+  :is(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--lg-tint-label) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* ---------------------------------------------------------------------
+   * Mobile: the sidebar is hidden; the tab bar floats; sheets keep the
+   * device-like corner radius.
+   * ------------------------------------------------------------------- */
+  @media (max-width: 760px) {
+    :root {
+      --lg-radius-sheet: 30px;
+      --lg-radius-card: 18px;
+      --lg-radius-section: 20px;
+    }
+
+    .topbar::after,
+    .builder-header::after {
+      inset: 0 0 -16px 0 !important;
+    }
+
+    /* Segmented controls stay one row, as on iOS, scrolling if needed,
+       instead of stacking into a grid of full-width buttons. */
+    .filter-tabs,
+    .knowledge-category-tabs {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      scrollbar-width: none !important;
+      width: 100% !important;
+    }
+
+    .filter-tabs button,
+    .knowledge-category-tabs button {
+      flex: 1 0 auto !important;
+      white-space: nowrap !important;
+      width: auto !important;
+    }
+
+    /* The sign-in card fills the phone screen here. Full-screen glass is a
+       HIG anti-pattern, so it becomes a thick standard material instead:
+       blurred and dimmed enough to keep the form legible over the photo. */
+    .login-card {
+      background: rgba(10, 11, 12, 0.76) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(120%) !important;
+      backdrop-filter: blur(24px) saturate(120%) !important;
+      box-shadow: none !important;
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+   * Accessibility and fallbacks.
+   * ------------------------------------------------------------------- */
+
+  /* No backdrop-filter support: glass becomes a thick, opaque material. */
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    :root {
+      --lg-glass: rgba(36, 38, 40, 0.96);
+      --lg-glass-large: rgba(28, 30, 32, 0.98);
+      --lg-glass-sheet: rgba(26, 28, 30, 0.99);
+      --lg-glass-clear: rgba(20, 20, 22, 0.9);
+    }
+  }
+
+  /* Reduce Transparency: frosted glass becomes solid. */
+  @media (prefers-reduced-transparency: reduce) {
+    :root {
+      --lg-glass: #2a2c2e;
+      --lg-glass-large: #202224;
+      --lg-glass-sheet: #1d1f21;
+      --lg-glass-clear: #1d1f21;
+      --lg-glass-dim: rgba(0, 0, 0, 0);
+      --lg-material: #1a1c1d;
+      --lg-sheen: linear-gradient(transparent, transparent);
+    }
+
+    .sidebar,
+    .mobile-nav,
+    .topbar .top-search,
+    .topbar .icon-button,
+    .topbar .user-chip,
+    .quiz-header .icon-button,
+    .quiz-header .timer,
+    .result-header .icon-button,
+    .builder-header .icon-button,
+    .builder-header .back-button,
+    .confirm-modal,
+    .cgv-function-modal,
+    .knowledge-reader,
+    .knowledge-editor,
+    .certificate-dialog,
+    .cgv-function-toast,
+    .knowledge-pdf-toolbar,
+    .knowledge-pdf-footer,
+    .certificate-toolbar,
+    .login-card,
+    .modal-backdrop,
+    .cgv-function-backdrop,
+    .knowledge-modal-backdrop,
+    .certificate-backdrop,
+    .topbar::after,
+    .builder-header::after {
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    .topbar::after,
+    .builder-header::after {
+      background: #090a09 !important;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+      inset: 0 !important;
+    }
+  }
+
+  /* Increase Contrast: opaque surfaces, visible borders, stronger labels. */
+  @media (prefers-contrast: more) {
+    :root {
+      --lg-glass: #1f2123;
+      --lg-glass-large: #18191b;
+      --lg-glass-sheet: #161719;
+      --lg-material: #161719;
+      --lg-material-thick: #1b1c1e;
+      --lg-separator: rgba(255, 255, 255, 0.42);
+      --lg-label-secondary: rgba(235, 235, 245, 0.86);
+      --lg-label-tertiary: rgba(235, 235, 245, 0.7);
+      --lg-tint: #a8320a;
+      --lg-tint-top: #b5360a;
+      --lg-tint-label: #ffa274;
+      --lg-rim: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+      --lg-sheen: linear-gradient(transparent, transparent);
+    }
+
+    .secondary-button,
+    .row-button,
+    .filter-tabs,
+    .knowledge-category-tabs,
+    .input-shell,
+    .admin-search,
+    .knowledge-search,
+    .live-filter-search {
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    }
+  }
+
+  /* Reduce Motion: no springs or scaling; state changes cross-fade only. */
+  @media (prefers-reduced-motion: reduce) {
+    .primary-button,
+    .login-button,
+    .hero-button,
+    .secondary-button,
+    .row-button,
+    .icon-button,
+    .sidebar-nav button,
+    .mobile-nav button,
+    .filter-tabs button,
+    .knowledge-category-tabs button,
+    .answer-list button {
+      transition: background-color 120ms linear, color 120ms linear !important;
+    }
+
+    .primary-button:active:not(:disabled),
+    .login-button:active:not(:disabled),
+    .hero-button:active:not(:disabled),
+    .secondary-button:active:not(:disabled),
+    .row-button:active:not(:disabled),
+    .icon-button:active:not(:disabled),
+    .sidebar-nav button:active,
+    .mobile-nav button:active,
+    .filter-tabs button:active,
+    .knowledge-category-tabs button:active {
+      transform: none !important;
+    }
+  }
+
+  /* Forced colors (Windows High Contrast): let system colors take over. */
+  @media (forced-colors: active) {
+    .sidebar,
+    .mobile-nav,
+    .confirm-modal,
+    .cgv-function-modal,
+    .knowledge-reader,
+    .knowledge-editor,
+    .certificate-dialog,
+    .cgv-function-toast,
+    .login-card,
+    .primary-button,
+    .secondary-button,
+    .row-button,
+    .filter-tabs,
+    .knowledge-category-tabs,
+    .answer-list button,
+    .metric-icon,
+    .evaluation-icon,
+    .course-icon {
+      background: Canvas !important;
+      border: 1px solid CanvasText !important;
+      box-shadow: none !important;
+      color: CanvasText !important;
+      forced-color-adjust: auto !important;
+    }
+
+    .sidebar-nav button.active,
+    .mobile-nav button.active,
+    .filter-tabs button.active,
+    .knowledge-category-tabs button.active,
+    .answer-list button.selected {
+      background: Highlight !important;
+      color: HighlightText !important;
+    }
+
+    .topbar::after,
+    .builder-header::after {
+      content: none !important;
+    }
+  }
+}

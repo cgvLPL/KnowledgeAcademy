@@ -54,6 +54,19 @@ performance, certificates, and administrator tools in one cinematic workspace.
   score distributions and question-level answer analysis.
 - Keep archived quizzes in a distinct section that is collapsed by default.
 
+## Version 1.3.0 — Exam Integrity & Liquid Glass
+
+- Quiz time limits and closing dates are enforced by the server, and the timer
+  never restarts on reload.
+- Editing a quiz keeps its question IDs, so scores and reports stay linked.
+- One Apps Script router; live heartbeats use the script cache and don't
+  compete with submissions.
+- An iOS 26 Liquid Glass interface layer, a redrawn glass app icon set, and
+  filled navigation symbols.
+
+See [CHANGELOG.md](CHANGELOG.md) for details. This release requires
+redeploying `Code.gs` and `ZZLiveQuiz.gs`.
+
 ## Version 1.2.0 — Live Quiz Monitoring
 
 Version 1.2.0 adds production-ready participant activity monitoring for
@@ -73,9 +86,10 @@ administrators while keeping quiz answers private.
 - Heartbeat writes are authenticated, course/attempt ownership is validated,
   question totals come from the server, and duplicate heartbeat bursts are
   throttled.
-- Stale completed and disconnected activity rows are automatically pruned.
-- The `LiveActivity` worksheet is created safely by the monitoring extension;
-  existing workbook data does not need to be reset or edited manually.
+- Heartbeats are kept in the Apps Script cache and never take the script lock,
+  so live monitoring does not slow down quiz submissions.
+- Time limits and closing dates are enforced on the server; reloading a quiz
+  never restarts its timer.
 - Live monitoring never returns answer selections, correct-answer keys, question
   text, or pre-submission scores to the Admin monitor.
 
@@ -177,8 +191,8 @@ Follow [the backend setup guide](google-apps-script/README.md) to:
 The application has no offline or demo accounts. Authentication, lessons,
 evaluations, attempts, results, account-language preferences, and live activity
 come from the connected spreadsheet. `setupEvaluationPlatform()` preserves
-existing data and adds required columns. `setupLiveQuizMonitoring()` safely
-ensures the `LiveActivity` worksheet exists and can be re-run. Use
+existing data and adds required columns. `setupLiveQuizMonitoring()` optionally
+clears rows left in a legacy `LiveActivity` tab and can be re-run. Use
 `resetEvaluationPlatformToAdminOnly()` only when an intentional clean reset is
 required.
 

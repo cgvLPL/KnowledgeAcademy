@@ -4,6 +4,12 @@ const APP = Object.freeze({
   release: "2026.08.11-backend-hardening",
   timezone: "Asia/Jakarta",
   sessionHours: 12,
+  timing: Object.freeze({
+    // Server-side allowance after the deadline for network latency, client
+    // retries and lock queuing. Submissions later than this are closed unscored.
+    submitGraceSeconds: 120,
+    defaultTimeLimitMinutes: 20,
+  }),
   request: Object.freeze({
     maxBodyBytes: 512 * 1024,
   }),
@@ -96,19 +102,38 @@ function doGet() {
   }
 }
 
+// The single POST entry point. Do not define doPost in any other .gs file:
+// Apps Script shares one global scope, so a second definition silently
+// replaces this one depending on file order. Extension files register routes
+// through a *ApiRoutes_() function instead; they are resolved at request time,
+// after every file has loaded, so file order does not matter.
 function doPost(event) {
   beginRequest_();
   try {
     const body = parseBody_(event);
     const action = String(body.action || "").trim();
-    if (!Object.prototype.hasOwnProperty.call(API_ACTIONS, action)) {
+    const routes = apiRoutes_();
+    if (!Object.prototype.hasOwnProperty.call(routes, action)) {
       throw new Error("Unsupported action.");
     }
-    return json_(withResponseMeta_(API_ACTIONS[action](body)));
+    return json_(withResponseMeta_(routes[action](body)));
   } catch (error) {
     logRequestError_(error);
     return json_(errorResponse_(error));
   }
+}
+
+function apiRoutes_() {
+  const routes = Object.assign({}, API_ACTIONS, {
+    getAccountLanguage: getAccountLanguage_,
+    setAccountLanguage: setAccountLanguage_,
+  });
+  // Optional extension in ZZLiveQuiz.gs. If the file is missing, only its
+  // actions are unavailable; every other route keeps working.
+  if (typeof liveQuizApiRoutes_ === "function") {
+    Object.assign(routes, liveQuizApiRoutes_());
+  }
+  return routes;
 }
 
 function health_() {
@@ -347,10 +372,16 @@ function startAttempt_(body) {
       "user_id",
       context.user.user_id,
     );
-    const existing = userAttempts.find(function (attempt) {
+    let existing = userAttempts.find(function (attempt) {
       return String(attempt.course_id) === courseId &&
         attempt.status === "started";
     });
+    if (existing && attemptIsPastDeadline_(existing, currentCourse, now.getTime())) {
+      // An abandoned attempt whose time ran out is closed unscored so it
+      // cannot be resumed with a fresh clock. It counts toward the limit.
+      finalizeExpiredAttempt_(existing, currentCourse, questions, now);
+      existing = null;
+    }
     if (existing) {
       let existingStartedAt = toIso_(existing.started_at);
       if (!existingStartedAt) {
@@ -378,11 +409,14 @@ function startAttempt_(body) {
   });
   const questionCounts = {};
   questionCounts[courseId] = questions.length;
+  const deadlineMs = attemptDeadlineMs_({ started_at: attemptContext.startedAt }, course);
 
   return {
     ok: true,
     attemptId: attemptContext.attemptId,
     startedAt: attemptContext.startedAt,
+    deadlineAt: isFinite(deadlineMs) ? new Date(deadlineMs).toISOString() : "",
+    serverNow: new Date().toISOString(),
     course: publicCourse_(course, questionCounts),
     questions: questions.map(function (question) {
       return {
@@ -441,14 +475,68 @@ function submitAttempt_(body) {
   if (!questions.length) throw new Error("No questions are configured for this course.");
 
   const now = new Date();
+  const graded = gradeAttemptAnswers_(questions, submittedAnswers, attemptId, now);
+
+  return withScriptLock_(APP.capacity.submissionLockTimeoutMs, function () {
+    const current = findById_(APP.sheets.attempts, "attempt_id", attemptId, true);
+    if (!current || String(current.user_id) !== String(context.user.user_id)) {
+      throw new Error("Attempt not found.");
+    }
+    const currentCourse = findById_(APP.sheets.courses, "course_id", current.course_id, true);
+    if (!currentCourse) throw new Error("The course for this attempt no longer exists.");
+    if (current.status === "submitted") return existingAttemptResult_(current, currentCourse);
+    if (current.status !== "started") throw new Error("This attempt cannot be submitted.");
+    const userAttempts = findObjectsByExactValue_(
+      getSheet_(APP.sheets.attempts),
+      "user_id",
+      context.user.user_id,
+    );
+    assertAttemptLimitAvailable_(currentCourse, userAttempts, current.attempt_id);
+    const attemptsUsed = submittedAttemptCountForCourse_(
+      userAttempts,
+      currentCourse.course_id,
+      current.attempt_id,
+    ) + 1;
+
+    // The time limit and closing date are enforced here, not only in the
+    // browser: answers that arrive after the deadline (plus a small network
+    // grace period) are discarded and the attempt is closed unscored.
+    const expired = attemptIsPastDeadline_(current, currentCourse, now.getTime());
+    const outcome = expired
+      ? finalizeExpiredAttempt_(current, currentCourse, questions, now)
+      : writeAttemptResult_(current, graded, attemptDurationSeconds_(current, now), now);
+    SpreadsheetApp.flush();
+    const passingScore = Number(currentCourse.passing_score || 0);
+    return {
+      ok: true,
+      alreadySubmitted: false,
+      expired: expired,
+      result: {
+        attemptId: attemptId,
+        score: outcome.score,
+        correctCount: outcome.correctCount,
+        totalQuestions: questions.length,
+        durationSeconds: outcome.durationSeconds,
+        attemptsUsed: attemptsUsed,
+        passed: outcome.score >= passingScore,
+        passingScore: passingScore,
+        expired: expired,
+      },
+    };
+  });
+}
+
+function gradeAttemptAnswers_(questions, submittedAnswers, attemptId, now) {
+  const answers = submittedAnswers && typeof submittedAnswers === "object" ? submittedAnswers : {};
   const normalizedAnswers = {};
   let correctCount = 0;
   let earned = 0;
   let total = 0;
   const answerRows = questions.map(function (question) {
-    const raw = String(submittedAnswers[question.question_id] || "").trim().toUpperCase();
+    const raw = String(answers[question.question_id] || "").trim().toUpperCase();
     const selected = ["A", "B", "C", "D"].indexOf(raw) >= 0 ? raw : "";
-    const correct = selected === String(question.correct_option || "").trim().toUpperCase();
+    const correct = selected !== "" &&
+      selected === String(question.correct_option || "").trim().toUpperCase();
     const points = Math.max(1, Number(question.points || 1));
     normalizedAnswers[question.question_id] = selected;
     total += points;
@@ -461,60 +549,73 @@ function submitAttempt_(body) {
       correct, correct ? points : 0, now,
     ];
   });
-  const score = total ? Math.round(earned / total * 100) : 0;
-  attemptDurationSeconds_(initialAttempt, now);
+  return {
+    answerRows: answerRows,
+    normalizedAnswers: normalizedAnswers,
+    correctCount: correctCount,
+    score: total ? Math.round(earned / total * 100) : 0,
+  };
+}
 
-  return withScriptLock_(APP.capacity.submissionLockTimeoutMs, function () {
-    const current = findById_(APP.sheets.attempts, "attempt_id", attemptId, true);
-    if (!current || String(current.user_id) !== String(context.user.user_id)) {
-      throw new Error("Attempt not found.");
-    }
-    const currentCourse = findById_(APP.sheets.courses, "course_id", current.course_id, true);
-    if (!currentCourse) throw new Error("The course for this attempt no longer exists.");
-    if (current.status === "submitted") return existingAttemptResult_(current, currentCourse);
-    if (current.status !== "started") throw new Error("This attempt cannot be submitted.");
-    const durationSeconds = attemptDurationSeconds_(current, now);
-    const userAttempts = findObjectsByExactValue_(
-      getSheet_(APP.sheets.attempts),
-      "user_id",
-      context.user.user_id,
-    );
-    assertAttemptLimitAvailable_(currentCourse, userAttempts, current.attempt_id);
-    const attemptsUsed = submittedAttemptCountForCourse_(
-      userAttempts,
-      currentCourse.course_id,
-      current.attempt_id,
-    ) + 1;
-    const answersSheet = getSheet_(APP.sheets.answers);
-    deleteRowsMatching_(answersSheet, "attempt_id", attemptId);
+// Must be called while holding the script lock.
+function writeAttemptResult_(attempt, graded, durationSeconds, now) {
+  const answersSheet = getSheet_(APP.sheets.answers);
+  deleteRowsMatching_(answersSheet, "attempt_id", attempt.attempt_id);
+  if (graded.answerRows.length) {
     answersSheet
-      .getRange(answersSheet.getLastRow() + 1, 1, answerRows.length, HEADERS.Answers.length)
-      .setValues(answerRows);
-    updateObjectRow_(getSheet_(APP.sheets.attempts), current.__row, {
-      submitted_at: now,
-      status: "submitted",
-      score: score,
-      correct_count: correctCount,
-      total_questions: questions.length,
-      duration_seconds: durationSeconds,
-      answers_json: JSON.stringify(normalizedAnswers),
-    });
-    SpreadsheetApp.flush();
-    return {
-      ok: true,
-      alreadySubmitted: false,
-      result: {
-        attemptId: attemptId,
-        score: score,
-        correctCount: correctCount,
-        totalQuestions: questions.length,
-        durationSeconds: durationSeconds,
-        attemptsUsed: attemptsUsed,
-        passed: score >= Number(currentCourse.passing_score || 0),
-        passingScore: Number(currentCourse.passing_score || 0),
-      },
-    };
+      .getRange(answersSheet.getLastRow() + 1, 1, graded.answerRows.length, HEADERS.Answers.length)
+      .setValues(graded.answerRows);
+    invalidateSheetCache_(answersSheet);
+  }
+  updateObjectRow_(getSheet_(APP.sheets.attempts), attempt.__row, {
+    submitted_at: now,
+    status: "submitted",
+    score: graded.score,
+    correct_count: graded.correctCount,
+    total_questions: graded.answerRows.length,
+    duration_seconds: durationSeconds,
+    answers_json: JSON.stringify(graded.normalizedAnswers),
   });
+  attempt.status = "submitted";
+  attempt.submitted_at = now;
+  return {
+    score: graded.score,
+    correctCount: graded.correctCount,
+    durationSeconds: durationSeconds,
+  };
+}
+
+// Closes a started attempt whose time ran out. No answers are accepted, and
+// the recorded duration is capped at the time that was actually allowed.
+// Must be called while holding the script lock.
+function finalizeExpiredAttempt_(attempt, course, questions, now) {
+  const startedAtMs = new Date(attempt.started_at).getTime();
+  const deadlineMs = attemptDeadlineMs_(attempt, course);
+  const durationSeconds = isFinite(startedAtMs) && isFinite(deadlineMs)
+    ? Math.max(0, Math.round((Math.min(deadlineMs, now.getTime()) - startedAtMs) / 1000))
+    : 0;
+  const graded = gradeAttemptAnswers_(questions, {}, attempt.attempt_id, now);
+  return writeAttemptResult_(attempt, graded, durationSeconds, now);
+}
+
+function courseTimeLimitMinutes_(course) {
+  const minutes = Number(course && course.time_limit_min);
+  return isFinite(minutes) && minutes > 0 ? minutes : APP.timing.defaultTimeLimitMinutes;
+}
+
+// The deadline is the earlier of start + time limit and the course closing date.
+function attemptDeadlineMs_(attempt, course) {
+  const startedAtMs = new Date(attempt && attempt.started_at).getTime();
+  if (!isFinite(startedAtMs)) return NaN;
+  let deadlineMs = startedAtMs + courseTimeLimitMinutes_(course) * 60000;
+  const endAtMs = course && course.end_at ? new Date(course.end_at).getTime() : NaN;
+  if (isFinite(endAtMs) && endAtMs < deadlineMs) deadlineMs = endAtMs;
+  return deadlineMs;
+}
+
+function attemptIsPastDeadline_(attempt, course, nowMs) {
+  const deadlineMs = attemptDeadlineMs_(attempt, course);
+  return isFinite(deadlineMs) && nowMs > deadlineMs + APP.timing.submitGraceSeconds * 1000;
 }
 
 function submittedAttemptCountForCourse_(attempts, courseId, excludedAttemptId) {
@@ -879,8 +980,9 @@ function adminSaveCourse_(body) {
       throw new Error("Every question needs four answer choices.");
     }
     if (["A", "B", "C", "D"].indexOf(correct) < 0) throw new Error("Invalid correct answer.");
+    // Column 0 holds the requested question ID; it is resolved under the lock.
     return [
-      Utilities.getUuid(), "", index + 1, String(question.prompt).trim(),
+      String(question.id || "").trim(), "", index + 1, String(question.prompt).trim(),
       options[0].trim(), options[1].trim(), options[2].trim(), options[3].trim(),
       correct, Math.max(1, Number(question.points || 1)), String(question.explanation || ""),
     ];
@@ -917,14 +1019,31 @@ function adminSaveCourse_(body) {
         ? courseRandomizesAnswers_(existing)
         : booleanSetting_(input.randomizeAnswers),
     };
+    const questionsSheet = getSheet_(APP.sheets.questions);
+    // Keep the IDs of questions that already belong to this course. Attempt
+    // answers (Answers rows and answers_json) and in-progress attempts are keyed
+    // by question ID, so regenerating IDs would orphan every recorded answer.
+    const reusableIds = {};
+    if (existing) {
+      findObjectsByExactValue_(questionsSheet, "course_id", courseId).forEach(function (question) {
+        reusableIds[String(question.question_id)] = true;
+      });
+    }
+    preparedQuestions.forEach(function (row) {
+      const requestedId = row[0];
+      if (requestedId && reusableIds[requestedId]) {
+        delete reusableIds[requestedId];
+      } else {
+        row[0] = Utilities.getUuid();
+      }
+      row[1] = courseId;
+    });
     if (existing) {
       updateObjectRow_(coursesSheet, existing.__row, record);
-      deleteRowsMatching_(getSheet_(APP.sheets.questions), "course_id", courseId);
+      deleteRowsMatching_(questionsSheet, "course_id", courseId);
     } else {
       appendObject_(coursesSheet, record);
     }
-    preparedQuestions.forEach(function (row) { row[1] = courseId; });
-    const questionsSheet = getSheet_(APP.sheets.questions);
     questionsSheet
       .getRange(questionsSheet.getLastRow() + 1, 1, preparedQuestions.length, HEADERS.Questions.length)
       .setValues(preparedQuestions);
@@ -2034,8 +2153,8 @@ function clamp_(value, minimum, maximum) {
 }
 
 // Account language preferences are stored in the existing Settings sheet so
-// older workbooks do not need a Users-column migration. These routes are kept
-// outside API_ACTIONS to preserve the frozen legacy action table.
+// older workbooks do not need a Users-column migration. These routes are
+// registered in apiRoutes_() alongside the frozen legacy action table.
 function accountLanguageKey_(userId) {
   return "account_language:" + String(userId || "");
 }
@@ -2084,29 +2203,4 @@ function setAccountLanguage_(body) {
       user: Object.assign(publicUser_(context.user), { language: language }),
     };
   });
-}
-
-// Final POST router: adds account-language actions while preserving every
-// existing API_ACTIONS route and the standard response envelope.
-function doPost(event) {
-  beginRequest_();
-  try {
-    const body = parseBody_(event);
-    const action = String(body.action || "").trim();
-    let result;
-    if (action === "getAccountLanguage") {
-      result = getAccountLanguage_(body);
-    } else if (action === "setAccountLanguage") {
-      result = setAccountLanguage_(body);
-    } else {
-      if (!Object.prototype.hasOwnProperty.call(API_ACTIONS, action)) {
-        throw new Error("Unsupported action.");
-      }
-      result = API_ACTIONS[action](body);
-    }
-    return json_(withResponseMeta_(result));
-  } catch (error) {
-    logRequestError_(error);
-    return json_(errorResponse_(error));
-  }
 }
