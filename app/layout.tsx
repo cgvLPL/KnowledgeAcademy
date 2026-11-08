@@ -88,10 +88,10 @@ import "./dashboard-card-spacing.css";
 import "./admin-participants-mobile.css";
 import "./admin-quiz-builder-responsive.css";
 import "./live-quiz-monitor-bento.css";
-// Liquid Glass (iOS 26 HIG) — cascade-layered, so it must stay the final import.
-import "./liquid-glass.css";
 // Final login geometry override: the brand and credential form occupy separate grid cells.
 import "./login-brand-layout-fix.css";
+// Liquid Glass (iOS 26 HIG) — cascade-layered, so it must stay the final import.
+import "./liquid-glass.css";
 
 const publicSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://cgvlpl.github.io/KnowledgeAcademy/";
 const normalizedPublicSiteUrl = publicSiteUrl.endsWith("/") ? publicSiteUrl : `${publicSiteUrl}/`;
