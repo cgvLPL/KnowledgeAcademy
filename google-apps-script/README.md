@@ -24,8 +24,9 @@ scoreboard, and live quiz activity service.
      container-bound projects do not need it)
 7. Run `setupEvaluationPlatform()` once and approve the requested spreadsheet
    permission.
-8. Run `setupLiveQuizMonitoring()` once. It safely creates or repairs the
-   `LiveActivity` worksheet and can be re-run without deleting quiz data.
+8. Optional: run `setupLiveQuizMonitoring()`. Live activity is kept in the
+   script cache, so no worksheet is needed; the helper only clears rows left in
+   a legacy `LiveActivity` tab by older versions and can be re-run safely.
 9. Choose **Deploy → New deployment → Web app**:
    - Execute as: **Me**
    - Who has access: **Anyone**
@@ -33,8 +34,8 @@ scoreboard, and live quiz activity service.
     `GOOGLE_APPS_SCRIPT_URL` environment variable.
 
 `setupEvaluationPlatform()` creates the core tabs without deleting existing
-courses or users. `setupLiveQuizMonitoring()` creates only the live-activity
-schema and prunes expired activity rows. To intentionally return to one
+courses or users. `setupLiveQuizMonitoring()` only clears legacy live-activity
+rows. To intentionally return to one
 administrator and no other data, run `resetEvaluationPlatformToAdminOnly()`.
 
 Accounts sign in with usernames. Usernames are lowercase and may contain
@@ -67,15 +68,41 @@ count comes from the server-side question bank rather than the client payload.
 Repeated identical heartbeat snapshots inside five seconds are acknowledged but
 not rewritten to the sheet.
 
-Reconnects update the same `attempt_id` row and return the participant to Active
-status; they do not create duplicate live sessions. Completed activity is kept
-for six hours, disconnected activity for 24 hours, and stale/missing-attempt rows
-are pruned automatically when Admin reads the monitor or when the setup helper is
-run.
+Heartbeats are stored in the Apps Script script cache (one entry per attempt),
+not in a worksheet, and never take the script lock, so they do not queue in
+front of quiz submissions. Reconnects overwrite the same attempt's entry and
+return the participant to Active status. The monitor lists started attempts
+from the last 24 hours and submissions from the last six hours, read from the
+`Attempts` tab. A cache entry that has been evicted only means the participant
+shows as Disconnected until their next heartbeat (within 15 seconds).
 
-`LiveActivity` stores only monitoring metadata: attempt/course/user IDs, current
-question, total questions, answered count, client status, and activity timestamps.
-It never stores answer selections, correct-answer keys, question text, or scores.
+Cache entries hold only monitoring metadata: attempt/course/user IDs, current
+question, total questions, answered count, client status, and activity
+timestamps. They never store answer selections, correct-answer keys, question
+text, or scores.
+
+### Routing
+
+`Code.gs` contains the project's only `doPost`. Extension files must not define
+another one; they expose a `*ApiRoutes_()` function (for example
+`liveQuizApiRoutes_()` in `ZZLiveQuiz.gs`) that `apiRoutes_()` resolves at
+request time, so the order of files in the Apps Script editor does not matter.
+
+### Time limits
+
+Every attempt has a server deadline: the start time plus the quiz time limit,
+or the quiz closing date if that is earlier. `startAttempt` returns it as
+`deadlineAt`, and the browser counts down to it, so reloading or resuming never
+restarts the clock. `submitAttempt` accepts answers up to 120 seconds after the
+deadline (for network delay and retries). Later submissions, and abandoned
+attempts that are reopened after their deadline, are closed with no answers and
+a score of 0; they count toward the attempt limit.
+
+### Editing quizzes
+
+Saving an edited quiz keeps the IDs of its existing questions, so recorded
+answers, reports, and attempts that are in progress stay linked. Questions added
+in the edit get new IDs, and removed questions simply stop being scored.
 
 ## Knowledge Centre and File Garden sync
 
@@ -111,7 +138,8 @@ existing Google Apps Script web-app version. After backend files change:
    the same name.
 3. Run `setupEvaluationPlatform()` once so new core workbook columns are added
    while existing account, course, and lesson data is preserved.
-4. Run `setupLiveQuizMonitoring()` once so the `LiveActivity` schema is ready.
+4. Optional: run `setupLiveQuizMonitoring()` once to clear rows left in a legacy
+   `LiveActivity` tab. Make sure no other `.gs` file defines `doPost`.
 5. If required by a Knowledge Centre update, optionally run
    `syncKnowledgeCentreBackend()` once to audit and normalize resource URLs.
 6. Select **Deploy → Manage deployments**.
@@ -234,7 +262,7 @@ server-side, and administrator actions require an administrator session.
 - `Answers` — participant answer audit trail.
 - `Sessions` — expiring hashed login sessions.
 - `Settings` — app-level configuration.
-- `LiveActivity` — transient authenticated quiz-monitoring metadata; created and
-  maintained by `ZZLiveQuiz.gs`.
+- `LiveActivity` — legacy only. Older versions stored monitoring rows here; live
+  activity now lives in the script cache and this tab can be deleted.
 
 No cells are merged, so filtering, copying, and future automation remain safe.

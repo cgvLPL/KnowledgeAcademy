@@ -51,6 +51,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties, ty
 import { createPortal } from "react-dom";
 import type { ExecutiveReportData } from "./executive-report";
 import KnowledgeCentre, { type Lesson, type LessonInput } from "./knowledge-centre";
+import { FILLED_NAV_SYMBOLS } from "./symbols";
 import { createCsvDocument, createEvaluationCalendar, safeFilename } from "./productivity-insights.mjs";
 import { deriveQuizLifecycle } from "./quiz-lifecycle";
 import { selectLatestScoreboardEvaluation } from "./scoreboard-selection.mjs";
@@ -189,6 +190,30 @@ async function sheetsRequest<T = Record<string, unknown>>(
     throw new Error(data.error || "The Google Sheets backend could not complete this request.");
   }
   return data;
+}
+
+/**
+ * Converts the server's attempt deadline to this device's clock using the
+ * server timestamp in the same response, so a wrong device clock cannot add
+ * or remove time. Falls back to the start time (or now) plus the time limit
+ * when talking to an older backend that does not send a deadline.
+ */
+function deviceDeadlineMs(
+  data: { startedAt?: string; deadlineAt?: string; serverNow?: string },
+  durationMinutes: number,
+  requestedAt: number,
+) {
+  const receivedAt = Date.now();
+  const deadline = Date.parse(String(data.deadlineAt || ""));
+  const serverNow = Date.parse(String(data.serverNow || ""));
+  if (Number.isFinite(deadline) && Number.isFinite(serverNow)) {
+    // Assume the server stamped its clock midway through the round trip.
+    const midpoint = requestedAt + (receivedAt - requestedAt) / 2;
+    return deadline - serverNow + midpoint;
+  }
+  const limitMs = Math.max(1, Number(durationMinutes) || 20) * 60_000;
+  const startedAt = Date.parse(String(data.startedAt || ""));
+  return (Number.isFinite(startedAt) ? Math.min(startedAt, receivedAt) : receivedAt) + limitMs;
 }
 
 function formatApiDate(value: unknown, fallback = "Not scheduled") {
@@ -569,12 +594,15 @@ function Sidebar({
       </div>
       <nav className="sidebar-nav" aria-label="Main navigation">
         {items.map((item) => {
-          const Icon = item.icon;
+          const active = view === item.id;
+          // Selected items use the filled symbol variant, as iOS sidebars do.
+          const Icon = (active && FILLED_NAV_SYMBOLS[item.id]) || item.icon;
           return (
             <button
               type="button"
               key={item.id}
-              className={view === item.id ? "active" : ""}
+              className={active ? "active" : ""}
+              aria-current={active ? "page" : undefined}
               onClick={() => setView(item.id)}
             >
               <Icon size={19} />
@@ -1362,14 +1390,21 @@ function ProfileView({ user, history }: { user: AuthUser | null; history: Histor
   );
 }
 
+function secondsUntil(deadlineMs: number) {
+  return Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+}
+
 function Quiz({
   evaluation,
   questionsData,
+  deadlineMs,
   onExit,
   onComplete,
 }: {
   evaluation: Evaluation;
   questionsData: Question[];
+  /** Server-issued deadline, already converted to this device's clock. */
+  deadlineMs: number;
   onExit: () => void;
   onComplete: (score: number, answers: Record<number, number>) => Promise<string | null>;
 }) {
@@ -1378,8 +1413,10 @@ function Quiz({
   const [showSubmit, setShowSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const initialSeconds = Math.max(1, Math.round(evaluation.duration * 60));
-  const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
+  // The countdown is derived from the server deadline on every tick, so
+  // reloading or resuming an attempt never restarts the clock, and a
+  // throttled background tab catches up as soon as it runs again.
+  const [remainingSeconds, setRemainingSeconds] = useState(() => secondsUntil(deadlineMs));
   const submitStartedRef = useRef(false);
   const submitQuizRef = useRef<(allowIncomplete?: boolean) => Promise<void>>(async () => undefined);
   const current = questionsData[index];
@@ -1421,21 +1458,21 @@ function Quiz({
 
   useEffect(() => {
     if (!questionsData.length) return undefined;
-    const timer = window.setInterval(() => {
-      setRemainingSeconds((value) => {
-        if (value <= 1) {
-          window.clearInterval(timer);
-          window.setTimeout(() => {
-            setShowSubmit(true);
-            void submitQuizRef.current(true);
-          }, 0);
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
+    let expired = false;
+    const tick = () => {
+      const next = secondsUntil(deadlineMs);
+      setRemainingSeconds(next);
+      if (next === 0 && !expired) {
+        expired = true;
+        window.clearInterval(timer);
+        setShowSubmit(true);
+        void submitQuizRef.current(true);
+      }
+    };
+    const timer = window.setInterval(tick, 500);
+    tick();
     return () => window.clearInterval(timer);
-  }, [evaluation.id, initialSeconds, questionsData.length]);
+  }, [evaluation.id, deadlineMs, questionsData.length]);
 
   if (!current) {
     return (
@@ -2542,8 +2579,9 @@ function MobileNav({ role, view, setView }: { role: Role; view: View; setView: (
   return (
     <nav className="mobile-nav" aria-label="Primary navigation">
       {items.map((item) => {
-        const Icon = item.icon;
         const active = view === item.id;
+        // The selected tab uses the filled symbol variant, as iOS tab bars do.
+        const Icon = (active && FILLED_NAV_SYMBOLS[item.id]) || item.icon;
         return (
           <button
             key={item.id}
@@ -2568,6 +2606,7 @@ export default function ExamClient() {
   const [activeQuiz, setActiveQuiz] = useState<Evaluation | null>(null);
   const [activeAttemptId, setActiveAttemptId] = useState<string | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
+  const [quizDeadlineMs, setQuizDeadlineMs] = useState(0);
   const [result, setResult] = useState<{
     evaluation: Evaluation;
     score: number;
@@ -2867,9 +2906,13 @@ export default function ExamClient() {
     }
     if (backendMode === "sheets" && sessionToken) {
       try {
+        const requestedAt = Date.now();
         const data = await sheetsRequest<{
           ok: boolean;
           attemptId: string;
+          startedAt?: string;
+          deadlineAt?: string;
+          serverNow?: string;
           questions: {
             id: string;
             prompt: string;
@@ -2887,6 +2930,7 @@ export default function ExamClient() {
             optionKeys: options.map((option) => option.key),
           };
         });
+        setQuizDeadlineMs(deviceDeadlineMs(data, evaluation.duration, requestedAt));
         setQuizQuestions(liveQuestions);
         setActiveAttemptId(data.attemptId);
         setActiveQuiz({ ...evaluation, questionCount: liveQuestions.length });
@@ -2915,12 +2959,16 @@ export default function ExamClient() {
         }, {});
         const submission = await sheetsRequest<{
           ok: boolean;
-          result: { attemptId?: string; score: number; durationSeconds: number; attemptsUsed?: number };
+          expired?: boolean;
+          result: { attemptId?: string; score: number; durationSeconds: number; attemptsUsed?: number; expired?: boolean };
         }>("submitAttempt", {
           token: sessionToken,
           attemptId: activeAttemptId,
           answers: answerPayload,
         });
+        if (submission.expired || submission.result.expired) {
+          window.alert("Time ran out before this submission reached the server, so the attempt was closed without answers.");
+        }
         finalScore = submission.result.score;
         completedAttemptId = String(submission.result.attemptId || activeAttemptId);
         completedDurationSeconds = Number(submission.result.durationSeconds || 0);
@@ -3128,7 +3176,7 @@ export default function ExamClient() {
   if (booting) return <BootScreen onComplete={() => setBooting(false)} />;
   if (!role) return <Login onLogin={login} />;
   if (builderOpen && role === "admin") return <CourseBuilder onClose={() => setBuilderOpen(false)} onSave={saveCourse} />;
-  if (activeQuiz) return <Quiz evaluation={activeQuiz} questionsData={quizQuestions} onExit={() => setActiveQuiz(null)} onComplete={completeQuiz} />;
+  if (activeQuiz) return <Quiz evaluation={activeQuiz} questionsData={quizQuestions} deadlineMs={quizDeadlineMs} onExit={() => setActiveQuiz(null)} onComplete={completeQuiz} />;
   if (result) {
     return (
       <>
